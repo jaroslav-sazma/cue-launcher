@@ -23,7 +23,7 @@ licensee = "1.14.1"
 screenshot = "0.0.1-alpha16"
 androidxActivity = "1.13.0"
 androidxBrowser = "1.9.0"
-androidxCore = "1.19.0"
+androidxCore = "1.19.1"
 # Version-sensitive: under AGP 9 the androidx.baselineprofile Gradle plugin required the
 # android.newDsl=false switch, and only 1.5.0 works without it. Anything lower, 1.4.1 included,
 # does not run with AGP 9.4.1.
