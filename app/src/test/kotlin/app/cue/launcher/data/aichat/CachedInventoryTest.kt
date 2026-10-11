@@ -3,6 +3,7 @@ package app.cue.launcher.data.aichat
 import app.cue.launcher.data.ha.HaService
 import app.cue.launcher.data.scenario.TapAction
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.test.runCurrent
@@ -11,6 +12,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 import kotlin.time.Duration.Companion.minutes
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class CachedInventoryTest {
 
     @Test

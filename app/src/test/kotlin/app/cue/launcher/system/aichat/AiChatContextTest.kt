@@ -281,7 +281,7 @@ class AiChatContextTest {
         val text = aiChatContext(realisticInventory(), english, TEST_ROUTE)
 
         val sample = File(rootDir(), "build/aichat/context-sample.md")
-        sample.parentFile.mkdirs()
+        sample.parentFile?.mkdirs()
         sample.writeText(text)
         println("AI chat brief: ${text.length} characters, ${text.toByteArray().size} bytes UTF-8 → $sample")
         assertTrue(text.length < MAX_REALISTIC_LENGTH, "${text.length} characters")

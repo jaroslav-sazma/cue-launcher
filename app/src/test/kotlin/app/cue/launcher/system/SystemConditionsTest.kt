@@ -9,6 +9,7 @@ import app.cue.launcher.engine.StateNeeds
 import app.cue.launcher.engine.StateProvider
 import app.cue.launcher.engine.SystemState
 import app.cue.launcher.engine.aspect
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
@@ -18,6 +19,7 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class SystemConditionsTest {
 
     private val started = mutableListOf<StateAspect>()
