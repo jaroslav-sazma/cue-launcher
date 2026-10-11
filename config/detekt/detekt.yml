@@ -1,0 +1,26 @@
+# Deviations from the detekt default configuration only (buildUponDefaultConfig = true).
+style:
+  MaxLineLength:
+    maxLineLength: 120 # kept in sync with .editorconfig
+  MagicNumber:
+    ignorePropertyDeclaration: true
+    ignoreAnnotated: ['Composable', 'Preview']
+  ForbiddenImport:
+    active: true
+    imports:
+      - value: 'androidx.compose.runtime.collectAsState'
+        reason: 'A composition outlives onStop. Use collectAsStateWithLifecycle so nothing keeps running behind the home screen.'
+
+naming:
+  FunctionNaming:
+    ignoreAnnotated: ['Composable'] # composable functions are named in PascalCase
+    excludes: ['**/test/**', '**/testDebug/**', '**/androidTest/**'] # this project's test sets, debug-only tests included
+  TopLevelPropertyNaming:
+    ignoreAnnotated: ['Composable']
+
+complexity:
+  LongParameterList:
+    ignoreAnnotated: ['Composable'] # a composable API typically has many parameters with defaults
+  TooManyFunctions:
+    ignoreAnnotated: ['DependencyGraph'] # the dependency graph is a list of bindings, not a class with behaviour
+    excludes: ['**/test/**', '**/testDebug/**', '**/androidTest/**'] # this project's test sets, debug-only tests included

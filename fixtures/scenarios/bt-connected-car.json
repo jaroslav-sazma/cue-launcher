@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "bt-connected-car",
+  "name": "Bluetooth connected → navigation",
+  "enabled": true,
+  "priority": 600,
+  "size": "2x2",
+  "conditions": [
+    { "type": "bt_connected", "mac": null }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "text_only",
+    "text": "In the car",
+    "text2": "Bluetooth connected",
+    "items": [
+      { "label": "Maps", "icon": "mdi:map-marker", "action": { "kind": "app", "package": "com.google.android.apps.maps" } }
+    ]
+  }
+}

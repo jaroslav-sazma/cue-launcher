@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "name": "Dryer — HA event with a payload",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "ha-payload-dryer-text", "name": "Dryer", "enabled": true, "priority": 860, "size": "2x2",
+      "conditions": [ { "type": "ha_event", "code": "dryer", "durationSec": 300 } ],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "Done in {ha:remaining} min",
+        "text2": "Program {ha:program} · {ha:temperature} °C",
+        "items": [ { "label": "Open the clock", "icon": null, "action": { "kind": "app", "package": "com.google.android.deskclock" } } ]
+      }
+    },
+    {
+      "schemaVersion": 1, "id": "ha-payload-dryer-icon", "name": "Dryer — icon from the payload", "enabled": true, "priority": 855, "size": "1x1",
+      "conditions": [ { "type": "ha_event", "code": "dryer", "durationSec": 300 } ],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [ { "label": "Dryer", "icon": null, "action": { "kind": "ha", "service": "script.dryer_ack" } } ]
+      }
+    }
+  ]
+}

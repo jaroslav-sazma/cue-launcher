@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "name": "Where I parked",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "p1-remember-parking", "name": "Navigation over → remember the place", "enabled": true, "priority": 900, "pinnedPosition": 0, "size": "1x1",
+      "match": "any",
+      "conditions": [
+        { "type": "notification_ended", "package": "com.google.android.apps.maps", "ongoing": true, "minLastedSec": 120, "durationSec": 1800 },
+        { "type": "bt_disconnected", "durationSec": 1800 }
+      ],
+      "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Save parking", "icon": "mdi:car-brake-parking", "action": { "kind": "system", "action": "remember_place" } } ] }
+    },
+    {
+      "schemaVersion": 1, "id": "p2-show-parking", "name": "Place remembered → where I parked", "enabled": true, "priority": 800, "pinnedPosition": 0, "size": "1x1",
+      "conditions": [ { "type": "place_saved", "durationSec": 259200 } ],
+      "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Where I parked", "icon": "mdi:car-back", "action": { "kind": "system", "action": "show_place" } } ] }
+    }
+  ]
+}

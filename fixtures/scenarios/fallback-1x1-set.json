@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "name": "Fallback 1×1 — folder overflow (5 chips for 4 slots)",
+  "scenarios": [
+    { "schemaVersion": 1, "id": "fb-1x1-dialer", "name": "Phone", "enabled": true, "priority": 50, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Phone", "icon": null, "action": { "kind": "app", "package": "com.google.android.dialer" } } ] } },
+    { "schemaVersion": 1, "id": "fb-1x1-messages", "name": "Messages", "enabled": true, "priority": 40, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Messages", "icon": null, "action": { "kind": "app", "package": "com.google.android.apps.messaging" } } ] } },
+    { "schemaVersion": 1, "id": "fb-1x1-torch", "name": "Flashlight", "enabled": true, "priority": 30, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Flashlight", "icon": "mdi:flashlight", "action": { "kind": "system", "action": "flashlight" } } ] } },
+    { "schemaVersion": 1, "id": "fb-1x1-camera", "name": "Camera", "enabled": true, "priority": 20, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Camera", "icon": null, "action": { "kind": "app", "package": "com.google.android.GoogleCamera" } } ] } },
+    { "schemaVersion": 1, "id": "fb-1x1-wifi", "name": "Wi-Fi panel", "enabled": true, "priority": 10, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Wi-Fi", "icon": "mdi:wifi", "action": { "kind": "system", "action": "panel_wifi" } } ] } }
+  ]
+}

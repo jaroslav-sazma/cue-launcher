@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "media-playing-youtube-music",
+  "name": "YouTube Music is playing → library",
+  "enabled": true,
+  "priority": 460,
+  "size": "1x1",
+  "conditions": [
+    { "type": "media_playing", "packages": ["com.google.android.apps.youtube.music"] }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Library", "icon": "mdi:music-box-multiple", "action": { "kind": "app", "package": "com.google.android.apps.youtube.music" } }
+    ]
+  }
+}

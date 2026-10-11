@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "fb-2x2-quick",
+  "name": "Quick actions (fallback 2×2, 4 icons)",
+  "enabled": true,
+  "priority": 10,
+  "size": "2x2",
+  "conditions": [],
+  "content": {
+    "kind": "template",
+    "layout": "four_icons",
+    "text": "Quick actions",
+    "text2": null,
+    "items": [
+      { "label": "Chrome", "icon": null, "action": { "kind": "app", "package": "com.android.chrome" } },
+      { "label": "Calendar", "icon": null, "action": { "kind": "app", "package": "com.google.android.calendar" } },
+      { "label": "Volume", "icon": "mdi:volume-high", "action": { "kind": "system", "action": "panel_volume" } },
+      { "label": "Search", "icon": "mdi:web", "action": { "kind": "activity", "package": "com.android.chrome", "component": "org.chromium.chrome.browser.searchwidget.SearchActivity" } }
+    ]
+  }
+}

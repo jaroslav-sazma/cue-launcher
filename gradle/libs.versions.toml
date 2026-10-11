@@ -1,0 +1,89 @@
+[versions]
+kotlin = "2.4.20"            # Metro 1.4.3 is built directly against this version.
+agp = "9.4.1"                # 9.5.0 is alpha only — do not take it.
+# The alpha BOM is used instead of pinning by hand: it holds material3 1.5.0-alpha28 together with
+# the whole Compose UI 1.13.0-alpha03 stack, so the stack is consistent by definition and cannot
+# end up mixing 1.12 with 1.13.
+composeBomAlpha = "2026.09.00"
+navigation3 = "1.2.0-rc01"   # RC, no longer preview
+metro = "1.4.3"
+room = "2.8.5"
+ktor = "3.5.2"
+ksp = "2.3.12"               # KSP versions its own way since 2.3.0, and 2.3.12 is built
+                             # against Kotlin 2.3.20. The pairing with 2.4.20 is verified:
+                             # Room codegen runs and SanityDao_Impl lands in the APK.
+coroutines = "1.11.0"
+serialization = "1.11.0"     # kotlinx-serialization-json; 1.12.0 is still RC
+datastore = "1.2.1"
+lifecycle = "2.11.0"
+junit5 = "6.1.3"             # JUnit 6 (org.junit:junit-bom) — Jupiter API and platform
+turbine = "1.2.1"
+detekt = "1.23.8"
+licensee = "1.14.1"
+screenshot = "0.0.1-alpha16"
+androidxActivity = "1.13.0"
+androidxBrowser = "1.9.0"
+androidxCore = "1.19.0"
+# Version-sensitive: under AGP 9 the androidx.baselineprofile Gradle plugin required the
+# android.newDsl=false switch, and only 1.5.0 works without it. Anything lower, 1.4.1 included,
+# does not run with AGP 9.4.1.
+benchmark = "1.5.0"
+uiautomator = "2.4.0"            # 2.5.0 does not exist yet
+androidxTestJunit = "1.3.0"      # androidx.test.ext:junit — JUnit4 runner for instrumentation
+profileinstaller = "1.4.1"       # installs the baseline profile on first start
+
+[libraries]
+# The BOM drives the version of every Compose artifact — none of them is pinned by hand.
+compose-bom-alpha = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "composeBomAlpha" }
+compose-material3 = { group = "androidx.compose.material3", name = "material3" }
+compose-ui = { group = "androidx.compose.ui", name = "ui" }
+compose-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling" }
+compose-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version.ref = "androidxActivity" }
+androidx-browser = { group = "androidx.browser", name = "browser", version.ref = "androidxBrowser" }
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "androidxCore" }
+navigation3-runtime = { group = "androidx.navigation3", name = "navigation3-runtime", version.ref = "navigation3" }
+navigation3-ui = { group = "androidx.navigation3", name = "navigation3-ui", version.ref = "navigation3" }
+room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
+ktor-client-websockets = { group = "io.ktor", name = "ktor-client-websockets", version.ref = "ktor" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "coroutines" }
+lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "lifecycle" }
+datastore = { group = "androidx.datastore", name = "datastore", version.ref = "datastore" }
+# Supplies @PreviewTest: the screenshot engine only picks up previews carrying that annotation.
+screenshot-validation-api = { group = "com.android.tools.screenshot", name = "screenshot-validation-api", version.ref = "screenshot" }
+junit5-bom = { group = "org.junit", name = "junit-bom", version.ref = "junit5" }          # the BOM drives the versions below
+junit5-api = { group = "org.junit.jupiter", name = "junit-jupiter-api" }
+junit5-engine = { group = "org.junit.jupiter", name = "junit-jupiter-engine" }
+junit5-params = { group = "org.junit.jupiter", name = "junit-jupiter-params" }
+junit5-platform-launcher = { group = "org.junit.platform", name = "junit-platform-launcher" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
+# Classpath dependencies that raise KGP/KSP above the version built into AGP 9, which ships
+# built-in Kotlin with KGP 2.2.10.
+kotlin-gradle-plugin = { group = "org.jetbrains.kotlin", name = "kotlin-gradle-plugin", version.ref = "kotlin" }
+ksp-gradle-plugin = { group = "com.google.devtools.ksp", name = "symbol-processing-gradle-plugin", version.ref = "ksp" }
+# For the :baselineprofile module only — none of this reaches :app.
+androidx-benchmark-macro-junit4 = { group = "androidx.benchmark", name = "benchmark-macro-junit4", version.ref = "benchmark" }
+androidx-uiautomator = { group = "androidx.test.uiautomator", name = "uiautomator", version.ref = "uiautomator" }
+androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestJunit" }
+# The only one of these that does reach :app: the profile installer used on first start.
+androidx-profileinstaller = { group = "androidx.profileinstaller", name = "profileinstaller", version.ref = "profileinstaller" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+android-test = { id = "com.android.test", version.ref = "agp" }
+baselineprofile = { id = "androidx.baselineprofile", version.ref = "benchmark" }
+# org.jetbrains.kotlin.android is deliberately unused since AGP 9.0: AGP compiles Kotlin itself
+# via android.builtInKotlin. KGP is raised through a classpath dependency in the root build.
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+metro = { id = "dev.zacsweers.metro", version.ref = "metro" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
+detekt = { id = "io.gitlab.arturbosch.detekt", version.ref = "detekt" }
+licensee = { id = "app.cash.licensee", version.ref = "licensee" }
+android-screenshot = { id = "com.android.compose.screenshot", version.ref = "screenshot" }

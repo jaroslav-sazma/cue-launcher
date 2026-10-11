@@ -1,0 +1,162 @@
+blueprint:
+  name: "Cue: — událost do launcheru"
+  description: >-
+    Pošle launcheru **Cue:** událost s párovacím kódem přes companion aplikaci
+    (`command_broadcast_intent`), takže událost nepotřebuje vlastní spojení launcheru
+    s Home Assistantem a funguje doma i na mobilních datech.
+
+
+    V launcheru vytvoř scénář s podmínkou *Home Assistant — událost* a **stejným
+    párovacím kódem**. Dlaždice zůstane vidět tak dlouho, jak scénář určuje; druhá
+    automatizace z tohoto blueprintu s volbou *Konec* ji schová dřív.
+
+
+    **Párovací klíč** je vyplněný, když blueprint nahraje launcher (*Nastavení → Home
+    Assistant → Pro události*), takže ho nech, jak je. Bez něj launcher událost zahodí —
+    tím brání ostatním aplikacím v telefonu, aby si dlaždici vymyslely.
+
+
+    Nepovinná data se do šablony dlaždice dosadí jako `{ha:teplota}`. Vyplň je jako
+    dvojice název/hodnota — každá hodnota se cestou URL-kóduje, takže čárka, dvojtečka
+    ani mezera v ní nevadí.
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    trigger_source:
+      name: Spouštěč
+      description: Cokoli, co má událost vyvolat (zazvonění, stav entity, dokončené praní…).
+      selector:
+        trigger: {}
+    condition_source:
+      name: Podmínky
+      description: Nepovinné — kdy se událost opravdu pošle (třeba jen když jsi doma).
+      default: []
+      selector:
+        condition: {}
+    notify_device:
+      name: Telefon
+      description: >-
+        Telefon s launcherem. Událost doručí jeho companion aplikace — název notify služby
+        se odvodí od zařízení, takže není co dohledávat.
+      selector:
+        device:
+          integration: mobile_app
+          multiple: false
+    pairing_secret:
+      name: Párovací klíč
+      description: >-
+        Vyplní ho launcher, když tenhle blueprint nahraje — nech ho, jak je, a po změně
+        klíče blueprint nahraj znovu z **Nastavení → Home Assistant → Pro události**.
+        Přijímač musí být otevřený ostatním aplikacím v telefonu, takže událost bez
+        správného klíče se zahodí — to brání cizí aplikaci, aby ti na plochu dala
+        vymyšlenou dlaždici.
+      selector:
+        text:
+          type: password
+    event_code:
+      name: Párovací kód
+      description: >-
+        Musí se shodovat s kódem v podmínce *Home Assistant — událost* v launcheru (na
+        velikosti písmen nezáleží). **Bez čárek a dvojteček** — podle nich companion
+        aplikace data rozděluje.
+      selector:
+        text: {}
+    options:
+      name: Nepovinné
+      icon: mdi:tune
+      collapsed: true
+      input:
+        event_op:
+          name: Co událost udělá
+          description: >-
+            *Konec* pošle `op:end` — launcher dlaždici s tímto kódem hned schová, i když
+            její odpočet ještě běží.
+          default: start
+          selector:
+            select:
+              mode: list
+              options:
+                - label: Začátek — dlaždice se objeví
+                  value: start
+                - label: Konec — dlaždice zmizí
+                  value: end
+        event_icon:
+          name: Ikona dlaždice
+          description: >-
+            Nepovinný název MDI ikony, stejně jako u entity v HA — funguje `doorbell`
+            i `mdi:doorbell`, předpona se odstraní sama. Přebije ikonu odvozenou ze
+            scénáře.
+          default: ""
+          selector:
+            text: {}
+        extra_payload:
+          name: Data pro šablonu
+          description: >-
+            Hodnoty pro šablonu dlaždice jako dvojice název/hodnota: `zbyva` → `12` se
+            v šabloně objeví jako `{ha:zbyva}`. V hodnotě fungují šablony Home Assistantu
+            (`{{ states('sensor.x') }}`).
+
+
+            Vyplň je takhle — dvě hodnoty, druhá se přečte ze senzoru ve chvíli, kdy se
+            událost posílá:
+
+                program: bavlna
+                zbyva: "{{ states('sensor.washer_remaining_minutes') }}"
+
+            Text dlaždice `Hotovo za {ha:zbyva} min` pak ukáže aktuální minuty. Šablona musí
+            zůstat v uvozovkách, jinak YAML její složené závorky přečte jako vlastní mapu.
+            Názvy `secret`, `code`, `op`, `icon` a `v` patří samotné události.
+
+
+            Každá hodnota se před předáním companion aplikaci URL-kóduje a v telefonu
+            dekóduje, takže dvojtečka, čárka ani mezera v hodnotě nevadí. **Název** nesmí
+            obsahovat čárku ani dvojtečku — podle nich se data rozdělují.
+          default: {}
+          selector:
+            object: {}
+        notify_service_override:
+          name: Notify služba
+          description: >-
+            Nech prázdné a použije se služba telefonu výše. Vyplň ji, když companion služba
+            telefonu není `notify.mobile_app_` plus název zařízení — například
+            `notify.mobile_app_pixel_10_pro`.
+          default: ""
+          selector:
+            text: {}
+
+variables:
+  pairing_secret: !input pairing_secret
+  event_code: !input event_code
+  event_op: !input event_op
+  event_icon: !input event_icon
+  extra_payload: !input extra_payload
+  notify_device: !input notify_device
+  notify_service_override: !input notify_service_override
+  notify_service: >-
+    {{ notify_service_override | trim
+       if (notify_service_override | trim)
+       else 'notify.mobile_app_' ~ (device_attr(notify_device, 'name') | slugify) }}
+
+triggers: !input trigger_source
+
+conditions: !input condition_source
+
+actions:
+  - action: "{{ notify_service }}"
+    data:
+      message: command_broadcast_intent
+      data:
+        intent_package_name: app.cue.launcher
+        intent_action: app.cue.launcher.HA_EVENT
+        # Assembled through join(',') so that no whitespace from a wrapped line reaches extras.
+        # The mdi: prefix is stripped on purpose: the companion app splits extras on ":" too, so
+        # icon:mdi:doorbell would become the value "mdi" with the type "doorbell".
+        # Payload values ride as "name:value:urlencoded" — the companion app URL-decodes them, which
+        # is what makes a value containing a colon, a comma or a space safe to send. The whole thing
+        # stays on one line on purpose: a folded line would put spaces inside the extras.
+        intent_extras: >-
+          {% set ns = namespace(parts = ['secret:' ~ (pairing_secret | trim), 'v:1', 'code:' ~ (event_code | trim)] + (['op:end'] if event_op == 'end' else []) + (['icon:' ~ (event_icon | trim | replace('mdi:', ''))] if (event_icon | trim) else [])) %}{% for name, value in (extra_payload | default({}, true)).items() %}{% set ns.parts = ns.parts + [(name | trim) ~ ':' ~ (value | string | urlencode) ~ ':urlencoded'] %}{% endfor %}{{ ns.parts | join(',') }}
+
+mode: queued
+max: 10

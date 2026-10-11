@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "ringer-silent-normal",
+  "name": "Silent → turn the sound on",
+  "enabled": true,
+  "priority": 400,
+  "size": "1x1",
+  "conditions": [
+    { "type": "ringer_mode", "mode": "silent" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Sound on", "icon": "mdi:volume-high", "action": { "kind": "system", "action": "ringer_normal" } }
+    ]
+  }
+}

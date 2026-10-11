@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "ha-gate-button",
+  "name": "Doorbell → gate button",
+  "enabled": true,
+  "priority": 900,
+  "pinnedPosition": 0,
+  "size": "1x1",
+  "conditions": [
+    { "type": "ha_event", "code": "doorbell", "durationSec": 60 }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Open the gate", "icon": "mdi:gate", "action": { "kind": "ha", "service": "cover.open_cover", "entity": "{{PLACEHOLDER:ha_gate}}", "data": {} } }
+    ]
+  }
+}

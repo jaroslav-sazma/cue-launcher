@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "charging-desk",
+  "name": "Charging → alarm",
+  "enabled": true,
+  "priority": 400,
+  "size": "1x1",
+  "conditions": [
+    { "type": "charging" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Alarm", "icon": "mdi:alarm", "action": { "kind": "app", "package": "com.google.android.deskclock" } }
+    ]
+  }
+}

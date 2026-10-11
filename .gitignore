@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Android Studio / IntelliJ
+.idea/
+*.iml
+local.properties
+captures/
+.navigation/
+
+# Kotlin
+.kotlin/
+
+# macOS
+.DS_Store
+
+# Signing material and secrets — never commit
+*.jks
+*.keystore
+keystore.properties
+secrets.properties
+
+# Baseline profiles generated during the build (mergeIntoMain). The committed profile lives in
+# app/src/release/generated/baselineProfiles/, and that path is deliberately not ignored.
+app/src/main/generated/

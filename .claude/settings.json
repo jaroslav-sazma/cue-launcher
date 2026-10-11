@@ -1,0 +1,58 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(adb -e *)",
+      "Bash(adb devices *)",
+      "Bash(emulator *)",
+      "Edit(build/shots/**)",
+      "Read(/tmp/**)",
+      "Read(/private/tmp/**)"
+    ],
+    "ask": [
+      "Bash(adb * pull *)",
+      "Bash(adb * push *)",
+      "Bash(adb * forward *)",
+      "Bash(adb * reverse *)"
+    ],
+    "deny": [
+      "Read(./keystore.properties)"
+    ],
+    "additionalDirectories": [
+      "/tmp"
+    ]
+  },
+  "sandbox": {
+    "excludedCommands": ["./gradlew *", "adb *", "emulator *"],
+    "filesystem": {
+      "denyRead": ["keystore.properties"],
+      "denyWrite": [
+        "app/src",
+        "app/build.gradle.kts",
+        "baselineprofile/src",
+        "baselineprofile/build.gradle.kts",
+        "build.gradle.kts",
+        "settings.gradle.kts",
+        "gradle",
+        "gradle.properties",
+        "gradlew",
+        "local.properties",
+        ".gradle",
+        "config"
+      ]
+    }
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "if": "Bash(./gradlew *)",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/hooks/gradle-allow.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

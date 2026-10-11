@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "name": "Ride from a notification",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "notification-ride-progress", "name": "Ride", "enabled": true, "priority": 890, "size": "2x2",
+      "conditions": [ { "type": "notification", "package": "ee.mtakso.client", "durationSec": 1800 } ],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "{notif:title}",
+        "text2": "{notif:text}",
+        "items": [
+          { "label": "Open the ride", "icon": "mdi:car", "action": { "kind": "app", "package": "ee.mtakso.client" } }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1, "id": "notification-ride-actions", "name": "Ride home", "enabled": true, "priority": 870, "size": "2x2",
+      "conditions": [ { "type": "notification", "package": "ee.mtakso.client", "contains": "driver", "durationSec": 1800 } ],
+      "content": {
+        "kind": "template",
+        "layout": "four_icons",
+        "text": null,
+        "text2": null,
+        "items": [
+          { "label": "Ride", "icon": "mdi:car", "action": { "kind": "app", "package": "ee.mtakso.client" } },
+          { "label": "Navigate home", "icon": "mdi:home-map-marker", "action": { "kind": "deeplink", "uri": "google.navigation:q=Home" } },
+          { "label": "Mute", "icon": "mdi:volume-off", "action": [ { "kind": "system", "action": "ringer_silent" }, { "kind": "system", "action": "dnd_on" } ] },
+          { "label": "Flashlight", "icon": "mdi:flashlight", "action": { "kind": "system", "action": "flashlight" } }
+        ]
+      }
+    }
+  ]
+}

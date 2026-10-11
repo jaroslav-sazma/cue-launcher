@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "alarm-morning",
+  "name": "Good morning after the alarm",
+  "enabled": true,
+  "priority": 800,
+  "size": "1x1",
+  "conditions": [
+    { "type": "alarm", "durationSec": 3600 }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Weather", "icon": "mdi:weather-partly-cloudy", "action": { "kind": "deeplink", "uri": "https://www.google.com/search?q=weather" } }
+    ]
+  }
+}

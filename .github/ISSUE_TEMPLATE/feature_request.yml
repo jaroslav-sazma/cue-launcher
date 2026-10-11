@@ -1,0 +1,26 @@
+name: Feature request
+description: "A trigger, an action, a tile or anything else Cue: could do."
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Check the README's Roadmap first — the idea may already be planned. Cue: has no analytics
+        and talks to no server of its own, and a request that needs either is unlikely to fit.
+  - type: textarea
+    id: situation
+    attributes:
+      label: The situation
+      description: When would the tile appear, and what would you do with it?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: "What Cue: could do"
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What you do today instead

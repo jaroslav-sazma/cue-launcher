@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "time-window-evening",
+  "name": "Evening at home 18–23",
+  "enabled": true,
+  "priority": 400,
+  "size": "2x2",
+  "conditions": [
+    { "type": "time_window", "from": "18:00", "to": "23:00", "days": [1, 2, 3, 4, 5, 6, 7] }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "text_only",
+    "text": "Evening at home",
+    "text2": "18:00–23:00",
+    "items": [
+      { "label": "Settings", "icon": "mdi:cog", "action": { "kind": "system", "action": "open_settings" } }
+    ]
+  }
+}

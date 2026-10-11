@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "name": "Pickup code from a notification",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "notification-extract-code", "name": "Parcel code", "enabled": true, "priority": 890, "size": "2x2",
+      "conditions": [
+        {
+          "type": "notification",
+          "package": "cz.zasilkovna.app",
+          "contains": "pickup code",
+          "extract": [
+            { "name": "code", "after": "code", "kind": "number" },
+            { "name": "place", "after": "pickup point", "kind": "line" }
+          ],
+          "durationSec": 900
+        }
+      ],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "{notif:code}",
+        "text2": "{notif:place}",
+        "items": [
+          { "label": "Open Packeta", "icon": "mdi:qrcode", "action": { "kind": "app", "package": "cz.zasilkovna.app" } }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1, "id": "notification-extract-amount", "name": "Card payment", "enabled": true, "priority": 870, "size": "1x1",
+      "conditions": [
+        {
+          "type": "notification",
+          "package": "cz.csob.smartbanking",
+          "extract": [
+            { "name": "amount", "kind": "amount" }
+          ],
+          "durationSec": 300
+        }
+      ],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [
+          { "label": "{notif:amount}", "icon": "mdi:credit-card-outline", "action": { "kind": "app", "package": "cz.csob.smartbanking" } }
+        ]
+      }
+    }
+  ]
+}

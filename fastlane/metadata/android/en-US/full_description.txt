@@ -1,0 +1,19 @@
+Cue: is a launcher that shows what you need right now, and you are the one who decides what "right now" means. Every tile at the top of the home screen is a small scenario of your own: a few conditions, and the tile that should appear while they hold. A meeting in your calendar starts and a button to silence the phone is there; once the meeting ends, a button to turn the sound back on takes its place. You come home and connect to your Wi-Fi, and a button to unlock the front door appears, because Cue: can optionally talk to your own Home Assistant. Nothing is guessed or learned behind your back: if a tile is on the screen, one of your rules put it there.
+
+THE HOME SCREEN
+The home screen has three parts. At the top is the dynamic area your scenarios fill. Its tiles come and go as your day moves along, and a tile can be a button, a piece of text taken from a notification (a pickup code, an amount, a time), the launcher's clock, calendar or media player, or any app widget. Below it is a calm, static zone for the apps and widgets you always want in the same place; the launcher never rearranges them. At the bottom sits the dock with your everyday apps. A swipe up from anywhere opens the app drawer with search.
+
+THE WIDGET PAGE
+Left of the home screen there is a page just for widgets: a scrollable column where you stack as many as you like, in the order you like, with a dock of its own at the bottom. The idea is to keep the home screen light and give the organised side of your day a place of its own: mail, calendar, tasks, notes, whatever helps you plan and get work done. Its dock is a good home for the apps that belong with them, such as more work tools, or the apps you read your news and feeds in.
+
+MAKE IT YOURS
+In the settings you can shape how the launcher looks and behaves. Icons can stay as they are, come from an icon pack, or be drawn as tinted monochrome icons for a calmer screen. If you prefer solid surfaces to the frosted glass, switch to the opaque design. And a swipe from right to left can do whatever you pick, for example open the Home Assistant app or any other app you reach for often.
+
+Your setup, scenarios included, exports to a single file, so you can back it up or share a scenario with someone else.
+
+PRIVATE BY DESIGN
+No account, no ads, no telemetry. Everything happens on your phone; the only network traffic goes to your own Home Assistant, if you set one up. Permissions are asked for only when you set up something that needs them, and saying no turns off just that one thing.
+
+Requires Android 17 or newer, phones only. Free software under GPL-3.0-or-later.
+
+Cue: is not affiliated with Home Assistant, Nabu Casa or Google.

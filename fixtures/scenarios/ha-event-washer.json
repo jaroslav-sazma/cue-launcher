@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "ha-event-washer",
+  "name": "HA event “washer” → laundry done",
+  "enabled": true,
+  "priority": 850,
+  "size": "1x1",
+  "conditions": [
+    { "type": "ha_event", "code": "washer", "durationSec": 120 }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Laundry done", "icon": "mdi:washing-machine", "action": { "kind": "app", "package": "com.google.android.deskclock" } }
+    ]
+  }
+}

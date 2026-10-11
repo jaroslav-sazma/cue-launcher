@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "ha-state-tv",
+  "name": "TV playing → controls",
+  "enabled": true,
+  "priority": 550,
+  "size": "2x2",
+  "conditions": [
+    { "type": "ha_state", "entity": "media_player.living_room_tv", "states": ["playing", "paused"] }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "text_two_icons",
+    "text": "Living room TV",
+    "text2": null,
+    "items": [
+      { "label": "Play/pause", "icon": "mdi:play-pause", "action": { "kind": "ha", "service": "media_player.media_play_pause", "entity": "media_player.living_room_tv", "data": {} } },
+      { "label": "Remote", "action": { "kind": "system", "action": "tv_remote" } }
+    ]
+  }
+}

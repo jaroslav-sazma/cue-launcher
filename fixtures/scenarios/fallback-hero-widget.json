@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "id": "fb-hero-widget",
+  "name": "Hero fallback — widget (picked after import)",
+  "enabled": true,
+  "priority": 10,
+  "size": "4x2",
+  "conditions": [],
+  "content": {
+    "kind": "app_widget",
+    "package": "{{PLACEHOLDER:widget_hero_pkg}}",
+    "provider": "{{PLACEHOLDER:widget_hero_provider}}",
+    "appWidgetId": "{{PLACEHOLDER:widget_hero}}"
+  }
+}

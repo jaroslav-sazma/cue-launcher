@@ -1,0 +1,1 @@
+Initial release: rule-driven tiles, trigger conditions, template and widget tiles, and the Home Assistant integration.

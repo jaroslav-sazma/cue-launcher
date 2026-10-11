@@ -1,0 +1,113 @@
+name: CI
+
+# Other branches are checked through their pull request, or by hand with workflow_dispatch; a push
+# trigger on every branch would run a pull request's commits twice.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A newer push supersedes a running check of the same pull request, but every commit on main keeps
+# its own result.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+# Read-only by default; the one job that writes to the repository's dependency graph asks for it
+# itself. No checkout keeps the token in .git/config: Gradle and its plugins run afterwards, and
+# nothing in the build needs to push.
+permissions:
+  contents: read
+
+# Every action is pinned to a commit, not a tag: a tag can be moved to other code, a commit cannot.
+# Renovate keeps the pins (and the version comments next to them) current.
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          # android-37.1: Compose 1.13.0-alphaXX, and thus material3 1.5.0-alpha, needs minor API 37.1.
+          packages: 'platforms;android-37.1 build-tools;37.0.0'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+
+      # The release build is part of every run: R8 and resource shrinking only happen there, and a
+      # missing keep rule shows up as a broken release, never as a broken debug build. Without
+      # keystore.properties it comes out unsigned, which is all CI needs. The merged manifest and
+      # license checks are named on their own rather than through `check`, which would also pull in
+      # the screenshot tests.
+      - name: Build + lint + tests + detekt + manifest and license checks
+        run: ./gradlew assembleDebug assembleRelease lintRelease test detekt verifyDebugMergedManifest licensee --stacktrace
+
+      # Screenshot tests render through layoutlib and image parity between macOS (local) and Linux
+      # (CI) is not verified yet, so this step does not block the build. Drop continue-on-error once
+      # it does.
+      - name: Screenshot tests (non-blocking for now)
+        continue-on-error: true
+        run: ./gradlew validateDebugScreenshotTest --stacktrace
+
+      - name: Upload debug APK
+        if: success()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Upload reports on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: reports
+          path: |
+            app/build/reports/**
+            app/build/test-results/**
+          if-no-files-found: ignore
+
+  # Sends the resolved Gradle dependency graph to GitHub, which is what lets Dependabot alerts see
+  # vulnerable libraries in a Gradle project at all. Only for the default branch and only the
+  # release runtime of the app: alerts are about what ships, not about test or build tooling.
+  dependencies:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3.2.2
+        with:
+          packages: 'platforms;android-37.1 build-tools;37.0.0'
+
+      - name: Submit the dependency graph
+        uses: gradle/actions/dependency-submission@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        with:
+          dependency-graph-include-projects: '^:app$'
+          dependency-graph-include-configurations: '^releaseRuntimeClasspath$'

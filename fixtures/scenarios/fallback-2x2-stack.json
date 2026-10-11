@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "name": "Fallback 2×2 — overflow stack (4 contents for 2 slots)",
+  "scenarios": [
+    { "schemaVersion": 1, "id": "fb-2x2-stack-a", "name": "Stack A", "enabled": true, "priority": 9, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "text_only", "text": "Stack A", "text2": "Swipe up to switch to B", "items": [ { "label": "Calendar", "icon": null, "action": { "kind": "app", "package": "com.google.android.calendar" } } ] } },
+    { "schemaVersion": 1, "id": "fb-2x2-stack-b", "name": "Stack B", "enabled": true, "priority": 8, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "text_only", "text": "Stack B", "text2": "Second content in the stack", "items": [ { "label": "Clock", "icon": null, "action": { "kind": "app", "package": "com.google.android.deskclock" } } ] } },
+    { "schemaVersion": 1, "id": "fb-2x2-stack-c", "name": "Stack C", "enabled": true, "priority": 7, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "text_two_icons", "text": "Stack C", "text2": "Third content — custom action icons", "items": [ { "label": "Chrome", "icon": null, "action": { "kind": "app", "package": "com.android.chrome" } }, { "label": "Volume", "icon": "mdi:volume-high", "action": { "kind": "system", "action": "panel_volume" } } ] } },
+    { "schemaVersion": 1, "id": "fb-2x2-stack-d", "name": "Stack D", "enabled": true, "priority": 6, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "text_only", "text": "Stack D", "text2": "Last one — the stack goes no deeper", "items": [ { "label": "Contacts", "icon": null, "action": { "kind": "app", "package": "com.google.android.contacts" } } ] } }
+  ]
+}

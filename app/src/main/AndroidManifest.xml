@@ -1,0 +1,276 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Every permission below is declared here but requested just-in-time, never up front. -->
+
+    <!-- Phones only. Play filters the launcher out of every device without telephony hardware —
+         Wi-Fi-only tablets, TVs, Chromebooks — while Wear, TV and Automotive need an opt-in this
+         manifest never gives. A cellular tablet or an unfolded foldable still passes the filter and
+         has to be excluded in the Play Console device catalog instead. -->
+    <uses-feature
+        android:name="android.hardware.telephony"
+        android:required="true" />
+
+    <!-- BLUETOOTH_SCAN is deliberately absent: the launcher never scans, it picks from paired devices. -->
+    <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+
+    <uses-feature
+        android:name="android.hardware.bluetooth"
+        android:required="false" />
+
+    <!-- Not a runtime permission but a special access granted only in system settings. Without the
+         declaration the launcher does not even appear in that settings list. -->
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Android treats the Wi-Fi network name as location data and redacts it in transportInfo
+         without precise location. COARSE is declared alongside FINE because since Android 12 the
+         system drops a FINE request that does not ask for COARSE at the same time. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
+    <!-- required="false" is load-bearing: location permissions otherwise imply location hardware as
+         required, and Play would hide the launcher from devices without GPS. -->
+    <uses-feature
+        android:name="android.hardware.location"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="false" />
+    <uses-feature
+        android:name="android.hardware.location.network"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
+    <!-- The only network traffic the launcher makes: calls to the user's own HA instance. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Since Android 17 INTERNET no longer covers the local network. Requested just in time, and
+         only for a Home Assistant that lives on the home network: an instance the user picked in the
+         system picker is reached without it, and a Nabu Casa address is not local at all. -->
+    <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
+
+    <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
+
+    <!-- The confirmation prompt on a Home Assistant action the user marked as sensitive. -->
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" />
+
+    <!-- Nothing may start the launcher at boot; this keeps any library from declaring otherwise.
+         BootManifestTest holds it in place. -->
+    <uses-permission
+        android:name="android.permission.RECEIVE_BOOT_COMPLETED"
+        tools:node="remove" />
+
+    <!-- Without these queries LauncherApps.getActivityList() returns only a handful of system apps;
+         the HOME role does not exempt the launcher from package visibility. Declared narrowly on
+         purpose — QUERY_ALL_PACKAGES is sensitive and is not needed. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
+        <!-- Without this, AppWidgetManager reports widgets of visible packages only, so
+             getAppWidgetInfo() can return null for an already bound widget and the cleanup would
+             judge it dead. -->
+        <intent>
+            <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+        </intent>
+        <!-- Icon packs announce themselves through these community intents and cannot be detected
+             any other way. Must stay in sync with IconPackRepository.PACK_INTENTS. -->
+        <intent>
+            <action android:name="org.adw.launcher.THEMES" />
+        </intent>
+        <intent>
+            <action android:name="org.adw.launcher.icons.ACTION_PICK_ICON" />
+        </intent>
+        <intent>
+            <action android:name="com.novalauncher.THEME" />
+        </intent>
+        <intent>
+            <action android:name="com.gau.go.launcherex.theme" />
+        </intent>
+        <intent>
+            <action android:name="app.lawnchair.icons.THEMED_ICON" />
+        </intent>
+        <!-- Without this single package the "Ask AI" drawer row would not see Gemini and every tap
+             would end in the system chooser. -->
+        <package android:name="com.google.android.apps.bard" />
+        <!-- The tv_remote action is offered only while this resolves; Google TV's launcher entry
+             makes the package visible today, this keeps it visible should that entry go. Must stay
+             in sync with TV_REMOTE_ACTION. -->
+        <intent>
+            <action android:name="com.google.android.apps.googletv.ACTION_VIRTUAL_REMOTE" />
+        </intent>
+        <!-- The apps that can hold the assistant role: an AI chat scenario goes to the holder, and
+             without these it could not tell whether the holder takes a shared file. -->
+        <intent>
+            <action android:name="android.intent.action.ASSIST" />
+        </intent>
+        <intent>
+            <action android:name="android.service.voice.VoiceInteractionService" />
+        </intent>
+    </queries>
+
+    <!-- Cleartext, certificate transparency and what holds the boundary instead of a domain list are
+         all decided in @xml/network_security_config.
+         allowBackup="false" alone does not stop a device-to-device transfer for an app targeting
+         Android 12+; only @xml/data_extraction_rules keeps cue.db and settings.json on this phone. -->
+    <application
+        android:name=".CueApplication"
+        android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
+        android:networkSecurityConfig="@xml/network_security_config"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Cue">
+
+        <!-- adjustResize is required by the Intent Drawer field: only with it do IME insets reach
+             composition, and the drawer bar is offset above the keyboard from them. -->
+        <activity
+            android:name=".MainActivity"
+            android:clearTaskOnLaunch="true"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="portrait"
+            android:stateNotNeeded="true"
+            android:taskAffinity=""
+            android:theme="@style/Theme.Cue.Wallpaper"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <!-- LAUNCHER is here so Cue: can be opened from another launcher while it does not
+                     hold the HOME role yet. Without its own drawer icon there would be no way back
+                     from a foreign home screen after choosing "just try it out". The icon always
+                     opens the home screen; only Cue:'s own drawer, while Cue: is the default home,
+                     opens the settings from it instead (opensLauncherSettings). -->
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+
+            <!-- Narrow on application/json on purpose: with */* Cue: would offer itself for sharing
+                 anything. The sender grants read access together with the intent, so no storage
+                 permission is needed. Content URIs only and no BROWSABLE: a web page must not be able
+                 to hand the launcher a file. An explicit intent skips these filters, so
+                 scenarioDocumentOf() enforces the same again. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:scheme="content" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="application/json" />
+            </intent-filter>
+        </activity>
+
+        <!-- EmojiCompat is deliberately not initialized at startup: the initializer cost 5–17 ms on
+             the main thread in bindApplication and its thread competed with the home screen start.
+             On API >= 36 the system carries a current emoji font, so emoji still render — only
+             downloadable EmojiCompat updates are given up.
+             OkHttp's initializer would load its TLS platform in every process, receiver wakes and
+             installs without Home Assistant included; HaHttp hands it the context before the first
+             client instead. -->
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="${applicationId}.androidx-startup"
+            android:exported="false"
+            tools:node="merge">
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                tools:node="remove" />
+            <meta-data
+                android:name="okhttp3.internal.platform.PlatformInitializer"
+                tools:node="remove" />
+        </provider>
+
+        <!-- Hands the AI chat brief, a single file in the cache, to the chat app it is sent to. Not
+             exported: only a send's one-off read grant opens it. -->
+        <provider
+            android:name=".system.aichat.AiChatFileProvider"
+            android:authorities="${applicationId}.aichat"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/ai_chat_paths" />
+        </provider>
+
+        <!-- Only event triggers need a manifest receiver, because they must wake the process while
+             the home screen is not visible. State conditions are measured when it returns. -->
+
+        <!-- Exported on purpose: ACL_DISCONNECTED comes from the Bluetooth module, which runs as its
+             own uid (1002), not as the system, and the system never hands another uid's broadcast to
+             an unexported receiver. Safe, because ACL_DISCONNECTED is a protected broadcast that no
+             app can send. -->
+        <receiver
+            android:name=".system.BluetoothDisconnectReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.bluetooth.device.action.ACL_DISCONNECTED" />
+            </intent-filter>
+        </receiver>
+
+        <receiver
+            android:name=".system.NextAlarmReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.NEXT_ALARM_CLOCK_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- The system sends this one only to the package that owns the mode, so it needs no export;
+             it keeps the launcher's Do Not Disturb mode from outliving its switching off. -->
+        <receiver
+            android:name=".system.ZenModeStatusReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.app.action.AUTOMATIC_ZEN_RULE_STATUS_CHANGED" />
+            </intent-filter>
+        </receiver>
+
+        <!-- exported="true" is required: the broadcast comes from the HA companion app, a foreign
+             process, which would not reach an unexported receiver even with intent.package set.
+             The action must match both ha/launcher_event*.yaml blueprints and HA_EVENT_ACTION; a
+             unit test enforces that. -->
+        <receiver
+            android:name=".system.HaEventReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="app.cue.launcher.HA_EVENT" />
+            </intent-filter>
+        </receiver>
+
+        <!-- exported="true" plus permission: system_server binds to this service, so it must be
+             exported, and BIND_NOTIFICATION_LISTENER_SERVICE is signature-level, which nobody but
+             the system can hold. Dropping the permission would let anyone bind.
+             default_autobind=false keeps the system from binding it on its own, at boot or when
+             access is granted, while nothing may need it: a bound listener wakes the process for
+             every post of every app. NotificationListenerLink binds it as long as a scenario or the
+             badges need the posts, the home screen in the background included. -->
+        <service
+            android:name=".system.notifications.CueNotificationListener"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.notification.default_autobind_listenerservice"
+                android:value="false" />
+        </service>
+    </application>
+
+</manifest>

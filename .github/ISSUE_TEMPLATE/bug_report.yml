@@ -1,0 +1,66 @@
+name: Bug report
+description: "Something in Cue: does not work the way the README says it should."
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **A security problem does not belong here.** Report it privately as described in
+        SECURITY.md — a public issue shows it to everyone before a fix exists.
+
+        Opened from the app — long-press the home screen → Launcher settings → Scenarios → ⋮ →
+        About → *Report a bug* — the form comes with the device, the Android build and the Cue:
+        version already filled in.
+  - type: input
+    id: device
+    attributes:
+      label: Device
+      placeholder: Pixel 10 Pro
+    validations:
+      required: true
+  - type: input
+    id: android
+    attributes:
+      label: Android build
+      description: Settings → About phone → Android version → Build number.
+      placeholder: Android 17, BP4A.261005.001
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: "Cue: version"
+      description: Long-press the home screen → Launcher settings → Scenarios → ⋮ → About, where *Report a bug* fills this in for you. Say where you installed it from.
+      placeholder: 1.0.0 (1) from GitHub
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. …
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs, scenario or screenshots
+      description: |
+        For a crash, connect the phone to a computer while the launcher runs and attach the output
+        of `adb logcat -d --pid=$(adb shell pidof app.cue.launcher)`. If a scenario is involved,
+        export it (Settings → Backups) and check it for anything private before attaching it.
+      render: text

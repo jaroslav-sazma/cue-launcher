@@ -1,0 +1,21 @@
+{
+  "_comment": "Curated catalog of deep links. Data, not code — it can be extended without touching the app. A recipe is only offered when the target app on that particular phone actually handles it, so a nonsensical entry cannot produce a dead row.",
+  "schemaVersion": 1,
+  "recipes": [
+    {
+      "package": "com.spotify.music",
+      "uri": "spotify:search",
+      "label": "Search"
+    },
+    {
+      "package": "com.google.android.youtube",
+      "uri": "https://www.youtube.com/feed/subscriptions",
+      "label": "Subscriptions"
+    },
+    {
+      "package": "com.google.android.apps.maps",
+      "uri": "https://www.google.com/maps/@?api=1&map_action=map",
+      "label": "Map"
+    }
+  ]
+}

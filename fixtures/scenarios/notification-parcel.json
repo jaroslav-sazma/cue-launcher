@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "name": "Notification from Packeta",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "notification-parcel-text", "name": "Parcel", "enabled": true, "priority": 880, "size": "2x2",
+      "conditions": [ { "type": "notification", "package": "cz.zasilkovna.app", "durationSec": 900 } ],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "{notif:title}",
+        "text2": "{notif:text}",
+        "items": [
+          { "label": "Open Packeta", "icon": "mdi:package-variant-closed", "action": { "kind": "app", "package": "cz.zasilkovna.app" } }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1, "id": "notification-parcel-code", "name": "Pickup code", "enabled": true, "priority": 885, "size": "1x1",
+      "conditions": [ { "type": "notification", "package": "cz.zasilkovna.app", "contains": "pickup code", "durationSec": 900 } ],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [
+          { "label": "{notif:text}", "icon": "mdi:qrcode", "action": { "kind": "app", "package": "cz.zasilkovna.app" } }
+        ]
+      }
+    }
+  ]
+}

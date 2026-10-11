@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "calendar-event-meeting",
+  "name": "Meeting in progress → calendar",
+  "enabled": true,
+  "priority": 400,
+  "size": "1x1",
+  "conditions": [
+    { "type": "calendar_event" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Meeting", "icon": "mdi:calendar-clock", "action": { "kind": "app", "package": "com.google.android.calendar" } }
+    ]
+  }
+}

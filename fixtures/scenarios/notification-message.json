@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "name": "Message with a reply",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "notification-message-reply", "name": "Message", "enabled": true, "priority": 890, "size": "2x2",
+      "conditions": [ { "type": "notification", "package": "com.google.android.apps.messaging", "durationSec": 900 } ],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "{notif:title}",
+        "text2": "{notif:text}",
+        "items": [
+          { "label": "Open messages", "icon": "mdi:message-text", "action": { "kind": "app", "package": "com.google.android.apps.messaging" } }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "wifi-any-online",
+  "name": "Connected to Wi-Fi → browser",
+  "enabled": true,
+  "priority": 300,
+  "size": "1x1",
+  "conditions": [
+    { "type": "wifi", "mode": "any", "ssid": null, "negate": false }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Web", "icon": "mdi:wifi", "action": { "kind": "app", "package": "com.android.chrome" } }
+    ]
+  }
+}

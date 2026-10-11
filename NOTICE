@@ -1,0 +1,64 @@
+Cue: — trigger-driven Android launcher
+
+Copyright (C) 2026 Jaroslav Sazma
+
+SPDX-License-Identifier: GPL-3.0-or-later
+
+This program is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without
+even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program (the
+file LICENSE). If not, see <https://www.gnu.org/licenses/>.
+
+
+Additional terms under section 7 of the GNU GPL version 3
+---------------------------------------------------------
+
+These terms apply only to the material authored by the copyright holder above, not to the
+third-party material listed below.
+
+(a) Under section 7(c), a modified version you convey must be marked in reasonable ways as
+    different from the original version, for example with a name of its own and an application ID
+    other than app.cue.launcher, and must not be presented as the original.
+
+(b) Under section 7(e), this license grants no rights under trademark law to the names "Cue:" and
+    "Cue: React & Act" or to the Cue: icon and logo.
+
+
+Third-party material
+--------------------
+
+This project redistributes the following, each under its own license. The license texts are in the
+LICENSES/ directory; the app shows them too (long-press the home screen → Launcher settings →
+Scenarios → ⋮ → About → Open-source licenses).
+
+- Material Design Icons (MDI) by Pictogrammers — @mdi/font 7.4.47 (npm), 7447 glyphs.
+  https://pictogrammers.com/library/mdi/
+  https://github.com/Templarian/MaterialDesign-Webfont
+  Covered by the Pictogrammers Free License (LICENSES/LicenseRef-Pictogrammers-Free-License.txt),
+  which places the fonts under the Apache License 2.0 and non-font, non-icon files under the MIT
+  License.
+  · app/src/main/res/font/mdi.ttf — fonts/materialdesignicons-webfont.ttf from that package,
+    unchanged. Apache License 2.0 (LICENSES/Apache-2.0.txt).
+  · app/src/main/assets/mdi_glyphs.txt — a "name → codepoint" index generated from
+    scss/_variables.scss of the same package (the font itself carries no such mapping).
+    MIT License (LICENSES/MIT.txt), Copyright (c) Pictogrammers and contributors.
+
+- Public Suffix List, maintained by Mozilla and contributors — shipped inside OkHttp as
+  assets/PublicSuffixDatabase.list in the APK. Mozilla Public License 2.0 (LICENSES/MPL-2.0.txt).
+  The source form is available at https://publicsuffix.org/list/.
+
+- SLF4J API (org.slf4j:slf4j-api), which Ktor depends on. MIT License (LICENSES/MIT.txt),
+  Copyright (c) 2004-2022 QOS.ch Sarl (Switzerland).
+
+- Libraries compiled into the app, all under the Apache License 2.0 (LICENSES/Apache-2.0.txt):
+  AndroidX and Jetpack Compose (The Android Open Source Project); the Kotlin standard library,
+  the JetBrains Java annotations, kotlinx.coroutines (with kotlinx-coroutines-slf4j),
+  kotlinx.serialization, kotlinx-io and Ktor (JetBrains); OkHttp and Okio (Square); Metro (Zac
+  Sweers); Guava's ListenableFuture (The Guava Authors); and the JSpecify annotations (The JSpecify
+  Authors). The direct dependencies and their versions are in gradle/libs.versions.toml.

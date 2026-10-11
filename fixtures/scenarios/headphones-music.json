@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "headphones-music",
+  "name": "Headphones → YouTube Music",
+  "enabled": true,
+  "priority": 500,
+  "size": "1x1",
+  "conditions": [
+    { "type": "audio_output" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Music", "icon": null, "action": { "kind": "app", "package": "com.google.android.apps.youtube.music" } }
+    ]
+  }
+}

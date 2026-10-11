@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "multi-action-quiet",
+  "name": "Silence and do not disturb",
+  "enabled": true,
+  "priority": 410,
+  "size": "1x1",
+  "conditions": [],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      {
+        "label": "Quiet",
+        "icon": "mdi:bell-sleep",
+        "action": [
+          { "kind": "system", "action": "ringer_silent" },
+          { "kind": "system", "action": "dnd_on" }
+        ]
+      }
+    ]
+  }
+}

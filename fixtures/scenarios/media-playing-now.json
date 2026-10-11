@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "media-playing-now",
+  "name": "Something is playing → player",
+  "enabled": true,
+  "priority": 450,
+  "size": "1x1",
+  "conditions": [
+    { "type": "media_playing" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Now playing", "icon": "mdi:music-note", "action": { "kind": "app", "package": "com.google.android.apps.youtube.music" } }
+    ]
+  }
+}

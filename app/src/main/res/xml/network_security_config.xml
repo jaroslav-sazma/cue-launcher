@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Cleartext stays permitted for one reason only: the Home Assistant address at home, typically
+  http://homeassistant.local:8123. The user types that address, so the exception cannot be narrowed
+  to a domain here; the boundary is held by validation instead — the away address must be https, and
+  a cleartext home address is contacted only while the phone is on a listed home network or the
+  paired instance answers on mDNS.
+
+  Certificate transparency is on by default for apps targeting Android 17 and is deliberately left
+  that way. A Home Assistant behind a publicly issued certificate (Nabu Casa, Let's Encrypt) is in
+  the logs; a private CA is exempt from the check anyway, and the launcher never trusted the user
+  certificate store to begin with.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

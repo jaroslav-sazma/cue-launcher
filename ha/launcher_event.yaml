@@ -1,0 +1,164 @@
+blueprint:
+  name: "Cue: — event into the launcher"
+  description: >-
+    Sends an event with a pairing code to the **Cue:** launcher through the companion
+    app (`command_broadcast_intent`), so the event needs no connection of the launcher's
+    own to Home Assistant and works both at home and on mobile data.
+
+
+    In the launcher, create a scenario with a *Home Assistant — event* condition and the
+    **same pairing code**. The tile stays visible for as long as the scenario specifies;
+    a second automation from this blueprint with the *End* option hides it sooner.
+
+
+    The **pairing secret** comes filled in when the launcher uploads this blueprint
+    (*Settings → Home Assistant → For events*), so leave it as it is. Without it the
+    launcher drops the event, which is what keeps other apps on the phone from spoofing
+    a tile.
+
+
+    An optional payload is substituted into the tile template as `{ha:temperature}`. Fill
+    it in as name/value pairs — every value is URL-encoded on the way out, so a comma, a
+    colon or a space inside one is safe.
+  domain: automation
+  homeassistant:
+    min_version: 2024.10.0
+  input:
+    trigger_source:
+      name: Trigger
+      description: Anything that should raise the event (a doorbell press, an entity state, a finished washer…).
+      selector:
+        trigger: {}
+    condition_source:
+      name: Conditions
+      description: Optional — when the event is actually sent (for example only when you are home).
+      default: []
+      selector:
+        condition: {}
+    notify_device:
+      name: Phone
+      description: >-
+        The phone with the launcher on it. Its companion app is what delivers the event —
+        the notify service name is derived from the device, so there is nothing to look up.
+      selector:
+        device:
+          integration: mobile_app
+          multiple: false
+    pairing_secret:
+      name: Pairing secret
+      description: >-
+        Filled in by the launcher when it uploads this blueprint — leave it as it is, and
+        after the secret changes upload the blueprint again from **Settings → Home
+        Assistant → For events**. The receiver has to be open to other apps on the phone,
+        so an event without the right secret is thrown away — that is what stops a foreign
+        app from putting a made-up tile on your home screen.
+      selector:
+        text:
+          type: password
+    event_code:
+      name: Pairing code
+      description: >-
+        Must match the code in the *Home Assistant — event* condition in the launcher
+        (case does not matter). **No commas and no colons** — the companion app splits
+        the payload on them.
+      selector:
+        text: {}
+    options:
+      name: Optional
+      icon: mdi:tune
+      collapsed: true
+      input:
+        event_op:
+          name: What the event does
+          description: >-
+            *End* sends `op:end` — the launcher hides the tile with this code right
+            away, even if its countdown is still running.
+          default: start
+          selector:
+            select:
+              mode: list
+              options:
+                - label: Start — the tile appears
+                  value: start
+                - label: End — the tile disappears
+                  value: end
+        event_icon:
+          name: Tile icon
+          description: >-
+            An optional MDI glyph name, the same as an entity uses in HA — both
+            `doorbell` and `mdi:doorbell` work, the prefix is stripped automatically.
+            It overrides the icon derived from the scenario.
+          default: ""
+          selector:
+            text: {}
+        extra_payload:
+          name: Payload for the template
+          description: >-
+            Values for the tile template, as name/value pairs: `remaining` → `12` ends up
+            in the template as `{ha:remaining}`. Home Assistant templates
+            (`{{ states('sensor.x') }}`) work in a value.
+
+
+            Type them in like this — two values, the second read from a sensor at the moment
+            the event is sent:
+
+                program: cotton
+                remaining: "{{ states('sensor.washer_remaining_minutes') }}"
+
+            A tile text of `Done in {ha:remaining} min` then shows the current minutes. A
+            template has to stay in quotes, otherwise YAML reads its braces as a mapping of
+            its own. The names `secret`, `code`, `op`, `icon` and `v` are taken by the event
+            itself.
+
+
+            Each value is URL-encoded before it is handed to the companion app and decoded
+            on the phone, so a colon, a comma or a space inside a value is safe. A **name**
+            may carry neither a comma nor a colon — that is what the payload is split on.
+          default: {}
+          selector:
+            object: {}
+        notify_service_override:
+          name: Notify service
+          description: >-
+            Leave empty and the service of the phone above is used. Name it here when that
+            phone's companion service is not `notify.mobile_app_` plus its device name —
+            for example `notify.mobile_app_pixel_10_pro`.
+          default: ""
+          selector:
+            text: {}
+
+variables:
+  pairing_secret: !input pairing_secret
+  event_code: !input event_code
+  event_op: !input event_op
+  event_icon: !input event_icon
+  extra_payload: !input extra_payload
+  notify_device: !input notify_device
+  notify_service_override: !input notify_service_override
+  notify_service: >-
+    {{ notify_service_override | trim
+       if (notify_service_override | trim)
+       else 'notify.mobile_app_' ~ (device_attr(notify_device, 'name') | slugify) }}
+
+triggers: !input trigger_source
+
+conditions: !input condition_source
+
+actions:
+  - action: "{{ notify_service }}"
+    data:
+      message: command_broadcast_intent
+      data:
+        intent_package_name: app.cue.launcher
+        intent_action: app.cue.launcher.HA_EVENT
+        # Assembled through join(',') so that no whitespace from a wrapped line reaches extras.
+        # The mdi: prefix is stripped on purpose: the companion app splits extras on ":" too, so
+        # icon:mdi:doorbell would become the value "mdi" with the type "doorbell".
+        # Payload values ride as "name:value:urlencoded" — the companion app URL-decodes them, which
+        # is what makes a value containing a colon, a comma or a space safe to send. The whole thing
+        # stays on one line on purpose: a folded line would put spaces inside the extras.
+        intent_extras: >-
+          {% set ns = namespace(parts = ['secret:' ~ (pairing_secret | trim), 'v:1', 'code:' ~ (event_code | trim)] + (['op:end'] if event_op == 'end' else []) + (['icon:' ~ (event_icon | trim | replace('mdi:', ''))] if (event_icon | trim) else [])) %}{% for name, value in (extra_payload | default({}, true)).items() %}{% set ns.parts = ns.parts + [(name | trim) ~ ':' ~ (value | string | urlencode) ~ ':urlencoded'] %}{% endfor %}{{ ns.parts | join(',') }}
+
+mode: queued
+max: 10

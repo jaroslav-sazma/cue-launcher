@@ -1,0 +1,25 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
+  "labels": ["dependencies"],
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "labels": ["dependencies", "security"]
+  },
+  "packageRules": [
+    {
+      "description": "Pins with in-catalog constraints: bump only via a deliberate manual change.",
+      "matchPackageNames": [
+        "io.gitlab.arturbosch.detekt",
+        "com.google.devtools.ksp:symbol-processing-gradle-plugin"
+      ],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
+    },
+    {
+      "description": "The Compose alpha BOM tracks its own prerelease train; group its updates alone.",
+      "matchPackageNames": ["androidx.compose:compose-bom-alpha"],
+      "groupName": "compose-bom-alpha"
+    }
+  ]
+}

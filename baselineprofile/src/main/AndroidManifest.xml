@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <application>
+        <!-- Not exported: the measured app reads the fixture only through the grant that comes with
+             the import intent, the same path a file shared from another app takes. The authority is
+             the one seedFixtureUri() builds. -->
+        <provider
+            android:name=".FixtureProvider"
+            android:authorities="${applicationId}.fixtures"
+            android:exported="false"
+            android:grantUriPermissions="true" />
+    </application>
+</manifest>

@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "wifi-home-evening",
+  "name": "Evening at home (change the SSID to your own network)",
+  "enabled": true,
+  "priority": 700,
+  "size": "2x2",
+  "conditions": [
+    { "type": "time_window", "from": "18:00", "to": "23:00", "days": [1, 2, 3, 4, 5, 6, 7] },
+    { "type": "wifi", "mode": "ssid", "ssid": "AndroidWifi", "negate": false }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "four_icons",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Lights", "icon": "mdi:lightbulb", "action": { "kind": "system", "action": "open_settings" } },
+      { "label": "Music", "icon": "mdi:music", "action": { "kind": "app", "package": "com.google.android.apps.youtube.music" } },
+      { "label": "Alarm", "icon": "mdi:alarm", "action": { "kind": "app", "package": "com.google.android.deskclock" } },
+      { "label": "Web", "icon": "mdi:web", "action": { "kind": "app", "package": "com.android.chrome" } }
+    ]
+  }
+}

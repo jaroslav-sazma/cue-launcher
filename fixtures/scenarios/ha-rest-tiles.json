@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "name": "HA over REST — actions and states",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "ha-rest-buttons", "name": "Lights over HA", "enabled": true, "priority": 40, "size": "2x2",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "text_two_icons",
+        "text": "Living room",
+        "text2": "actions go over REST",
+        "items": [
+          { "label": "Turn on", "icon": "mdi:lightbulb-on", "action": { "kind": "ha", "service": "light.turn_on", "entity": "light.living_room", "data": { "brightness": 200 } } },
+          { "label": "Turn off", "icon": "mdi:lightbulb-off", "action": { "kind": "ha", "service": "light.turn_off", "entity": "light.living_room", "data": {} } }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1, "id": "ha-rest-state", "name": "Temperature from HA", "enabled": true, "priority": 30, "size": "2x2",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "Outside {ha:sensor.outside_temperature} °C",
+        "text2": null,
+        "items": [ { "label": "Open HA", "icon": "mdi:home-assistant", "action": { "kind": "ha", "service": "script.cue_ping" } } ]
+      }
+    },
+    {
+      "schemaVersion": 1, "id": "ha-rest-fallback", "name": "Static content behind the temperature", "enabled": true, "priority": 10, "size": "2x2",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "text_only",
+        "text": "The slot falls back to this",
+        "text2": "when the state from HA cannot be read.",
+        "items": [ { "label": "Settings", "icon": "mdi:cog", "action": { "kind": "system", "action": "open_settings" } } ]
+      }
+    }
+  ]
+}

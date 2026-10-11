@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "time-instant-afternoon",
+  "name": "End of work at 17:00",
+  "enabled": true,
+  "priority": 800,
+  "size": "1x1",
+  "conditions": [
+    { "type": "time_instant", "at": "17:00", "days": [1, 2, 3, 4, 5], "durationSec": 60 }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Home", "icon": "mdi:home-map-marker", "action": { "kind": "deeplink", "uri": "google.navigation:q=Home" } }
+    ]
+  }
+}

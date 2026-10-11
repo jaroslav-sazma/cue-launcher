@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "name": "Baseline profile home",
+  "scenarios": [
+    { "schemaVersion": 1, "id": "bp-2x2-quick", "name": "Quick actions", "enabled": true, "priority": 30, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "four_icons", "text": null, "text2": null, "items": [ { "label": "Chrome", "icon": null, "action": { "kind": "app", "package": "com.android.chrome" } }, { "label": "Clock", "icon": null, "action": { "kind": "app", "package": "com.google.android.deskclock" } }, { "label": "Camera", "icon": null, "action": { "kind": "app", "package": "com.android.camera2" } }, { "label": "Settings", "icon": null, "action": { "kind": "app", "package": "com.android.settings" } } ] } },
+    { "schemaVersion": 1, "id": "bp-2x2-evening", "name": "Wind down", "enabled": true, "priority": 20, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "text_only", "text": "Wind down", "text2": "Set an alarm for tomorrow", "items": [ { "label": "Clock", "icon": null, "action": { "kind": "app", "package": "com.google.android.deskclock" } } ] } },
+    { "schemaVersion": 1, "id": "bp-2x2-reading", "name": "Read later", "enabled": true, "priority": 10, "size": "2x2", "conditions": [], "content": { "kind": "template", "layout": "text_two_icons", "text": "Read later", "text2": "Pick up where you left off", "items": [ { "label": "Chrome", "icon": null, "action": { "kind": "app", "package": "com.android.chrome" } }, { "label": "Wi-Fi", "icon": "mdi:wifi", "action": { "kind": "system", "action": "panel_wifi" } } ] } },
+    { "schemaVersion": 1, "id": "bp-1x1-camera", "name": "Camera", "enabled": true, "priority": 50, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Camera", "icon": null, "action": { "kind": "app", "package": "com.android.camera2" } } ] } },
+    { "schemaVersion": 1, "id": "bp-1x1-torch", "name": "Flashlight", "enabled": true, "priority": 40, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Flashlight", "icon": "mdi:flashlight", "action": { "kind": "system", "action": "flashlight" } } ] } },
+    { "schemaVersion": 1, "id": "bp-1x1-alarm", "name": "Alarms", "enabled": true, "priority": 30, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Alarms", "icon": null, "action": { "kind": "app", "package": "com.google.android.deskclock" } } ] } },
+    { "schemaVersion": 1, "id": "bp-1x1-volume", "name": "Volume", "enabled": true, "priority": 20, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Volume", "icon": "mdi:volume-high", "action": { "kind": "system", "action": "panel_volume" } } ] } },
+    { "schemaVersion": 1, "id": "bp-1x1-wifi", "name": "Wi-Fi panel", "enabled": true, "priority": 10, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Wi-Fi", "icon": "mdi:wifi", "action": { "kind": "system", "action": "panel_wifi" } } ] } },
+    { "schemaVersion": 1, "id": "bp-1x1-settings", "name": "Settings", "enabled": true, "priority": 5, "size": "1x1", "conditions": [], "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Settings", "icon": null, "action": { "kind": "app", "package": "com.android.settings" } } ] } }
+  ],
+  "staticZone": {
+    "grid": [
+      { "position": 0, "kind": "folder", "name": "Tools", "items": [
+        { "package": "com.android.settings", "component": "com.android.settings.Settings" },
+        { "package": "com.google.android.deskclock", "component": "com.android.deskclock.DeskClock" },
+        { "package": "com.android.camera2", "component": "com.android.camera.CameraLauncher" },
+        { "package": "com.android.chrome", "component": "com.google.android.apps.chrome.Main" }
+      ] },
+      { "position": 3, "kind": "shortcut", "package": "com.google.android.deskclock", "component": "com.android.deskclock.DeskClock" },
+      { "position": 8, "kind": "launcher_widget", "widget": "searchbar" }
+    ],
+    "dock": [
+      { "position": 0, "kind": "shortcut", "package": "com.android.chrome", "component": "com.google.android.apps.chrome.Main" },
+      { "position": 1, "kind": "shortcut", "package": "com.android.camera2", "component": "com.android.camera.CameraLauncher" },
+      { "position": 2, "kind": "shortcut", "package": "com.google.android.deskclock", "component": "com.android.deskclock.DeskClock" },
+      { "position": 3, "kind": "shortcut", "package": "com.android.settings", "component": "com.android.settings.Settings" }
+    ],
+    "widgetPanel": {
+      "widgets": [ { "position": 0, "kind": "launcher_widget", "widget": "calendar" } ],
+      "dock": []
+    }
+  }
+}

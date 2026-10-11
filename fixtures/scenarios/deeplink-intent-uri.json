@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "name": "Deep links — serialized intent next to a plain URI",
+  "scenarios": [
+    {
+      "schemaVersion": 1,
+      "id": "deeplink-intent",
+      "name": "Intent URI",
+      "enabled": true,
+      "priority": 90,
+      "size": "1x1",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [
+          {
+            "label": "Intent",
+            "icon": "mdi:link-variant",
+            "action": {
+              "kind": "deeplink",
+              "uri": "intent://example.com/#Intent;scheme=https;package=com.android.chrome;end"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "deeplink-plain",
+      "name": "Plain URI",
+      "enabled": true,
+      "priority": 80,
+      "size": "1x1",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [
+          {
+            "label": "Plain",
+            "icon": "mdi:link",
+            "action": {
+              "kind": "deeplink",
+              "uri": "https://example.com/"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "deeplink-fallback",
+      "name": "Fallback URL",
+      "enabled": true,
+      "priority": 70,
+      "size": "1x1",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [
+          {
+            "label": "Fallback",
+            "icon": "mdi:link-off",
+            "action": {
+              "kind": "deeplink",
+              "uri": "intent://open#Intent;scheme=nosuchscheme;package=app.example.missing;S.browser_fallback_url=https%3A%2F%2Fexample.com%2Ffallback;end"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "deeplink-malformed",
+      "name": "Malformed extra",
+      "enabled": true,
+      "priority": 60,
+      "size": "1x1",
+      "conditions": [],
+      "content": {
+        "kind": "template",
+        "layout": "icon_text",
+        "text": null,
+        "text2": null,
+        "items": [
+          {
+            "label": "Bad",
+            "icon": "mdi:bug",
+            "action": {
+              "kind": "deeplink",
+              "uri": "intent://x#Intent;scheme=https;i.count=abc;end"
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

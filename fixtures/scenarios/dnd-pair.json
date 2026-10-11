@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "name": "Sound switch",
+  "scenarios": [
+    {
+      "schemaVersion": 1, "id": "h1-meeting-dnd", "name": "Meeting → silence", "enabled": true, "priority": 400, "size": "1x1",
+      "conditions": [ { "type": "calendar_event" } ],
+      "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Silence", "icon": "mdi:bell-off", "action": { "kind": "system", "action": "dnd_on" } } ] }
+    },
+    {
+      "schemaVersion": 1, "id": "h2-dnd-off", "name": "Silence → turn the sound on", "enabled": true, "priority": 400, "size": "1x1",
+      "conditions": [ { "type": "ringer_mode", "mode": "dnd" } ],
+      "content": { "kind": "template", "layout": "icon_text", "text": null, "text2": null, "items": [ { "label": "Sound on", "icon": "mdi:bell-ring", "action": { "kind": "system", "action": "dnd_off" } } ] }
+    }
+  ]
+}

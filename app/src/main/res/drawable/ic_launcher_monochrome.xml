@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Themed icon (Android 13+). The system tints it with dynamic color; the segments keep their rhythm through 100 / 62 / 36 % alpha. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:pathData="M43.553,63.828 A14.688,14.688 0 0,1 43.726,43.983"
+        android:strokeColor="#FFFFFFFF" android:strokeAlpha="0.36" android:strokeWidth="8.064"
+        android:strokeLineCap="butt" android:fillColor="#00000000"/>
+    <path android:pathData="M63.511,65.574 A14.688,14.688 0 0,1 43.553,63.828"
+        android:strokeColor="#FFFFFFFF" android:strokeAlpha="0.62" android:strokeWidth="8.064"
+        android:strokeLineCap="butt" android:fillColor="#00000000"/>
+    <path android:pathData="M43.726,43.983 A14.688,14.688 0 0,1 63.511,42.426"
+        android:strokeColor="#FFFFFFFF" android:strokeAlpha="1" android:strokeWidth="8.064"
+        android:strokeLineCap="butt" android:fillColor="#00000000"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M66.096,49.536 a3.06,3.06 0 1,0 6.12,0 a3.06,3.06 0 1,0 -6.12,0 Z"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M66.096,58.464 a3.06,3.06 0 1,0 6.12,0 a3.06,3.06 0 1,0 -6.12,0 Z"/>
+</vector>

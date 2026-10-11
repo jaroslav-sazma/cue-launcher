@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "calendar-hero",
+  "name": "Calendar",
+  "enabled": true,
+  "priority": 100,
+  "size": "4x2",
+  "conditions": [],
+  "content": {
+    "kind": "launcher_widget",
+    "widget": "calendar"
+  }
+}
