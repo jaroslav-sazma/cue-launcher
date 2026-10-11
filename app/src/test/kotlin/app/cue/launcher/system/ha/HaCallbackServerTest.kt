@@ -120,10 +120,14 @@ class HaCallbackServerTest {
 
     // Every connection used to count toward a cap, so a few hundred empty ones ended the sign-in as
     // cancelled. Junk of every kind must leave the wait running until the real callback arrives.
+    //
+    // The backlog holds every connection the test makes: Linux drops a SYN that finds the queue full
+    // instead of refusing it, and each retransmit costs a second, so a backlog of one runs past the
+    // deadline there while macOS refuses at once and the retry hides it.
     @Test
     fun `no amount of junk on the callback port ends the wait`() = runBlocking {
         val state = haAuthState()
-        ServerSocket(0, 1, InetAddress.getLoopbackAddress()).use { server ->
+        ServerSocket(0, JUNK_CONNECTIONS + 1, InetAddress.getLoopbackAddress()).use { server ->
             val waiting = async(Dispatchers.IO) {
                 haAwaitCallback(server, state, HaCallbackWait(WAIT_MILLIS, junkPauseMillis = 0, log = {})) { "" }
             }
@@ -144,8 +148,8 @@ class HaCallbackServerTest {
         }
     }
 
-    // The backlog holds a single connection, so a connect can be refused while the server is still
-    // busy with the previous one, and a junk connection the server already dropped resets the write.
+    // A connect can still be refused where the system caps the backlog below what was asked for, and
+    // a junk connection the server already dropped resets the write.
     private fun send(port: Int, text: String) {
         repeat(CONNECT_ATTEMPTS) {
             try {
