@@ -5,7 +5,7 @@ agp = "9.4.1"                # 9.5.0 is alpha only — do not take it.
 # the whole Compose UI 1.13.0-alpha03 stack, so the stack is consistent by definition and cannot
 # end up mixing 1.12 with 1.13.
 composeBomAlpha = "2026.09.00"
-navigation3 = "1.2.0-rc01"   # RC, no longer preview
+navigation3 = "1.2.0"   # RC, no longer preview
 metro = "1.4.3"
 room = "2.8.5"
 ktor = "3.5.2"
