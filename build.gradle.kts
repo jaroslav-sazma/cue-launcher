@@ -1,5 +1,5 @@
-// AGP 9 compiles Kotlin itself and ships KGP 2.2.10. The newest stable Kotlin (2.4.20, which
-// Metro 1.4.3 is built against) is pulled in by raising KGP/KSP through classpath dependencies.
+// AGP 9 compiles Kotlin itself and ships KGP 2.2.10. The Kotlin that Metro needs (see `kotlin` in
+// libs.versions.toml) is pulled in by raising KGP/KSP through classpath dependencies.
 buildscript {
     repositories {
         google()
