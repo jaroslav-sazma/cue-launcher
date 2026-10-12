@@ -45,7 +45,7 @@ jobs:
           packages: 'platforms;android-37.1 build-tools;37.0.0'
 
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/setup-gradle@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
 
       # The release build is part of every run: R8 and resource shrinking only happen there, and a
       # missing keep rule shows up as a broken release, never as a broken debug build. Without
@@ -107,7 +107,7 @@ jobs:
           packages: 'platforms;android-37.1 build-tools;37.0.0'
 
       - name: Submit the dependency graph
-        uses: gradle/actions/dependency-submission@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/dependency-submission@3f5f9adaf7d9fecd50b5935e54106014257a94e6 # v6.4.0
         with:
           dependency-graph-include-projects: '^:app$'
           dependency-graph-include-configurations: '^releaseRuntimeClasspath$'
