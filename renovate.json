@@ -20,6 +20,17 @@
       "description": "The Compose alpha BOM tracks its own prerelease train; group its updates alone.",
       "matchPackageNames": ["androidx.compose:compose-bom-alpha"],
       "groupName": "compose-bom-alpha"
+    },
+    {
+      "description": "From v6 the caching in gradle/actions is a proprietary component under Gradle's terms of use; stay on v5 (MIT).",
+      "matchDepNames": ["gradle/actions"],
+      "allowedVersions": "<6"
+    },
+    {
+      "description": "The JDK moves only together with the daemon JVM, compileOptions and detekt (which cannot run on 25+), see CONTRIBUTING.",
+      "matchDepNames": ["java-jdk"],
+      "matchUpdateTypes": ["major"],
+      "enabled": false
     }
   ]
 }

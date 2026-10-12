@@ -44,8 +44,10 @@ jobs:
           # android-37.1: Compose 1.13, and thus material3 1.5, needs minor API 37.1.
           packages: 'platforms;android-37.1 build-tools;37.0.0'
 
+      # gradle/actions stays on v5 on purpose: from v6 its caching is a proprietary component under
+      # Gradle's terms of use. renovate.json holds both uses below 6.
       - name: Set up Gradle
-        uses: gradle/actions/setup-gradle@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/setup-gradle@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
 
       # The release build is part of every run: R8 and resource shrinking only happen there, and a
       # missing keep rule shows up as a broken release, never as a broken debug build. Without
@@ -107,7 +109,7 @@ jobs:
           packages: 'platforms;android-37.1 build-tools;37.0.0'
 
       - name: Submit the dependency graph
-        uses: gradle/actions/dependency-submission@748248ddd2a24f49513d8f472f81c3a07d4d50e1 # v4.4.4
+        uses: gradle/actions/dependency-submission@0723195856401067f7a2779048b490ace7a47d7c # v5.0.2
         with:
           dependency-graph-include-projects: '^:app$'
           dependency-graph-include-configurations: '^releaseRuntimeClasspath$'

@@ -201,8 +201,9 @@ Dependabot alerts see vulnerable libraries in a Gradle project. Renovate (`renov
 the updates themselves and opens an update with a `security` label as soon as an advisory names a
 version in use. Every action in the workflow is pinned to a full commit hash with the version as a
 comment, because a tag can be moved to other code and a commit cannot; Renovate keeps the pins
-current. The workflow's token is read-only, except for the dependency job, which needs to write the
-graph.
+current. `gradle/actions` is held on v5 on purpose: from v6 its caching is a proprietary component
+under Gradle's own terms of use, and `renovate.json` keeps it below 6. The workflow's token is
+read-only, except for the dependency job, which needs to write the graph.
 
 ---
 
@@ -215,7 +216,7 @@ What has to follow a change to the build, and when:
 | A dependency update — a Renovate pull request or by hand | CI green, release build included. After a Compose BOM, AGP, Kotlin or R8 update, also run the release APK on a device: a keep-rule problem can compile and only fail at runtime. Regenerate the baseline profile when Compose or anything on the startup path moved. |
 | A new library | `./gradlew :app:dependencies --configuration releaseRuntimeClasspath` shows what it pulls in. Nothing that reports anywhere — analytics, crash reporting, ads, Play Services — belongs in the app. A provider or startup initializer such a library adds to start itself fails `check` until it is removed in the manifest or allowlisted, and no library may bring a boot receiver or the boot permission, which `BootManifestTest` holds. If it talks to the network, `PRIVACY.md`, `SECURITY.md` and the audit change with it. If it needs keep rules its own artifact does not ship, they go into `app/proguard-rules.pro` with the reason. Its license goes into `NOTICE`, and its license text into `LICENSES/` and the app's list of licenses (`LicenseNotice`) if it is not there yet; `LicenseNoticesTest` keeps the last two in step. A license that is new to the project fails `licensee` until it is added to the `licensee` block in `app/build.gradle.kts` together with its text. |
 | `compileSdk`, `compileSdkMinor` or build-tools | The `packages:` line in **both** jobs of `ci.yml` installs the same platform and build-tools. |
-| The JDK | `./gradlew updateDaemonJvm --jvm-version=<n>`, `compileOptions`, detekt's `jvmTarget` in `app/build.gradle.kts` and `java-version` in both CI jobs move together. detekt 1.23.8 cannot run on JVM 25 or newer. |
+| The JDK | `./gradlew updateDaemonJvm --jvm-version=<n>`, `compileOptions`, detekt's `jvmTarget` in `app/build.gradle.kts` and `java-version` in both CI jobs move together. detekt 1.23.8 cannot run on JVM 25 or newer. Renovate does not propose a new major JDK, so the move is always made by hand. |
 | The Gradle version | `./gradlew wrapper --gradle-version <x>`, never a hand edit of the URL: the wrapper writes the `distributionSha256Sum` that pins the download. |
 | A Room entity or DAO query that changes the schema | From the first public release on: the database version goes up, a migration comes with it, and the schema exported into `app/schemas/` is committed. A user's database is never thrown away. |
 | The manifest — a permission, a component, an intent filter, an `exported` flag | `SECURITY.md` (the threat model), `docs/security-audit.md` (entry points, permissions), `PRIVACY.md` when data flows change, and the README's [Permissions](README.md#permissions) table. |
