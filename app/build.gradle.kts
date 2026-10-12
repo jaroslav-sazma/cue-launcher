@@ -17,7 +17,7 @@ plugins {
 android {
     namespace = "app.cue.launcher"
     compileSdk = 37
-    // Compose 1.13.0-alphaXX, and therefore material3 1.5.0-alpha, requires minor API 37.1.
+    // Compose 1.13, and therefore material3 1.5, requires minor API 37.1.
     compileSdkMinor = 1
 
     defaultConfig {
