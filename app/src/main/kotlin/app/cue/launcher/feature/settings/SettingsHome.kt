@@ -186,7 +186,7 @@ private fun SettingsDestinations(
             entry<ScenariosTab> {
                 ScenariosDestination(deps, backStack, selectTab, listNotice) { onListNotice(null) }
             }
-            entry<ScenarioBuilder> { key -> BuilderDestination(key, deps, haAccess, pop, onListNotice) }
+            entry<ScenarioBuilder> { BuilderDestination(it, deps, haAccess, backStack, selectTab, onListNotice) }
             entry<ScenarioEditor> { key ->
                 EditorDestination(key, deps, haAccess, pop, onListNotice)
             }
@@ -228,6 +228,7 @@ private fun SettingsDestinations(
                     onImportConsumed = onImportConsumed,
 
                     onEditScenario = { id, notice -> backStack.add(ScenarioEditor(id, notice)) },
+                    onPasteJson = { backStack.pushOnce(PasteScenario) },
                 )
             }
         },
@@ -342,9 +343,11 @@ private fun BuilderDestination(
     key: ScenarioBuilder,
     deps: SettingsDeps,
     haAccess: HaAccess,
-    pop: () -> Unit,
+    backStack: androidx.navigation3.runtime.NavBackStack<NavKey>,
+    selectTab: (NavKey) -> Unit,
     onListNotice: (ScenarioNotice?) -> Unit,
 ) {
+    val pop: () -> Unit = { backStack.removeAt(backStack.lastIndex) }
     val initial = remember(key.scenarioJson) { key.scenarioJson?.let(ScenarioFormat::decodeCanonical) }
     ScenarioBuilderScreen(
         systemState = deps.systemState,
@@ -358,7 +361,8 @@ private fun BuilderDestination(
         onClose = pop,
         onSaved = { scenario ->
             onListNotice(ScenarioNotice.Saved(scenario))
-            pop()
+            // A draft pasted on the Backups tab lands, once saved, in the list that shows it.
+            if (backStack.first() == ScenariosTab) pop() else selectTab(ScenariosTab)
         },
     )
 }

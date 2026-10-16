@@ -19,6 +19,7 @@ import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.ScenarioFormat
 import app.cue.launcher.data.scenario.portableScenarios
 import app.cue.launcher.data.settings.BackupSummary
+import app.cue.launcher.designsystem.ExperimentalLabel
 import app.cue.launcher.designsystem.GLYPH_CHEVRON
 import app.cue.launcher.designsystem.GlyphIcon
 import app.cue.launcher.designsystem.Tokens
@@ -42,6 +43,7 @@ internal fun BackupActions(
     onExportSet: () -> Unit,
     onResolve: (JitRequirement) -> Unit,
     modifier: Modifier = Modifier,
+    onPasteJson: (() -> Unit)? = null,
 ) {
     // Scrolls on its own: the tab cannot, since the import preview below it is a lazy list.
     Column(
@@ -74,6 +76,15 @@ internal fun BackupActions(
             detail = stringResource(R.string.backup_import_detail),
             onClick = onImport,
         )
+        onPasteJson?.let { paste ->
+            BackupRow(
+                glyph = GLYPH_PASTE,
+                title = stringResource(R.string.ai_chat_choice_paste),
+                detail = stringResource(R.string.ai_chat_choice_paste_detail),
+                onClick = paste,
+                badge = { ExperimentalLabel() },
+            )
+        }
         Note(text = stringResource(R.string.scenarios_secrets_note))
         lastBackup?.let { summary -> LastBackupRow(summary) }
         denied?.let { Message(text = stringResource(it)) }
@@ -92,10 +103,11 @@ private fun BackupRow(
     detail: String,
     onClick: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    badge: (@Composable () -> Unit)? = null,
 ) {
     TonalRow(onClick = onClick, modifier = modifier) {
         LeadingIconBox(glyph = glyph, enabled = onClick != null)
-        RowText(title = title, modifier = Modifier.weight(1f), detail = detail)
+        RowText(title = title, modifier = Modifier.weight(1f), detail = detail, badge = badge)
         if (onClick != null) {
             GlyphIcon(
                 name = GLYPH_CHEVRON,
@@ -124,6 +136,8 @@ private const val GLYPH_CONFIG = "archive-arrow-down-outline"
 private const val GLYPH_SET = "file-export-outline"
 
 private const val GLYPH_IMPORT = "file-import-outline"
+
+private const val GLYPH_PASTE = "content-paste"
 
 internal suspend fun exportConfig(
     context: Context,

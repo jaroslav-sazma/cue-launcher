@@ -275,7 +275,7 @@
     <string name="ai_chat_widget_unbound_text">The widget is not bound yet: the wizard offers it at the tile content, and the scenario cannot be saved without it. It is saved switched off — switch it on once you have checked it.</string>
     <string name="settings_scenarios_section">Scenarios</string>
     <string name="settings_ai_chat">Create scenarios in an AI chat</string>
-    <string name="settings_ai_chat_detail">Adds AI chat and pasted JSON to New scenario.</string>
+    <string name="settings_ai_chat_detail">AI chat in New scenario, pasted JSON in Backups.</string>
     <string name="ai_chat_choice_wizard">Step by step</string>
     <string name="ai_chat_choice_wizard_detail">Pick the trigger, the tile and what it opens yourself.</string>
     <string name="ai_chat_choice_chat">Create in an AI chat</string>

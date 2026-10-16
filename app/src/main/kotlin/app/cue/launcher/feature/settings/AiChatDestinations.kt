@@ -26,7 +26,7 @@ data object AiChatHandoff : NavKey
 data object PasteScenario : NavKey
 
 // Each step replaces the one before rather than stacking on it: back from the draft returns to the
-// list, not to a check that is already done.
+// tab it started from, not to a check that is already done.
 internal fun MutableList<NavKey>.replaceTop(from: NavKey, to: NavKey) {
     if (lastOrNull() == from) this[lastIndex] = to
 }

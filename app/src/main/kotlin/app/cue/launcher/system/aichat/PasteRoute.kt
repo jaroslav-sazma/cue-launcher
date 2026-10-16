@@ -9,7 +9,7 @@ internal data class PasteRoute(
     val scenarios: String,
     val card: String,
     val pasteAnswer: String,
-    val newScenario: String,
+    val backups: String,
     val pasteJson: String,
     val handoff: String,
 )
@@ -19,7 +19,7 @@ internal fun pasteRoute(string: (Int) -> String): PasteRoute = PasteRoute(
     scenarios = string(R.string.settings_tab_scenarios),
     card = string(R.string.ai_chat_pending_title),
     pasteAnswer = string(R.string.ai_chat_paste_answer),
-    newScenario = string(R.string.scenarios_new),
+    backups = string(R.string.settings_tab_backups),
     pasteJson = string(R.string.ai_chat_choice_paste),
     handoff = string(R.string.ai_chat_handoff_title),
 )

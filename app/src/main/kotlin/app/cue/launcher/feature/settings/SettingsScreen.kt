@@ -30,6 +30,7 @@ fun BackupsScreen(
     importUri: Uri? = null,
     onImportConsumed: () -> Unit = {},
     onEditScenario: (id: String, notice: String) -> Unit = { _, _ -> },
+    onPasteJson: () -> Unit = {},
 ) {
     val flash = rememberFlashState()
     TabPaneScaffold(title = stringResource(R.string.settings_tab_backups), modifier = modifier, flash = flash) {
@@ -41,6 +42,7 @@ fun BackupsScreen(
             importUri = importUri,
             onImportConsumed = onImportConsumed,
             onEditScenario = onEditScenario,
+            onPasteJson = onPasteJson,
         )
     }
 }

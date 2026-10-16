@@ -280,7 +280,7 @@
     <string name="ai_chat_widget_unbound_text">Widget ještě není navázaný: průvodce ti ho nabídne u obsahu dlaždice a bez něj scénář neuložíš. Uloží se vypnutý — až ho zkontroluješ, zapni ho.</string>
     <string name="settings_scenarios_section">Scénáře</string>
     <string name="settings_ai_chat">Tvorba scénářů v AI chatu</string>
-    <string name="settings_ai_chat_detail">Přidá k novému scénáři AI chat a vložení JSONu.</string>
+    <string name="settings_ai_chat_detail">AI chat v novém scénáři, vložení JSONu v Zálohách.</string>
     <string name="ai_chat_choice_wizard">Krok za krokem</string>
     <string name="ai_chat_choice_wizard_detail">Spouštěč, dlaždici i to, co otevře, si vybereš sám.</string>
     <string name="ai_chat_choice_chat">Vytvořit v AI chatu</string>

@@ -179,7 +179,7 @@ internal fun finalAnswer(route: PasteRoute): String = """
     - Then tell the user how to bring the block into Cue:: copy it with the copy button your app shows
       on the block, open Cue:, long-press the home screen and choose "${route.settings}" →
       "${route.scenarios}", where the card "${route.card}" at the top has "${route.pasteAnswer}".
-      Without the card: "${route.newScenario}" → "${route.pasteJson}". If Cue: still shows its
-      "${route.handoff}" screen, "${route.pasteAnswer}" there does the same. Quote these labels exactly
-      as written here, untranslated: they are the words on the user's screen.
+      Without the card: "${route.settings}" → "${route.backups}" → "${route.pasteJson}". If Cue:
+      still shows its "${route.handoff}" screen, "${route.pasteAnswer}" there does the same. Quote
+      these labels exactly as written here, untranslated: they are the words on the user's screen.
 """.trimIndent()

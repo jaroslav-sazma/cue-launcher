@@ -15,7 +15,7 @@ internal val TEST_ROUTE = PasteRoute(
     scenarios = "Scenarios",
     card = "Scenario from an AI chat",
     pasteAnswer = "Paste the answer",
-    newScenario = "New scenario",
+    backups = "Backups",
     pasteJson = "Paste scenario JSON",
     handoff = "Create in an AI chat",
 )
@@ -30,7 +30,7 @@ class PasteRouteTest {
         val answer = aiChatContext(InventorySnapshot.EMPTY, Locale.forLanguageTag(tag), route)
             .substringAfter("## Your final answer")
 
-        listOf(route.settings, route.scenarios, route.card, route.pasteAnswer, route.newScenario, route.pasteJson)
+        listOf(route.settings, route.scenarios, route.card, route.pasteAnswer, route.backups, route.pasteJson)
             .forEach { label -> assertTrue("\"$label\"" in answer, "$values: $label") }
         assertTrue("copy button" in answer && "untranslated" in answer)
     }
@@ -46,7 +46,7 @@ class PasteRouteTest {
             .substringAfter("## Your final answer")
 
         assertTrue("\"Nastavení launcheru\" →" in answer, answer)
-        assertTrue("\"Nový scénář\" → \"Vložit JSON scénáře\"" in answer, answer)
+        assertTrue("\"Zálohy\" → \"Vložit JSON scénáře\"" in answer, answer)
         assertTrue("long-press the home screen" in answer)
     }
 

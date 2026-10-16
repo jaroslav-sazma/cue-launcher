@@ -20,7 +20,6 @@ import app.cue.launcher.designsystem.rememberSheetExit
 internal fun NewScenarioChooser(
     onWizard: () -> Unit,
     onAiChat: () -> Unit,
-    onPaste: () -> Unit,
     onDismiss: () -> Unit,
 ) {
     val sheetState = rememberExpandedSheetState()
@@ -43,13 +42,6 @@ internal fun NewScenarioChooser(
                 detail = stringResource(R.string.ai_chat_choice_chat_detail),
                 experimental = true,
                 onClick = { pick(onAiChat) },
-            )
-            ChoiceRow(
-                glyph = GLYPH_PASTE,
-                title = stringResource(R.string.ai_chat_choice_paste),
-                detail = stringResource(R.string.ai_chat_choice_paste_detail),
-                experimental = true,
-                onClick = { pick(onPaste) },
             )
         }
     }
@@ -80,4 +72,3 @@ private fun ChoiceRow(
 
 private const val GLYPH_WIZARD = "format-list-checks"
 private const val GLYPH_AI_CHAT = "creation"
-private const val GLYPH_PASTE = "content-paste"

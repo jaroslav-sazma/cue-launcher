@@ -381,7 +381,6 @@ private fun NewScenarioFab(
         NewScenarioChooser(
             onWizard = onNewScenario,
             onAiChat = aiChat.onAiChat,
-            onPaste = aiChat.onPaste,
             onDismiss = { choosing = false },
         )
     }

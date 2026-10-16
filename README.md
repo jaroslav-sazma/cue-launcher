@@ -988,10 +988,10 @@ pulled out of its text.
 
 Instead of the builder, a scenario can be talked through with the AI chat app you already use and
 pasted back. It is experimental and off by default: switch on **Create scenarios in an AI chat** in
-*Appearance & features*. **New scenario** then offers three ways in — **Step by step** (the
-builder), **Create in an AI chat** and **Paste scenario JSON**. Cue: has no model and no AI service
-of its own: it writes a description for the chat, hands it to an app on your phone, and checks what
-comes back like an imported file.
+*Appearance & features*. **New scenario** then offers two ways in — **Step by step** (the builder)
+and **Create in an AI chat** — and the *Backups* tab shows **Paste scenario JSON** under
+**Import from a file**. Cue: has no model and no AI service of its own: it writes a description for
+the chat, hands it to an app on your phone, and checks what comes back like an imported file.
 
 1. **Choose what goes along.** **Create in an AI chat** sends nothing yet. It explains how it works
    and lets you tick what the description includes: **Bluetooth devices** (names and addresses of

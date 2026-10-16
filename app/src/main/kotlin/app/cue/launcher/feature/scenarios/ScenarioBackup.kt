@@ -65,6 +65,7 @@ fun ScenarioBackup(
     onImportConsumed: () -> Unit = {},
 
     onEditScenario: (id: String, notice: String) -> Unit = { _, _ -> },
+    onPasteJson: () -> Unit = {},
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -77,9 +78,7 @@ fun ScenarioBackup(
     val setFileName = stringResource(R.string.scenarios_export_file)
     val configFileName = stringResource(R.string.backup_export_config_file)
 
-    val openDocument = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
-        if (uri != null) state.source = uri
-    }
+    val pickImport = rememberImportPicker(state, flash)
 
     val createDocument = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument(MIME_JSON),
@@ -107,9 +106,7 @@ fun ScenarioBackup(
         state = state,
         scenarios = scenarios,
         lastBackup = stored?.lastBackup,
-        onImport = {
-            openDocument.launchOrElse(IMPORT_MIME_TYPES) { flash.show(R.string.document_picker_missing, error = true) }
-        },
+        onImport = pickImport,
         onExport = { kind ->
             state.pending = kind
             createDocument.launchOrElse(if (kind == ExportKind.CONFIG) configFileName else setFileName) {
@@ -131,10 +128,21 @@ fun ScenarioBackup(
         },
         onResolve = resolveRequirement,
         modifier = modifier,
+        onPasteJson = onPasteJson.takeIf { stored?.aiChatScenarios == true },
     )
 }
 
 private enum class ExportKind { CONFIG, SET }
+
+@Composable
+private fun rememberImportPicker(state: BackupState, flash: FlashState): () -> Unit {
+    val openDocument = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) state.source = uri
+    }
+    return {
+        openDocument.launchOrElse(IMPORT_MIME_TYPES) { flash.show(R.string.document_picker_missing, error = true) }
+    }
+}
 
 @Composable
 private fun rememberRequirementResolver(state: BackupState): (JitRequirement) -> Unit {
@@ -248,6 +256,7 @@ private fun BackupBody(
     onConfirm: (ImportPlan) -> Unit,
     onResolve: (JitRequirement) -> Unit,
     modifier: Modifier = Modifier,
+    onPasteJson: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -263,6 +272,7 @@ private fun BackupBody(
                 onExportConfig = { onExport(ExportKind.CONFIG) },
                 onExportSet = { onExport(ExportKind.SET) },
                 onResolve = onResolve,
+                onPasteJson = onPasteJson,
             )
 
             ImportState.Reading -> Note(text = stringResource(R.string.import_reading))
