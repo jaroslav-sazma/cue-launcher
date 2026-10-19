@@ -4,7 +4,7 @@
 
 Report privately through GitHub's **Security → Report a vulnerability** on this repository, which
 opens a private advisory only the maintainer can see. If that is not available to you, email
-jaroslav@sazmovi.cz instead. Please do not open a public issue for a vulnerability.
+apps@sazmovi.cz instead. Please do not open a public issue for a vulnerability.
 
 Useful in a report: the Cue: version, the Android version, and the shortest sequence of steps or the
 `adb` command that shows the problem. A proof of concept is welcome but not required — a clear

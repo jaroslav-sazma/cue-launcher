@@ -136,4 +136,4 @@ remove it in Home Assistant.
 
 ## Contact
 
-Cue: is developed by Jaroslav Sazma. Questions about this policy: jaroslav@sazmovi.cz
+Cue: is developed by Jaroslav Sazma. Questions about this policy: apps@sazmovi.cz
