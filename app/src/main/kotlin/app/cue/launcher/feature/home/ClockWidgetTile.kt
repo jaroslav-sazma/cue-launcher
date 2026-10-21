@@ -50,7 +50,6 @@ import app.cue.launcher.designsystem.LocalCueColors
 import app.cue.launcher.designsystem.TileSurface
 import app.cue.launcher.designsystem.Tokens
 import app.cue.launcher.designsystem.toTextStyle
-import app.cue.launcher.designsystem.rememberRoundedDisplayFamily
 import app.cue.launcher.system.rememberNextAlarmMillis
 import java.time.Instant
 import java.time.LocalTime
@@ -122,16 +121,16 @@ private fun ClockDial(time: LocalTime, diameter: Dp, modifier: Modifier = Modifi
 @Composable
 private fun BoxScope.ClockNumerals(radius: Dp, scale: Float) {
     val colors = LocalCueColors.current
+    val style = Clock.numeral
+        .copy(size = Clock.numeral.size * scale, lineHeight = Clock.numeral.lineHeight * scale)
+        .toTextStyle()
     CLOCK_DIAL_NUMERALS.forEachIndexed { index, numeral ->
         val (dx, dy) = NUMERAL_DIRECTIONS[index]
         Text(
             text = numeral,
             modifier = Modifier.align(Alignment.Center).offset(x = radius * dx, y = radius * dy),
             color = colors.textPrimary,
-            fontSize = Clock.numeral.size * scale,
-            fontWeight = Clock.numeral.weight,
-            letterSpacing = Clock.numeral.letterSpacing,
-            lineHeight = Clock.numeral.lineHeight * scale,
+            style = style,
         )
     }
 }
@@ -202,12 +201,6 @@ private fun ClockDateColumn(now: ZonedDateTime, alarm: ZonedDateTime?, modifier:
             modifier = Modifier.padding(top = Clock.weekdayGap),
             color = colors.textPrimary,
             style = Clock.dayNumber.toTextStyle(),
-            fontFamily = rememberRoundedDisplayFamily(
-                weight = Clock.dayNumber.weight,
-                roundness = Clock.DAY_NUMBER_ROUNDNESS,
-            ),
-            letterSpacing = Clock.dayNumber.letterSpacing,
-            lineHeight = Clock.dayNumber.lineHeight,
             maxLines = Tokens.Type.LABEL_LINES,
         )
         Text(

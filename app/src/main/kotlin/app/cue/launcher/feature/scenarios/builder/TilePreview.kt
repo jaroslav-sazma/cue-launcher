@@ -22,6 +22,7 @@ import app.cue.launcher.designsystem.GlassLevel
 import app.cue.launcher.designsystem.LocalCueColors
 import app.cue.launcher.designsystem.TileSurface
 import app.cue.launcher.designsystem.Tokens
+import app.cue.launcher.designsystem.toTextStyle
 import app.cue.launcher.feature.home.LauncherWidgetContent
 import app.cue.launcher.feature.home.LocalMediaFeed
 import app.cue.launcher.feature.home.inert
@@ -217,7 +218,7 @@ private fun PreviewCaption(text: String, modifier: Modifier = Modifier) {
         Text(
             text = text,
             color = LocalCueColors.current.textSecondary,
-            fontSize = Tokens.Type.tileBody.size,
+            style = Tokens.Type.tileBody.toTextStyle(),
         )
     }
 }

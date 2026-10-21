@@ -65,10 +65,13 @@ fun CueTheme(
         MaterialExpressiveTheme(
             colorScheme = colorScheme,
             motionScheme = MotionScheme.expressive(),
+            typography = BRAND_TYPOGRAPHY,
             content = content,
         )
     }
 }
+
+private val BRAND_TYPOGRAPHY = brandTypography()
 
 @Immutable
 sealed interface ThemeAccent {

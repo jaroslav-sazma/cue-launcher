@@ -243,10 +243,6 @@ object Tokens {
                 letterSpacing = (-1.5f).sp,
                 lineHeight = 58.9f.sp,
             )
-
-            // On the 0-100 scale Google's variable fonts give the 'ROND' axis; only a device font
-            // that carries the axis at all reacts to it.
-            const val DAY_NUMBER_ROUNDNESS = 100f
             val monthGap = 3.dp
             val month = TypeSpec(size = 15.sp, weight = FontWeight.Normal, lineHeight = 18.sp)
 

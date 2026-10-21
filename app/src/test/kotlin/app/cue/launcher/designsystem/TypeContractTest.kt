@@ -4,38 +4,48 @@ import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 import java.io.File
 
-// The launcher renders in the system font end to end, which only holds as long as nothing names a
-// typeface of its own. Three families are allowed to: the bundled MDI glyph font, which is an icon
-// set rather than text; the monospace family the Home Assistant secret field uses so a token can
-// be read character by character; and the rounded display family, which is not another typeface at
-// all but the system one with its variable axes set.
+// The launcher draws its text in the phone's own typeface, which only holds as long as one place
+// picks it: designsystem/Type.kt. Two other families are allowed: the bundled MDI glyph font,
+// which is an icon set rather than text, and the monospace family the Home Assistant secret field
+// uses so a token can be read character by character.
 class TypeContractTest {
 
-    private val allowed = setOf(
-        "MdiFontFamily",
-        "FontFamily.Monospace",
-        "rememberRoundedDisplayFamily",
-    )
-
     @Test
-    fun `no source names a typeface beyond the glyph font and the secret field`() {
+    fun `only Type kt names a typeface`() {
         val offenders = sources()
-            .flatMap { file -> FONT_FAMILY.findAll(file.readText()).map { file to it.groupValues[1] } }
-            .filterNot { (_, family) -> family in allowed }
-            .map { (file, family) -> "${file.name}: $family" }
+            .filterNot { it.name == "Type.kt" || it.name == "MdiFont.kt" }
+            .flatMap { file ->
+                TYPEFACE.findAll(file.readText()).map { "${file.name}: ${it.value}" }
+            }
             .toList()
 
         assertTrue(offenders.isEmpty()) {
-            "these pin a typeface instead of inheriting the system font: $offenders"
+            "these pick a typeface instead of going through TypeSpec or the theme: $offenders"
         }
     }
 
     @Test
-    fun `the theme leaves the Material type scale at its defaults`() {
+    fun `nothing pins a font family beyond the glyph font and the secret field`() {
+        val offenders = sources()
+            .filterNot { it.name == "Type.kt" }
+            .flatMap { file ->
+                FONT_FAMILY.findAll(file.readText()).map { file to it.groupValues[1] }
+            }
+            .filterNot { (_, family) -> family in ALLOWED_FAMILIES }
+            .map { (file, family) -> "${file.name}: $family" }
+            .toList()
+
+        assertTrue(offenders.isEmpty()) { "these pin a family of their own: $offenders" }
+    }
+
+    @Test
+    fun `the theme takes its type scale from the design system`() {
         val theme = repoFile("app/src/main/kotlin/app/cue/launcher/designsystem/CueTheme.kt").readText()
 
-        assertTrue(!theme.contains("typography")) {
-            "CueTheme passes a typography of its own — the scale has to stay on the device font"
+        val passed = Regex("""typography = (\w+)""").find(theme)?.groupValues?.get(1)
+
+        assertTrue(passed != null && theme.contains("val $passed = brandTypography()")) {
+            "CueTheme has to pass the typography brandTypography() builds"
         }
     }
 
@@ -47,6 +57,13 @@ class TypeContractTest {
     }
 
     private companion object {
+
+        val ALLOWED_FAMILIES = setOf("MdiFontFamily", "FontFamily.Monospace")
+
+        val TYPEFACE = Regex(
+            """\bDeviceFontFamilyName\b|\bFontFamily\(|\bFont\(|\bTypeface\b|""" +
+                """\bFontFamily\.(SansSerif|Serif|Cursive|Default)\b|\bFontVariation\b""",
+        )
 
         val FONT_FAMILY = Regex("""fontFamily\s*=\s*([\w.]+)""")
 

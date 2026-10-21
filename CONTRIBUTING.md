@@ -65,7 +65,11 @@ runs all day on someone's phone.
 - **Android 17 is the floor.** `minSdk` and `targetSdk` are both 37, so a runtime version check has
   no reason to exist, and nothing is kept working below it.
 - **Visuals come from the design system.** Colours, dimensions, shapes and motion are tokens in the
-  `designsystem` package; feature code uses no literal colour or size.
+  `designsystem` package; feature code uses no literal colour or size. Text takes its style from a
+  `TypeSpec` token through `toTextStyle()` or from the theme's Material type scale. Only
+  `designsystem/Type.kt` names a typeface — Google Sans Flex where the phone has it, `sans-serif`
+  otherwise, never a bundled text font. The bundled icon font and the monospace used for codes and
+  secrets are the only exceptions, and `TypeContractTest` fails when anything else names one.
 - **Material 3 Expressive for the settings and dialogs.** The theme is `MaterialExpressiveTheme` on
   the alpha Compose BOM on purpose, so a new piece of UI reaches for the expressive component first
   — `ToggleButton` with the connected button-group shapes rather than `SegmentedButton`,

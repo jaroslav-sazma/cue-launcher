@@ -268,11 +268,12 @@ Long-press an empty spot on the home screen → **Launcher settings**. There are
 | **Lock the layout** | icons, folders and widgets can no longer be moved, added or removed. |
 | **Create scenarios in an AI chat** | experimental, off by default — see [Creating scenarios in an AI chat](#creating-scenarios-in-an-ai-chat). |
 
-There is no font setting on purpose: Cue: draws all its text in the system font and follows the
-system font size; above 120 % the icon labels step aside rather than crowd the grid. Cue: speaks
-English and Czech. It takes whichever of the two comes first in the phone's list of languages, and
-English when neither is there; to use the other one for Cue: alone, pick it in *Settings → System →
-Languages → App languages*.
+There is no font setting on purpose: Cue: draws its text in the phone's own typeface — on a Pixel
+that is Google Sans Flex, with the bolder text rounded the way the system rounds it, elsewhere the
+system font — and follows the system font size; above 120 % the icon labels step aside rather than
+crowd the grid. Cue: speaks English and Czech. It takes whichever of the two comes first in the
+phone's list of languages, and English when neither is there; to use the other one for Cue: alone,
+pick it in *Settings → System → Languages → App languages*.
 
 ### Widget settings
 
