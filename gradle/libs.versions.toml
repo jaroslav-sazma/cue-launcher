@@ -6,7 +6,7 @@ agp = "9.4.1"                # 9.5.0 is alpha only — do not take it.
 # The alpha BOM is used instead of pinning by hand: it holds material3 1.5.0-beta01 together with
 # the whole Compose UI 1.13.0-beta01 stack, so the stack is consistent by definition and cannot
 # end up mixing 1.12 with 1.13.
-composeBomAlpha = "2026.10.00"
+composeBomAlpha = "2026.10.01"
 navigation3 = "1.2.0"
 metro = "1.4.5"
 room = "2.8.5"
