@@ -58,13 +58,12 @@ class ConditionMonitor(
         plan.deactivate.forEach { engine.deactivate(it) }
 
         // A state taking over from an event keeps what the event brought — the values on the tile, a
-        // remembered place — but not the notification key, and activating without a trigger drops
-        // the end event: the state holds the tile now, so the notification going away or the end
-        // event arriving must no longer end it.
+        // remembered place — while activating without a trigger drops the notification key and the
+        // end event: the state holds the tile now, so the notification going away or the end event
+        // arriving must no longer end it.
         plan.activate.forEach { scenario ->
             val previous = running.firstOrNull { it.scenarioId == scenario.id }?.payload
-            val kept = previous?.copy(notificationKey = null) ?: TriggerPayload.EMPTY
-            engine.activate(scenario, payload = kept)
+            engine.activate(scenario, payload = previous ?: TriggerPayload.EMPTY)
         }
         return plan
     }

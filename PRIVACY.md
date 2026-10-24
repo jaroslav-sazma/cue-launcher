@@ -58,9 +58,10 @@ The app keeps its data in its private storage on the phone:
   names you gave for Home Assistant;
 - the title and text of a notification that activated one of your scenarios, kept with the tile it
   raised until that tile ends (after 60 seconds unless the scenario sets its own duration or an
-  event that ends it), and — unless the scenario waits for such an event — the identifier Android
-  gave the notification, by which the tile also ends when the notification goes away; for a
-  scenario that fires when a notification ends, its last title and text, kept until the tile ends;
+  event that ends it), and — unless the scenario waits for such an event, or a state it also checks
+  holds the tile — the identifier Android gave the notification, by which the tile also ends when
+  the notification goes away; for a scenario that fires when a notification ends, its last title and
+  text, kept until the tile ends;
 - a place you asked the app to remember — its coordinates and when you saved it — kept with the tile
   that shows it and deleted when that tile expires or you close it. It is never exported;
 - per app, when you last opened it and how often you opened it from search, to order search results

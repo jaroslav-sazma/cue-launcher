@@ -193,6 +193,29 @@ class ActivationRulesTest {
     }
 
     @Test
+    fun `an activation no event carries drops the notification key from the payload it was given`() {
+        val parcel = Condition.NotificationFrom(packageName = "com.example")
+        val scenario = scenario("balik", conditions = listOf(parcel, Condition.Charging()))
+        val keyed = TriggerPayload(fields = mapOf("notif:title" to "Parcel"), notificationKey = "0|com.example|1")
+
+        val held = activationOf(scenario, at(now), payload = keyed)
+
+        assertNull(held?.payload?.notificationKey)
+        assertEquals(mapOf("notif:title" to "Parcel"), held?.payload?.fields)
+    }
+
+    @Test
+    fun `a fired trigger without an end keeps the notification key`() {
+        val parcel = Condition.NotificationFrom(packageName = "com.example")
+        val scenario = scenario("balik", conditions = listOf(parcel))
+        val keyed = TriggerPayload(notificationKey = "0|com.example|1")
+
+        val fired = activationOf(scenario, at(now), payload = keyed, trigger = parcel)
+
+        assertEquals("0|com.example|1", fired?.payload?.notificationKey)
+    }
+
+    @Test
     fun `a re-fire keeps since but moves the fire time`() {
         val pulse = Condition.HaEvent(code = "x", until = EndEvent.Alarm)
         val scenario = scenario("pulz", conditions = listOf(pulse))

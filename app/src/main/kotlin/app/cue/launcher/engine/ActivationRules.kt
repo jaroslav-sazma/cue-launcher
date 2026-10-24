@@ -14,7 +14,8 @@ const val DEFAULT_INSTANT_DURATION_SEC = 60
 
 // The trigger decides the expiry: an activation that no event carried — a state condition under
 // ANY, or a plain state scenario — never expires on its own, nor waits for an end event, nor has a
-// fire time.
+// fire time, nor keeps a notification key, so the notification going away cannot end what the
+// state holds.
 fun activationOf(
     scenario: Scenario,
     at: ZonedDateTime,
@@ -29,7 +30,11 @@ fun activationOf(
         scenarioId = scenario.id,
         since = previous?.since ?: now,
         expiresAt = end?.expiresAt,
-        payload = payload.copy(until = end?.until, firedAt = end?.let { now }),
+        payload = payload.copy(
+            notificationKey = payload.notificationKey.takeIf { trigger != null },
+            until = end?.until,
+            firedAt = end?.let { now },
+        ),
     )
 }
 

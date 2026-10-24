@@ -92,6 +92,40 @@ class ConditionMonitorDismissalTest {
     }
 
     @Test
+    fun `under ANY a plain notification firing while a state holds carries no key`() = runTest {
+        val monitor = monitor()
+        val any = parcelOrCharging()
+        scenarios.emit(any)
+        system.emit(SystemState(charging = true))
+        monitor.apply(listOf(any), SystemState(charging = true))
+
+        monitor.onNotificationPosted(parcelNotification())
+        assertNull(activations.rows().single().payload.notificationKey)
+
+        monitor.onNotificationRemoved(parcelNotification(), active = emptyList())
+        assertEquals(listOf("parcel"), runningIds(), "the live dismissal")
+        monitor.reconcileNotifications(since = MINUTE) { NotificationSnapshot(emptyList()) }
+        assertEquals(listOf("parcel"), runningIds(), "the replay with the notification gone")
+
+        monitor.apply(listOf(any), SystemState(charging = false))
+        assertTrue(runningIds().isEmpty(), "the state stops holding")
+    }
+
+    @Test
+    fun `a plain notification firing with no state holding ends on its dismissal`() = runTest {
+        val monitor = monitor()
+        val any = parcelOrCharging()
+        scenarios.emit(any)
+        system.emit(SystemState(charging = false))
+
+        monitor.onNotificationPosted(parcelNotification())
+        assertEquals("first", activations.rows().single().payload.notificationKey)
+
+        monitor.onNotificationRemoved(parcelNotification(), active = emptyList())
+        assertTrue(runningIds().isEmpty())
+    }
+
+    @Test
     fun `a tile without a key outlives a dismissal its plain condition matches`() = runTest {
         val monitor = monitor()
         val haFired = scenario("doorbell", conditions = listOf(Condition.HaEvent(code = "doorbell"), parcel()))
@@ -144,6 +178,9 @@ private val WATCH_OFFLINE = EndEvent.Notification(packageName = WATCH_APP, conta
 
 private fun parcel(durationSec: Int? = null) =
     Condition.NotificationFrom(packageName = PARCEL_APP, durationSec = durationSec)
+
+private fun parcelOrCharging() =
+    scenario("parcel", conditions = listOf(parcel(), Condition.Charging())).copy(match = ConditionMatch.ANY)
 
 private fun parcelNotification() = PostedNotification(
     key = "first",
