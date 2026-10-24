@@ -1,0 +1,1 @@
+Fixes: dismissing a notification no longer ends a tile that waits for an end event or that a state condition is holding, and moving an icon to the left no longer runs the swipe action.
