@@ -1,6 +1,7 @@
 package app.cue.launcher.data.aichat
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
@@ -127,7 +128,7 @@ fun groundingProblems(scenario: Scenario, inventory: InventorySnapshot): List<Gr
             .filterNot { it in packages || hasPlaceholder(it) }
             .forEach { add(GroundingProblem.UnknownPackage(it)) }
         if (macs != null) {
-            scenario.conditions.mapNotNull(Condition::requestedMac)
+            scenario.conditions.flatMap(Condition::requestedMacs)
                 .filterNot { it.uppercase(Locale.ROOT) in macs }
                 .forEach { add(GroundingProblem.UnknownBluetoothDevice(it)) }
         }
@@ -177,17 +178,25 @@ private fun TapAction.inAppTarget(): String = when (this) {
     else -> ""
 }
 
-private fun Condition.requestedMac(): String? = when (this) {
-    is Condition.BtConnected -> mac
-    is Condition.BtDisconnected -> mac
-    else -> null
+private fun Condition.requestedMacs(): List<String> {
+    val own = when (this) {
+        is Condition.BtConnected -> mac
+        is Condition.BtDisconnected -> mac
+        else -> null
+    }
+    val until = (this as? Condition.InstantCondition)?.until as? EndEvent.BtDisconnected
+    return listOfNotNull(own, until?.mac)
 }
 
-private fun Condition.watchedPackages(): List<String> = when (this) {
-    is Condition.NotificationFrom -> listOf(packageName)
-    is Condition.NotificationEnded -> listOf(packageName)
-    is Condition.MediaPlaying -> packages
-    else -> emptyList()
+private fun Condition.watchedPackages(): List<String> {
+    val own = when (this) {
+        is Condition.NotificationFrom -> listOf(packageName)
+        is Condition.NotificationEnded -> listOf(packageName)
+        is Condition.MediaPlaying -> packages
+        else -> emptyList()
+    }
+    val until = (this as? Condition.InstantCondition)?.until as? EndEvent.Notification
+    return own + listOfNotNull(until?.packageName)
 }
 
 private fun TapAction.targetPackage(): String? = when (this) {

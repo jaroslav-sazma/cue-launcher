@@ -118,6 +118,77 @@ class ScenarioValidationTest {
     }
 
     @Test
+    fun `an end event alongside a duration is fine, the duration caps it`() {
+        val capped = scenario.copy(
+            conditions = listOf(
+                Condition.NotificationFrom(
+                    packageName = "cz.zasilkovna.app",
+                    durationSec = 86_400,
+                    until = EndEvent.Notification(packageName = "cz.zasilkovna.app", contains = "picked up"),
+                ),
+            ),
+        )
+
+        assertEquals(emptyList<ScenarioDefect>(), validateScenario(capped))
+    }
+
+    @Test
+    fun `valid end events are not a defect`() {
+        listOf(
+            EndEvent.AtTime(at = "23:59", days = listOf(1, 7)),
+            EndEvent.Alarm,
+            EndEvent.BtDisconnected(),
+            EndEvent.BtDisconnected(mac = "{{PLACEHOLDER:bt_car}}"),
+            EndEvent.Notification(packageName = "cz.alza"),
+            EndEvent.HaEvent(code = "door_closed"),
+        ).forEach { until ->
+            val ended = scenario.copy(conditions = listOf(Condition.HaEvent(code = "doorbell", until = until)))
+
+            assertEquals(emptyList<ScenarioDefect>(), validateScenario(ended)) { "until $until" }
+        }
+    }
+
+    @Test
+    fun `a broken end event is a defect of its own`() {
+        val cases = mapOf(
+            EndEvent.AtTime(at = "24:00") to listOf(ScenarioDefect.InvalidTime("until.at", "24:00")),
+            EndEvent.AtTime(at = "17:00", days = listOf(0, 8)) to listOf(ScenarioDefect.InvalidDays(listOf(0, 8))),
+            EndEvent.AtTime(at = "17:00", days = emptyList()) to listOf(ScenarioDefect.MissingField("until.days")),
+            EndEvent.Notification(packageName = " ") to listOf(ScenarioDefect.MissingField("until.package")),
+            EndEvent.HaEvent(code = "") to listOf(ScenarioDefect.MissingField("until.code")),
+        )
+
+        cases.forEach { (until, expected) ->
+            val broken = scenario.copy(conditions = listOf(Condition.Alarm(until = until)))
+
+            assertEquals(expected, validateScenario(broken)) { "until $until" }
+        }
+    }
+
+    @Test
+    fun `a broken end event rejects only its own scenario on import`() {
+        val text = """
+            {"schemaVersion":1,"name":"Set","scenarios":[
+            {"id":"bad","name":"Bad","size":"1x1",
+            "conditions":[{"type":"alarm","until":{"type":"notification","package":""}}],
+            "content":{"kind":"template","layout":"icon_text","items":[
+            {"action":{"kind":"app","package":"com.x"}}]}},
+            {"id":"good","name":"Good","size":"1x1",
+            "conditions":[{"type":"alarm","until":{"type":"time_instant","at":"07:30"}}],
+            "content":{"kind":"template","layout":"icon_text","items":[
+            {"action":{"kind":"app","package":"com.x"}}]}}]}
+        """.trimIndent().replace("\n", "")
+
+        val read = ScenarioFormat.read(text) as ScenarioRead.Ok
+
+        assertEquals(
+            listOf(Condition.Alarm(until = EndEvent.AtTime(at = "07:30"))),
+            read.accepted.single().scenario.conditions,
+        )
+        assertEquals(listOf(ScenarioDefect.MissingField("until.package")), read.rejected.single().defects)
+    }
+
+    @Test
     fun `a template in the wrong size is a defect`() {
         val wrong = scenario.copy(
             size = TileSize.GRID_2X2,

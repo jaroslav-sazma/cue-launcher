@@ -327,7 +327,8 @@ A condition is one of two kinds:
 - **An event** happens at one moment: a notification from the parcel app, the doorbell, the alarm.
   It has no length of its own, so you set **how long the tile stays visible**: 30 s, 60 s, 5 min or
   any number of minutes (`1.5` works too). The same event arriving again restarts the countdown
-  instead of adding a second tile.
+  instead of adding a second tile. The last choice, *event*, keeps the tile until another event ends
+  it instead — see [Until an event](#until-an-event).
 
 Every state condition opens with a **Holds when** switch that turns it around: *charging* or *not
 charging*, *Wi-Fi Home* or *away from Wi-Fi Home*. Turning a condition around does not help one Cue:
@@ -376,7 +377,8 @@ A few of them need a word more:
   The countdown runs from the ring, not from when you unlock the phone. A snoozed alarm restarts the
   countdown of the tile already showing; an alarm deleted or moved fires nothing; a ring missed
   because the phone was off, or still locked after a restart, gets what is left of the time. With no
-  alarm set, the condition simply waits.
+  alarm set, the condition simply waits. As the end of a tile, the next ring ends it, even one the
+  launcher notices only later.
 - **Notification from an app** works while you are in another app too, so the tile is ready when you
   come back, and it goes away when you dismiss the notification. Android hides one-time codes from
   apps it does not trust: since Android 15, a notification in which the system detects a one-time
@@ -402,9 +404,38 @@ A few of them need a word more:
   tile stays hidden, turned around or not — see [A state as a condition](#9-a-state-as-a-condition).
 
 **An event's tile ends** when its time runs out, when you close it (long-press → Close), when the
-notification that brought it is dismissed, or — for a Home Assistant event — when an end event with
-the same code arrives. If Android ends the launcher in the meantime, an event's tile comes back with
-the time it had left, and every state is checked afresh whenever you return to the home screen.
+notification that brought it is dismissed, when the event it waits for arrives, or — for a Home
+Assistant event — when an end event with the same code arrives. If Android ends the launcher in the
+meantime, an event's tile comes back with the time it had left, and every state is checked afresh
+whenever you return to the home screen.
+
+#### Until an event
+
+Instead of a time, the *event* choice under *How long it stays visible* keeps the tile until
+another event ends it: **a notification arrives**, **a set time comes**, **the alarm rings**, **a
+Bluetooth device disconnects** or **a Home Assistant event arrives**. Each takes the settings of the
+condition of the same kind — the app and *Text contains* for a notification, the time and the days
+for a set time, the device for Bluetooth, the pairing code for Home Assistant — and needs what that
+condition needs.
+
+> A child's watch app posts *Watch connected* when the watch turns on and *Watch offline* when it
+> turns off. A *Notification from an app* condition for the watch app with *Text contains*
+> `connected`, ending when *A notification arrives* from the same app with *Text contains*
+> `offline`, shows the tile while the watch is on: *Watch offline* ends it, and so does dismissing
+> *Watch connected*, as it does any tile a notification brought.
+
+- **The same event cannot end its own tile.** When every event that would end the tile also shows it
+  — the very same event, or one the condition covers, as a condition with no *Text contains* covers
+  any end from its app — a new arrival restarts the tile instead, and the builder says so; set them
+  apart, as *Text contains* does above.
+- **A set time** ends the tile the first time it comes on one of the days you pick, so *17:00* on a
+  tile that appears at 18:00 means 17:00 the next day.
+- **You can always close** a tile that waits for its end (long-press → Close).
+- **Add a limit if the end could slip past.** A notification posted and dismissed again while the
+  launcher could not hear it — Android had just restarted it, say — is missed, and the tile would
+  stay. *At the latest after* sets a limit of 1 h, 4 h or 24 h, and whichever comes first ends the
+  tile. Without a limit the tile waits for the event however long it takes; the 60-second default
+  does not apply.
 
 ### Values from a notification
 
@@ -1093,12 +1124,12 @@ launcher picks it up the next time you return to the home screen.
 
 | Permission | Asked when | Without it |
 |---|---|---|
-| **Bluetooth** | you set up a *Bluetooth connected* or *Bluetooth disconnected* condition | those conditions cannot be read, so their scenarios never show |
+| **Bluetooth** | you set up a *Bluetooth connected* or *Bluetooth disconnected* condition, or a tile that ends when a Bluetooth device disconnects | those conditions cannot be read, so their scenarios never show, and such an end never comes |
 | **Location** | you pick a specific Wi-Fi network in a condition, fill in *Home Wi-Fi* for Home Assistant, or first tap a tile that remembers a place (approximate is enough for that one) | Android will not reveal the network name, so conditions for a named Wi-Fi never hold; *any Wi-Fi* keeps working. For Home Assistant the launcher falls back to asking whether the paired instance answers on this network; without a paired instance it cannot tell you are home, so an `http://` home address is never used. A tile that remembers a place remembers nothing until it is granted |
 | **Location services** (a system switch, not a permission) | same as above | the network name cannot be read and a place cannot be remembered; such a tile opens the location settings |
 | **Calendar** | you add a *Calendar event* condition or the calendar widget, tap a calendar widget without access, or choose its calendars | the condition cannot be evaluated, and the calendar widget shows *Tap to allow*: a tap asks for the access instead of running its action |
 | **Contacts** | you switch on contact search in the drawer (off by default) | the drawer searches apps only |
-| **Notification access** | you add a *Notification from an app*, *Notification ended* or *Something is playing* condition, put the media widget in a tile, tap a media widget without access, or switch on notification count badges | those conditions never fire, icons carry no badges, and the media widget says it has no access, with its buttons greyed out. A sample notification for pulling a value can still be typed by hand. Home Assistant events are not affected |
+| **Notification access** | you add a *Notification from an app*, *Notification ended* or *Something is playing* condition or a tile that ends when a notification arrives, put the media widget in a tile, tap a media widget without access, or switch on notification count badges | those conditions never fire, a tile waiting for a notification stays until its limit or until you close it, icons carry no badges, and the media widget says it has no access, with its buttons greyed out. A sample notification for pulling a value can still be typed by hand. Home Assistant events are not affected |
 | **Do Not Disturb access** | you pick *Turn Do Not Disturb on* or *off* in the builder, or tap a tile whose sound action was refused for it | that action explains what is missing and offers the settings screen; the other actions on the same tile still run |
 | **Default home app** (a role, not a permission) | never — you choose it at the first start or in the system settings | Android lets only the current home app read app shortcuts, so those sections of the action sheet stay empty with a note, and long-pressing an icon offers no shortcuts. Everything else works |
 | **Local network** | your Home Assistant address is a local one and you did not pick the instance in *Find my Home Assistant* | since Android 17 a local address cannot be reached without it: everything goes to the away address, and the launcher says why. Picking the instance in the system picker needs no permission. A Nabu Casa or other public address is unaffected |
@@ -1128,11 +1159,11 @@ that flipped — is caught up the moment you come back.
 What still reaches the launcher in the background are the events a trigger cannot learn about later:
 
 - a Bluetooth device disconnecting, and the next alarm changing — each switched off in the system
-  while no scenario listens for it;
+  while no scenario starts or ends on it and no tile on the home screen waits for it to end;
 - an event from your Home Assistant;
 - Android reporting that the launcher's own *Do Not Disturb (Cue:)* mode was switched off;
-- notifications, while a scenario or the badges need them — and only then is the notification
-  listener connected at all.
+- notifications, while a scenario starts on one, a tile waits for one to end it, or the badges need
+  them — and only then is the notification listener connected at all.
 
 Each is handled in one short step that measures only the state the fired scenario reads, and the
 launcher goes back to sleep. That measurement stays subscribed for five seconds after the last

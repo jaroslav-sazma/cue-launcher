@@ -1,6 +1,9 @@
 package app.cue.launcher.engine
 
+import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
+import app.cue.launcher.data.scenario.TriggerPayload
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -103,12 +106,47 @@ class BluetoothRulesTest {
     fun `the receiver is wanted only for an enabled scenario with a disconnect trigger`() {
         val trigger = scenario("parkuju", conditions = listOf(Condition.BtDisconnected(mac = car)))
 
-        assertTrue(wantsDisconnectReceiver(listOf(trigger)))
-        assertFalse(wantsDisconnectReceiver(listOf(trigger.copy(enabled = false))))
+        assertTrue(wantsDisconnectReceiver(listOf(trigger), emptyList()))
+        assertFalse(wantsDisconnectReceiver(listOf(trigger.copy(enabled = false)), emptyList()))
         assertFalse(
-            wantsDisconnectReceiver(listOf(scenario("stavovy", conditions = listOf(Condition.BtConnected(mac = car))))),
+            wantsDisconnectReceiver(
+                listOf(scenario("stavovy", conditions = listOf(Condition.BtConnected(mac = car)))),
+                emptyList(),
+            ),
         )
-        assertFalse(wantsDisconnectReceiver(emptyList()))
+        assertFalse(wantsDisconnectReceiver(emptyList(), emptyList()))
+    }
+
+    @Test
+    fun `the receiver is also wanted while a running activation waits for a disconnect`() {
+        val ending = Activation("drive", since = 0L, payload = TriggerPayload(until = EndEvent.BtDisconnected(car)))
+        val other = Activation("drive", since = 0L, payload = TriggerPayload(until = EndEvent.Alarm))
+
+        assertTrue(wantsDisconnectReceiver(emptyList(), listOf(ending)))
+        assertFalse(wantsDisconnectReceiver(emptyList(), listOf(other)))
+    }
+
+    @Test
+    fun `a scenario ending on a disconnect wants the receiver before anything runs`() {
+        val ending = scenario(
+            "drive",
+            conditions = listOf(Condition.HaEvent(code = "drive", until = EndEvent.BtDisconnected(car))),
+        )
+        val otherEnd = scenario(
+            "tea",
+            conditions = listOf(Condition.HaEvent(code = "tea", until = EndEvent.Alarm)),
+        )
+
+        assertTrue(wantsDisconnectReceiver(listOf(ending), emptyList()))
+        assertFalse(wantsDisconnectReceiver(listOf(ending.copy(enabled = false)), emptyList()))
+        assertFalse(wantsDisconnectReceiver(listOf(otherEnd), emptyList()))
+    }
+
+    @Test
+    fun `an end on a disconnect asks for the bluetooth permission`() {
+        val ending = Condition.HaEvent(code = "arrived", until = EndEvent.BtDisconnected())
+
+        assertTrue(usesBluetooth(listOf(scenario("e", conditions = listOf(ending)))))
     }
 
     @Test

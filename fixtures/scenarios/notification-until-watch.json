@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "notification-until-watch",
+  "name": "While the watch is on",
+  "enabled": true,
+  "priority": 700,
+  "size": "2x2",
+  "conditions": [
+    {
+      "type": "notification", "package": "com.example.kidswatch", "contains": "connected",
+      "until": { "type": "notification", "package": "com.example.kidswatch", "contains": "offline" }
+    }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "text_only",
+    "text": "Watch on",
+    "text2": "{notif:text}",
+    "items": [
+      { "label": "Open the watch app", "icon": "mdi:watch", "action": { "kind": "app", "package": "com.example.kidswatch" } }
+    ]
+  }
+}

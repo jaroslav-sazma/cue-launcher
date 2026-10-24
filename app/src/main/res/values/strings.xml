@@ -423,6 +423,14 @@
     <string name="phrase_ha_event">event “%1$s”</string>
     <string name="phrase_notification_ended">notification from %1$s ended</string>
     <string name="phrase_place_saved">a place remembered</string>
+    <string name="phrase_with_until">%1$s, %2$s</string>
+    <string name="phrase_until_time">until %1$s</string>
+    <string name="phrase_until_time_days">until %1$s (%2$s)</string>
+    <string name="phrase_until_alarm">until the alarm</string>
+    <string name="phrase_until_bt_any">until Bluetooth disconnects</string>
+    <string name="phrase_until_bt_device">until %1$s disconnects</string>
+    <string name="phrase_until_notification">until a notification from %1$s</string>
+    <string name="phrase_until_ha_event">until event “%1$s”</string>
     <string name="days_workdays">weekday</string>
     <string name="days_weekend">weekend</string>
     <string name="days_separator">", "</string>
@@ -749,11 +757,26 @@
     <string name="builder_duration_60">60 s</string>
     <string name="builder_duration_300">5 min</string>
     <string name="builder_duration_custom">custom</string>
+    <string name="builder_duration_event">event</string>
     <string name="builder_duration_custom_label">Minutes</string>
     <string name="builder_duration_note">Another event of the same kind restarts the countdown.</string>
     <string name="builder_duration_note_ha">Another event with this code restarts the countdown. HA can also send an end code.</string>
     <string name="builder_duration_note_alarm">Counted from the moment the alarm rings. A snoozed alarm restarts the countdown.</string>
     <string name="builder_duration_note_place">How long the place is remembered. Closing the tile forgets it sooner, and saving another place starts the countdown again.</string>
+    <string name="builder_until_section">Ends when</string>
+    <string name="builder_until_notification">A notification arrives</string>
+    <string name="builder_until_time">A set time comes</string>
+    <string name="builder_until_alarm">The alarm rings</string>
+    <string name="builder_until_bt">A Bluetooth device disconnects</string>
+    <string name="builder_until_ha">A Home Assistant event arrives</string>
+    <string name="builder_until_notification_package">Which app the ending notification comes from</string>
+    <string name="builder_until_time_note">The tile ends the first time this comes round on one of the days you pick.</string>
+    <string name="builder_until_repeats">Every such event also shows the tile, so when one comes it restarts the tile instead of ending it.</string>
+    <string name="builder_until_cap">At the latest after</string>
+    <string name="builder_until_cap_none">No limit</string>
+    <string name="builder_until_cap_hours">%1$d h</string>
+    <string name="builder_until_cap_minutes">%1$s min</string>
+    <string name="builder_until_note">The tile stays until the event arrives, and you can always close it. A limit ends it anyway, in case the event slips past unseen — say a notification posted and dismissed while Cue: was not listening.</string>
 
     <string name="builder_error_wifi_ssid">Pick the network the condition should hold for.</string>
     <string name="builder_error_ha_code">Enter a pairing code — without it the event has nothing to bind to.</string>
@@ -769,6 +792,10 @@
     <string name="builder_error_time">Enter the time in the 18:00 format.</string>
     <string name="builder_error_days">Pick at least one day.</string>
     <string name="builder_error_duration">Enter the duration as a positive number of minutes.</string>
+    <string name="builder_error_until_package">Pick the app whose notification ends the tile.</string>
+    <string name="builder_error_until_code">Enter the pairing code of the event that ends the tile.</string>
+    <string name="builder_error_until_time">Enter the end time in the 18:00 format.</string>
+    <string name="builder_error_until_days">Pick at least one day the tile can end on.</string>
 
     <string name="live_state_holds">✓ %1$s The condition holds now.</string>
     <string name="live_state_fails">✗ %1$s The condition would not hold now.</string>
@@ -1067,6 +1094,7 @@
     <string name="defect_pinned_position">A %2$s tile cannot be pinned to position %1$d.</string>
     <string name="defect_multiple_instants">There may be at most one instant condition (there are %1$d).</string>
     <string name="defect_duration_on_state">durationSec belongs only to an instant condition, not to %1$s.</string>
+    <string name="defect_until_on_state">until belongs only to an instant condition, not to %1$s.</string>
     <string name="defect_invalid_duration">durationSec must be positive (it is %1$d).</string>
     <string name="defect_layout_size">Layout %1$s does not belong to size %2$s.</string>
     <string name="defect_item_count">Layout %1$s expects %2$d items, it has %3$d.</string>

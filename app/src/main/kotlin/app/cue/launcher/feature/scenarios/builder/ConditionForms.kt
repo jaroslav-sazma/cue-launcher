@@ -178,7 +178,7 @@ private fun WifiForm(
 }
 
 @Composable
-private fun BluetoothForm(
+internal fun BluetoothForm(
     mac: String?,
     permissionTick: Int,
     modifier: Modifier = Modifier,

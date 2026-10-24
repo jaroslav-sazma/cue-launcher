@@ -2,6 +2,8 @@ package app.cue.launcher.feature.scenarios.builder
 
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionType
+import app.cue.launcher.data.scenario.EndEvent
+import app.cue.launcher.data.scenario.EndEventType
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.engine.DEFAULT_INSTANT_DURATION_SEC
@@ -106,10 +108,38 @@ fun conditionTypeOf(condition: Condition): ConditionType = when (condition) {
     is Condition.PlaceSaved -> ConditionType.PLACE_SAVED
 }
 
+// The notification comes first, as the end most tiles wait for.
+val END_EVENT_CATALOG: List<EndEventType> = listOf(
+    EndEventType.NOTIFICATION,
+    EndEventType.TIME_INSTANT,
+    EndEventType.ALARM,
+    EndEventType.BT_DISCONNECTED,
+    EndEventType.HA_EVENT,
+)
+
+fun newEndEvent(type: EndEventType): EndEvent = when (type) {
+    EndEventType.TIME_INSTANT -> EndEvent.AtTime(at = DEFAULT_END_AT)
+    EndEventType.ALARM -> EndEvent.Alarm
+    EndEventType.BT_DISCONNECTED -> EndEvent.BtDisconnected()
+    EndEventType.NOTIFICATION -> EndEvent.Notification(packageName = "")
+    EndEventType.HA_EVENT -> EndEvent.HaEvent(code = "")
+}
+
+fun endEventTypeOf(end: EndEvent): EndEventType = when (end) {
+    is EndEvent.AtTime -> EndEventType.TIME_INSTANT
+    EndEvent.Alarm -> EndEventType.ALARM
+    is EndEvent.BtDisconnected -> EndEventType.BT_DISCONNECTED
+    is EndEvent.Notification -> EndEventType.NOTIFICATION
+    is EndEvent.HaEvent -> EndEventType.HA_EVENT
+}
+
 private const val DEFAULT_WINDOW_FROM = "18:00"
 private const val DEFAULT_WINDOW_TO = "23:00"
 
 private const val DEFAULT_INSTANT_AT = "07:00"
+
+// Not the set time's own default, which would end nothing: that moment starts the tile again.
+private const val DEFAULT_END_AT = "09:00"
 
 private const val DEFAULT_MIN_LASTED_SEC = 120
 private const val DEFAULT_NOTIFICATION_ENDED_DURATION_SEC = 30 * 60

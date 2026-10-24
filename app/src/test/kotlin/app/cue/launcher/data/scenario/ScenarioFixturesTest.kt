@@ -173,6 +173,20 @@ class ScenarioFixturesTest {
     }
 
     @Test
+    fun `the watch fixture stays until the offline notification, without a cap`() {
+        val scenario = importedFixture(FixtureFile.NOTIFICATION_UNTIL_WATCH).single().scenario
+
+        assertEquals(
+            Condition.NotificationFrom(
+                packageName = "com.example.kidswatch",
+                contains = "connected",
+                until = EndEvent.Notification(packageName = "com.example.kidswatch", contains = "offline"),
+            ),
+            scenario.instantCondition,
+        )
+    }
+
+    @Test
     fun `every extract fixture value is used by the template and nothing else is`() {
         val scenarios = importedFixture(FixtureFile.NOTIFICATION_EXTRACT).map { it.scenario }
 
@@ -253,6 +267,7 @@ class ScenarioFixturesTest {
         const val NOTIFICATION_MESSAGE = "notification-message.json"
         const val NOTIFICATION_PARCEL = "notification-parcel.json"
         const val NOTIFICATION_RIDE = "notification-ride.json"
+        const val NOTIFICATION_UNTIL_WATCH = "notification-until-watch.json"
     }
 
     private companion object {

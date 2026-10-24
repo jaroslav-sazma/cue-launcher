@@ -1,6 +1,7 @@
 package app.cue.launcher.engine
 
 import app.cue.launcher.data.scenario.Activation
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
@@ -234,6 +235,14 @@ class SizeClassQueueTest {
 
         val closable = queues.small.entries.associate { it.scenario.id to it.isClosable }
         assertEquals(mapOf("pulz" to true, "stav" to false, "trvaly" to false), closable)
+    }
+
+    @Test
+    fun `a tile waiting for an end event can be closed`() {
+        val waiting = Activation("pulz", since = 1_000L, payload = TriggerPayload(until = EndEvent.Alarm))
+        val queues = sizeClassQueues(scenarios = listOf(scenario("pulz")), activations = listOf(waiting), now = now)
+
+        assertTrue(queues.small.entries.single().isClosable)
     }
 
     @Test

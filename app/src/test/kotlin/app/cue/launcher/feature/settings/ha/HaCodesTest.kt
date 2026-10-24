@@ -1,6 +1,7 @@
 package app.cue.launcher.feature.settings.ha
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
@@ -71,6 +72,22 @@ class HaCodesTest {
         )
 
         assertEquals(emptyList<HaPairingCode>(), codes)
+    }
+
+    @Test
+    fun `a code that only ends tiles is listed and a scenario counts once`() {
+        val endsOnly = haScenario("a", "brana").copy(
+            conditions = listOf(Condition.BtDisconnected(until = EndEvent.HaEvent(code = "Home"))),
+        )
+        val startsAndEnds = haScenario("b", "home").copy(
+            conditions = listOf(Condition.HaEvent(code = "home", until = EndEvent.HaEvent(code = " HOME "))),
+        )
+
+        val codes = haPairingCodes(listOf(endsOnly, startsAndEnds), lastSeen = mapOf("home" to 1_700L))
+
+        assertEquals(listOf("Home"), codes.map { it.code })
+        assertEquals(2, codes.single().scenarios)
+        assertEquals(1_700L, codes.single().lastSeenAt)
     }
 
     // The seen table is keyed by the incoming code, which is cut to the cap; a longer scenario code

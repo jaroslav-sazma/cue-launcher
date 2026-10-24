@@ -205,8 +205,21 @@ class TimeRulesTest {
 
         assertEquals(
             emptyList<String>(),
-            dueTimeInstants(listOf(pulse), listOf(Activation("pulz", since = 0L)), state)
+            dueTimeInstants(listOf(pulse), listOf(Activation("pulz", since = 0L)), state, now = 1L)
                 .map { it.id },
+        )
+    }
+
+    @Test
+    fun `an expired activation the prune has not reached does not block the instant`() {
+        val state = SystemState(clock = clock(monday, 17))
+        val pulse = scenario("pulz", conditions = listOf(Condition.TimeInstant(at = "17:00")))
+        val expired = Activation("pulz", since = 0L, expiresAt = 1_000L)
+
+        assertEquals(listOf("pulz"), dueTimeInstants(listOf(pulse), listOf(expired), state, now = 1_000L).map { it.id })
+        assertEquals(
+            emptyList<String>(),
+            dueTimeInstants(listOf(pulse), listOf(expired), state, now = 999L).map { it.id },
         )
     }
 
@@ -219,5 +232,5 @@ class TimeRulesTest {
     }
 
     private fun dueIds(scenarios: List<Scenario>, state: SystemState) =
-        dueTimeInstants(scenarios, activations = emptyList(), state = state).map { it.id }
+        dueTimeInstants(scenarios, activations = emptyList(), state = state, now = 0L).map { it.id }
 }

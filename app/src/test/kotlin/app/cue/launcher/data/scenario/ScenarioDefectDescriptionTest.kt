@@ -23,6 +23,7 @@ class ScenarioDefectDescriptionTest {
         ScenarioDefect.PinnedPositionOutOfRange(position = 3, size = TileSize.GRID_1X1),
         ScenarioDefect.MultipleInstantConditions(2),
         ScenarioDefect.DurationOnStateCondition("wifi"),
+        ScenarioDefect.UntilOnStateCondition("wifi"),
         ScenarioDefect.InvalidDuration(0),
         ScenarioDefect.LayoutSizeMismatch(TemplateLayout.FOUR_ICONS, TileSize.GRID_1X1),
         ScenarioDefect.ItemCountMismatch(TemplateLayout.TEXT_TWO_ICONS, expected = 2, actual = 3),

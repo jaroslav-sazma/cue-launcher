@@ -123,6 +123,53 @@ class ScenarioEntityTest {
     }
 
     @Test
+    fun `the end event converts to a row and back`() {
+        val activation = Activation(
+            scenarioId = "parcel",
+            since = 1_758_000_000_000,
+            expiresAt = 1_758_086_400_000,
+            payload = TriggerPayload(
+                fields = mapOf("notif:code" to "482 913"),
+                notificationKey = "0|cz.zasilkovna.app|7|null|10123",
+                until = EndEvent.Notification(packageName = "cz.zasilkovna.app", contains = "picked up"),
+            ),
+        )
+
+        assertEquals(activation, activation.toEntity().toActivation())
+    }
+
+    @Test
+    fun `an end event alone makes the payload worth a row`() {
+        val payload = TriggerPayload(until = EndEvent.AtTime(at = "17:00"))
+        val activation = Activation(scenarioId = "ha-gate", since = 1_758_000_000_000, payload = payload)
+
+        assertFalse(payload.isEmpty)
+        assertEquals(payload, activation.toEntity().toActivation().payload)
+    }
+
+    @Test
+    fun `a payload without an end event writes no until and an older row still reads`() {
+        val payload = TriggerPayload(icon = "mdi:gate", notificationKey = "0|com.x|1|null|10123")
+        val older = """{"icon":"mdi:gate","fields":{},"progress":null,"semantic":"unspecified",""" +
+            """"reply":null,"notificationKey":"0|com.x|1|null|10123"}"""
+
+        val row = Activation(scenarioId = "ha-gate", since = 1, payload = payload).toEntity()
+
+        assertFalse("until" in row.payload.orEmpty()) { row.payload }
+        assertFalse("firedAt" in row.payload.orEmpty()) { row.payload }
+        assertEquals(payload, row.copy(payload = older).toActivation().payload)
+    }
+
+    @Test
+    fun `the fire time alone makes the payload worth a row and converts back`() {
+        val payload = TriggerPayload(firedAt = 1_758_000_060_000, until = EndEvent.Alarm)
+        val activation = Activation(scenarioId = "tea", since = 1_758_000_000_000, payload = payload)
+
+        assertFalse(TriggerPayload(firedAt = 1L).isEmpty)
+        assertEquals(activation, activation.toEntity().toActivation())
+    }
+
+    @Test
     fun `an empty payload is not written to the row`() {
         val activation = Activation(scenarioId = "evening-home", since = 1_758_000_000_000)
 

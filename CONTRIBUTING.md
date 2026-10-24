@@ -171,8 +171,9 @@ receiver, a binding to another app's service or one of its own other than the no
 keeps the listener bound although the need it stored says nothing wants it, is in another state than
 the one the listener calls for — a bound service while it is bound, otherwise the home state or a
 cached one — or spent more than 0.3 s of CPU a minute. `--with-listener` grants notification access
-for the run; the listener binds only while badges are on or a scenario watches notifications. The
-reposted notification stays in the shade under the tag `cue-audit`, as the shell cannot cancel it.
+for the run; the listener binds only while badges are on, a scenario watches notifications or a
+running tile waits for one to end it. The reposted notification stays in the shade under the tag
+`cue-audit`, as the shell cannot cancel it.
 
 ### What CI checks
 

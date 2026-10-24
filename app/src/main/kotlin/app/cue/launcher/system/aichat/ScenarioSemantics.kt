@@ -5,6 +5,7 @@ import app.cue.launcher.data.scenario.EXTRACT_MARKER_MAX_LENGTH
 import app.cue.launcher.data.scenario.EXTRACT_MAX_RULES
 import app.cue.launcher.data.scenario.EXTRACT_NAME_MAX_LENGTH
 import app.cue.launcher.data.scenario.EXTRACT_RESERVED_NAMES
+import app.cue.launcher.data.scenario.EndEventType
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.SystemActionType
@@ -68,6 +69,25 @@ internal fun ConditionType.meaning(): String = when (this) {
             "show_place opens it, `{place:lat}` and `{place:lng}` read it, and it is forgotten when the tile " +
             "goes. remember_place saves nothing unless a scenario with this condition waits for it."
 }
+
+internal fun EndEventType.meaning(): String = when (this) {
+    EndEventType.TIME_INSTANT -> "Ends the tile the first time `at` comes on one of the listed `days`."
+    EndEventType.ALARM -> "Ends the tile when the phone's alarm clock next rings."
+    EndEventType.BT_DISCONNECTED ->
+        "Ends the tile when a Bluetooth device disconnects: the one with `mac`, or any device when `mac` is " +
+            "left out. Needs the Bluetooth permission."
+    EndEventType.NOTIFICATION ->
+        "Ends the tile when the app `package` posts a notification, optionally only one whose title or text " +
+            "contains `contains` (any case). Needs notification access."
+    EndEventType.HA_EVENT -> "Ends the tile when Home Assistant sends an event with this `code`."
+}
+
+internal const val END_EVENT_RULES: String =
+    "Without `durationSec` the tile waits for its end event however long that takes; a `durationSec` " +
+        "alongside is an upper bound, worth adding when the end could slip past unseen, such as a " +
+        "notification posted and dismissed again while Cue: could not hear it. An end event equal to the trigger " +
+        "only restarts the tile, so tell them apart, as with `contains`: a watch app posting \"connected\" " +
+        "starts the tile and its \"offline\" ends it. The user can always close a waiting tile."
 
 internal fun TemplateLayout.meaning(): String {
     val texts = when (this) {
@@ -168,8 +188,11 @@ private val FIELD_NOTES: Map<String, String> = mapOf(
     "negate" to "default false; true turns the condition around",
     "durationSec" to
         "how many seconds the tile stays after the event, more than 0. Left out, it is " +
-        "$DEFAULT_INSTANT_DURATION_SEC; ask the user how long rather than leave it out",
+        "$DEFAULT_INSTANT_DURATION_SEC; ask the user how long rather than leave it out. With `until` it is " +
+        "only an upper bound, and left out the tile waits for the end event",
     "days" to "ISO weekdays, 1 = Monday to 7 = Sunday; default every day",
+    "until.days" to
+        "ISO weekdays, 1 = Monday to 7 = Sunday, at least one, as an empty list is refused; default every day",
     "from" to "HH:mm, 24-hour",
     "to" to "HH:mm, 24-hour",
     "at" to "HH:mm, 24-hour",
@@ -228,7 +251,11 @@ private val FIELD_NOTES: Map<String, String> = mapOf(
         "the words the value follows, matched as whole words in any case and without diacritics, at most " +
         "$EXTRACT_MARKER_MAX_LENGTH characters; without it the first value of the kind counts",
     "extract.kind" to "see the kinds below",
-    "until" to "only for kind until: the text that ends the value, at most $EXTRACT_MARKER_MAX_LENGTH characters",
+    "extract.until" to
+        "only for kind until: the text that ends the value, at most $EXTRACT_MARKER_MAX_LENGTH characters",
+    "until" to
+        "the event that ends the tile, see End events; leave it out for a tile that ends after `durationSec`. " +
+        "Use it when the user says the tile should stay until something happens",
 )
 
 internal const val WIDGET_PLACEHOLDER = "widget"

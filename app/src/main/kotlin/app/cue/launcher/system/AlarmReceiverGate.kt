@@ -2,6 +2,7 @@ package app.cue.launcher.system
 
 import android.app.Application
 import android.util.Log
+import app.cue.launcher.engine.ActivationStore
 import app.cue.launcher.engine.AlarmMonitor
 import app.cue.launcher.engine.ScenarioSource
 import app.cue.launcher.engine.wantsAlarmReceiver
@@ -9,8 +10,8 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 // While switched off nobody follows the alarm, so switching on first remembers the current one —
@@ -21,13 +22,13 @@ import kotlinx.coroutines.launch
 class AlarmReceiverGate(
     private val application: Application,
     private val scenarios: ScenarioSource,
+    private val activations: ActivationStore,
     private val alarms: AlarmMonitor,
 ) {
 
     fun start(scope: CoroutineScope) {
         scope.launch {
-            scenarios.observeScenarios()
-                .map(::wantsAlarmReceiver)
+            combine(scenarios.observeScenarios(), activations.observeActivations(), ::wantsAlarmReceiver)
                 .distinctUntilChanged()
                 .collect { enabled -> setReceiverEnabled(enabled) }
         }

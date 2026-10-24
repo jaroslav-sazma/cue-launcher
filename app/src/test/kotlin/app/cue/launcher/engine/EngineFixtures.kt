@@ -82,7 +82,16 @@ internal class FakeActivationStore : ActivationStore {
     override fun observeActivations(): Flow<List<Activation>> =
         combine(rows, revision) { current, _ -> current.values.sortedByDescending(Activation::since) }
 
-    override suspend fun activations(): List<Activation> = rows()
+    // Runs once, right after the next read: a write that lands between a snapshot and what is done
+    // with it.
+    var afterNextRead: (() -> Unit)? = null
+
+    override suspend fun activations(): List<Activation> = rows().also {
+        afterNextRead?.let { write ->
+            afterNextRead = null
+            write()
+        }
+    }
 
     override suspend fun activation(scenarioId: String): Activation? = rows.value[scenarioId]
 
@@ -93,6 +102,12 @@ internal class FakeActivationStore : ActivationStore {
     override suspend fun deactivate(scenarioId: String): Boolean {
         val existing = rows.value[scenarioId] ?: return false
         rows.update { it - existing.scenarioId }
+        return true
+    }
+
+    override suspend fun deactivateIfUnchanged(activation: Activation): Boolean {
+        if (rows.value[activation.scenarioId] != activation) return false
+        rows.update { it - activation.scenarioId }
         return true
     }
 

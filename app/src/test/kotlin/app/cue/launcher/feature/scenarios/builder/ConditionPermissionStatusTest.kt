@@ -1,6 +1,7 @@
 package app.cue.launcher.feature.scenarios.builder
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.feature.scenarios.JitPermission
 import app.cue.launcher.feature.scenarios.JitRequirement
@@ -65,6 +66,22 @@ class ConditionPermissionStatusTest {
 
         assertEquals(listOf(JitRequirement.NotificationListener), missing)
         assertTrue(granted.isEmpty())
+    }
+
+    @Test
+    fun `an end event asks for what its condition counterpart needs`() {
+        val notificationEnd = Condition.HaEvent(code = "door", until = EndEvent.Notification(packageName = "com.watch"))
+        val disconnectEnd = Condition.Alarm(until = EndEvent.BtDisconnected())
+
+        assertEquals(
+            listOf(JitRequirement.NotificationListener),
+            conditionRequirements(notificationEnd, SystemAccess()),
+        )
+        assertEquals(
+            listOf(JitRequirement.Grant(JitPermission.BLUETOOTH)),
+            conditionRequirements(disconnectEnd, SystemAccess()),
+        )
+        assertTrue(conditionRequirements(Condition.Alarm(until = EndEvent.Alarm), SystemAccess()).isEmpty())
     }
 
     @Test

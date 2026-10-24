@@ -118,6 +118,10 @@ internal fun conditionFormErrorText(error: ConditionFormError): String = stringR
         ConditionFormError.TIME -> R.string.builder_error_time
         ConditionFormError.DAYS -> R.string.builder_error_days
         ConditionFormError.DURATION -> R.string.builder_error_duration
+        ConditionFormError.END_PACKAGE -> R.string.builder_error_until_package
+        ConditionFormError.END_HA_CODE -> R.string.builder_error_until_code
+        ConditionFormError.END_TIME -> R.string.builder_error_until_time
+        ConditionFormError.END_DAYS -> R.string.builder_error_until_days
     },
 )
 
@@ -128,6 +132,7 @@ internal fun durationChipLabel(choice: DurationChoice): String = stringResource(
         DurationChoice.SEC_60 -> R.string.builder_duration_60
         DurationChoice.MIN_5 -> R.string.builder_duration_300
         DurationChoice.CUSTOM -> R.string.builder_duration_custom
+        DurationChoice.EVENT -> R.string.builder_duration_event
     },
 )
 

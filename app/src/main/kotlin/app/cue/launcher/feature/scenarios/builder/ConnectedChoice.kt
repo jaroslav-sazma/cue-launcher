@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroupDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
@@ -29,12 +30,19 @@ internal fun ConnectedChoiceRow(options: List<ConnectedChoice>, modifier: Modifi
             .padding(horizontal = Tokens.Settings.surfacePadding),
         horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
     ) {
+        // From four buttons on the default padding leaves a phone's width too little room for a label.
+        val padding = if (options.size >= COMPACT_CHOICES) {
+            ButtonDefaults.contentPaddingFor(ButtonDefaults.ExtraSmallContainerHeight)
+        } else {
+            ButtonDefaults.ContentPadding
+        }
         options.forEachIndexed { index, option ->
             ToggleButton(
                 checked = option.selected,
                 onCheckedChange = { checked -> if (checked) option.onSelect() },
                 modifier = Modifier.weight(1f),
                 enabled = option.enabled,
+                contentPadding = padding,
                 shapes = when (index) {
                     0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
                     options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
@@ -46,3 +54,5 @@ internal fun ConnectedChoiceRow(options: List<ConnectedChoice>, modifier: Modifi
         }
     }
 }
+
+private const val COMPACT_CHOICES = 4

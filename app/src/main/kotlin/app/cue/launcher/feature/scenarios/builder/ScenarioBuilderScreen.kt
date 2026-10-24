@@ -417,8 +417,12 @@ internal sealed interface AppPickRequest {
     data class ForCondition(
         val condition: Condition.InstantCondition,
         val index: Int?,
+        val target: AppTarget = AppTarget.CONDITION,
     ) : AppPickRequest
 }
+
+// Which package the picked app fills in: the condition's own, or that of its ending notification.
+internal enum class AppTarget { CONDITION, END_EVENT }
 
 // listSaver cannot hold a null, so an absent pin or index travels as a value neither can take.
 internal const val SAVED_ABSENT = -1

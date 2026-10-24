@@ -11,6 +11,7 @@ import kotlinx.coroutines.sync.withLock
 @Inject
 class AlarmMonitor(
     private val scenarios: ScenarioSource,
+    private val activations: ActivationStore,
     private val systemState: SystemStateSource,
     private val engine: ScenarioEngine,
     private val memory: AlarmMemory,
@@ -35,13 +36,15 @@ class AlarmMonitor(
         memory.rememberAlarm(readUpcoming())
     }
 
+    // Ends before fires, so an alarm that ends its own scenario starts it again.
     private suspend fun activateRung(rangAt: Long, now: Long) {
+        endedByAlarm(activations.activations(), rangAt).forEach { engine.deactivateIfUnchanged(it) }
         val definitions = scenarios.observeScenarios().first()
         val listeners = alarmListeners(definitions)
         if (listeners.isEmpty()) return
         val needs = stateNeedsOf(listeners)
         val state = if (needs.aspects.isEmpty()) SystemState() else systemState.measure(needs)
-        dueAlarms(definitions, state, rangAt, now).forEach { scenario ->
+        dueAlarms(definitions, state, rangAt, now, clock.zone()).forEach { scenario ->
             val trigger = activationTrigger(scenario, state, alarmTrigger(scenario))
             engine.activate(scenario, trigger = trigger, firedAt = rangAt)
         }

@@ -104,9 +104,9 @@ private fun SettingsSheet(
             null
         },
 
-        onPickApp = { condition ->
-            if (condition is Condition.NotificationFrom || condition is Condition.NotificationEnded) {
-                screen.show(BuilderSheet.AppPicker(AppPickRequest.ForCondition(condition, sheet.index)))
+        onPickApp = { condition, target ->
+            if (condition is Condition.InstantCondition) {
+                screen.show(BuilderSheet.AppPicker(AppPickRequest.ForCondition(condition, sheet.index, target)))
             }
         },
     )

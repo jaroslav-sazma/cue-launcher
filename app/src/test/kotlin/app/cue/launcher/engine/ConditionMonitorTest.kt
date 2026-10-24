@@ -2,6 +2,7 @@ package app.cue.launcher.engine
 
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.ExtractRule
 import app.cue.launcher.data.scenario.WifiMode
@@ -14,6 +15,8 @@ import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.ZoneId
+import java.time.ZoneOffset
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ConditionMonitorTest {
@@ -28,11 +31,16 @@ class ConditionMonitorTest {
 
     private val haEventLog = FakeHaEventLog()
 
-    private fun TestScope.monitor(): ConditionMonitor {
+    private fun TestScope.monitor(zone: ZoneId = ZoneId.systemDefault()): ConditionMonitor {
+        val wall = object : WallClock {
+            override fun nowMillis(): Long = testScheduler.currentTime
+
+            override fun zone(): ZoneId = zone
+        }
         val engine = ScenarioEngine(
             scenarios = scenarios,
             activations = activations,
-            clock = WallClock { testScheduler.currentTime },
+            clock = wall,
             haStates = HaStateSource.NONE,
         )
         localClock.elapsedMillis = { testScheduler.currentTime }
@@ -43,7 +51,7 @@ class ConditionMonitorTest {
             localClock = localClock,
             engine = engine,
             haEventLog = haEventLog,
-            clock = WallClock { testScheduler.currentTime },
+            clock = wall,
         )
     }
 
@@ -170,6 +178,27 @@ class ConditionMonitorTest {
 
         assertEquals(listOf("at-five"), runningIds())
         assertEquals(listOf(MINUTE + 30_000L), activations.rows().map(Activation::expiresAt))
+    }
+
+    @Test
+    fun `a time end at the trigger time restarts the tile the next day before the prune runs`() = runTest {
+        // Shifted so the wall clock reads 16:59 at the start, as the local one does.
+        val monitor = monitor(zone = ZoneOffset.ofHoursMinutes(16, 59))
+        val daily = Condition.TimeInstant(at = "17:00", until = EndEvent.AtTime(at = "17:00"))
+        scenarios.emit(scenario("daily", conditions = listOf(daily)))
+        system.emit(SystemState())
+        backgroundScope.launch { monitor.runForeground() }
+
+        advanceTimeBy(MINUTE)
+        runCurrent()
+        assertEquals(listOf(MINUTE + DAY), activations.rows().map(Activation::expiresAt))
+
+        advanceTimeBy(DAY)
+        runCurrent()
+
+        val restarted = activations.rows().single()
+        assertEquals(MINUTE + 2 * DAY, restarted.expiresAt)
+        assertEquals(MINUTE + DAY, restarted.since)
     }
 
     @Test
@@ -671,6 +700,8 @@ class ConditionMonitorTest {
 }
 
 private const val MINUTE = 60_000L
+
+private const val DAY = 24 * 60 * MINUTE
 
 private const val CAR = "AA:BB:CC:DD:EE:FF"
 

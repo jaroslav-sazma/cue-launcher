@@ -92,6 +92,8 @@ sealed interface Condition {
     sealed interface InstantCondition : Condition {
 
         val durationSec: Int?
+
+        val until: EndEvent?
     }
 
     @Serializable
@@ -161,17 +163,25 @@ sealed interface Condition {
         val at: String,
         val days: List<Int> = ALL_WEEK_DAYS,
         override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
     ) : InstantCondition
 
     @Serializable
     @SerialName("alarm")
-    data class Alarm(override val durationSec: Int? = null) : InstantCondition
+    data class Alarm(
+        override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
+    ) : InstantCondition
 
     @Serializable
     @SerialName("bt_disconnected")
     data class BtDisconnected(
         val mac: String? = null,
         override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
     ) : InstantCondition
 
     @Serializable
@@ -182,6 +192,8 @@ sealed interface Condition {
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val extract: List<ExtractRule> = emptyList(),
         override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
     ) : InstantCondition
 
     @Serializable
@@ -189,6 +201,8 @@ sealed interface Condition {
     data class HaEvent(
         val code: String,
         override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
     ) : InstantCondition
 
     @Serializable
@@ -200,11 +214,17 @@ sealed interface Condition {
         @EncodeDefault(EncodeDefault.Mode.NEVER)
         val minLastedSec: Int? = null,
         override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
     ) : InstantCondition
 
     @Serializable
     @SerialName("place_saved")
-    data class PlaceSaved(override val durationSec: Int? = null) : InstantCondition
+    data class PlaceSaved(
+        override val durationSec: Int? = null,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        override val until: EndEvent? = null,
+    ) : InstantCondition
 }
 
 fun Condition.StateCondition.withNegate(negate: Boolean): Condition.StateCondition = when (this) {
@@ -217,6 +237,16 @@ fun Condition.StateCondition.withNegate(negate: Boolean): Condition.StateConditi
     is Condition.RingerMode -> copy(negate = negate)
     is Condition.CalendarEvent -> copy(negate = negate)
     is Condition.HaState -> copy(negate = negate)
+}
+
+fun Condition.InstantCondition.withUntil(until: EndEvent?): Condition.InstantCondition = when (this) {
+    is Condition.TimeInstant -> copy(until = until)
+    is Condition.Alarm -> copy(until = until)
+    is Condition.BtDisconnected -> copy(until = until)
+    is Condition.NotificationFrom -> copy(until = until)
+    is Condition.HaEvent -> copy(until = until)
+    is Condition.NotificationEnded -> copy(until = until)
+    is Condition.PlaceSaved -> copy(until = until)
 }
 
 enum class ConditionType(val jsonName: String, val isInstant: Boolean) {
@@ -274,6 +304,9 @@ data class Activation(
     val payload: TriggerPayload = TriggerPayload.EMPTY,
 ) {
     fun isExpired(now: Long): Boolean = expiresAt != null && expiresAt <= now
+
+    // An end event may carry an activation with no expiry at all.
+    val isEventHeld: Boolean get() = expiresAt != null || payload.until != null
 }
 
 fun tidyPackages(packages: List<String>): List<String> =
@@ -290,7 +323,7 @@ fun tidyHaEntity(entity: String): String = haEntityIdOrNull(entity) ?: entity.tr
 // nothing stored carries a marker its kind ignores, whatever its length.
 internal fun Scenario.tidied(): Scenario = copy(
     conditions = conditions.map { condition ->
-        when (condition) {
+        val tidied = when (condition) {
             is Condition.MediaPlaying -> condition.copy(packages = tidyPackages(condition.packages))
             is Condition.NotificationFrom -> condition.copy(extract = tidyExtractRules(condition.extract))
             is Condition.NotificationEnded -> condition.copy(packageName = condition.packageName.trim())
@@ -300,6 +333,12 @@ internal fun Scenario.tidied(): Scenario = copy(
             )
 
             else -> condition
+        }
+        val until = (tidied as? Condition.InstantCondition)?.until
+        if (tidied is Condition.InstantCondition && until is EndEvent.Notification) {
+            tidied.withUntil(until.copy(packageName = until.packageName.trim()))
+        } else {
+            tidied
         }
     },
 )

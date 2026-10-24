@@ -1,5 +1,6 @@
 package app.cue.launcher.engine
 
+import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TriggerPayload
 import dev.zacsweers.metro.AppScope
@@ -57,17 +58,22 @@ class ConditionMonitor(
         plan.deactivate.forEach { engine.deactivate(it) }
 
         // A state taking over from an event keeps what the event brought — the values on the tile, a
-        // remembered place — but not the notification key: the state holds the tile now, so the
-        // notification going away must no longer end it.
+        // remembered place — but not the notification key, and activating without a trigger drops
+        // the end event: the state holds the tile now, so the notification going away or the end
+        // event arriving must no longer end it.
         plan.activate.forEach { scenario ->
             val previous = running.firstOrNull { it.scenarioId == scenario.id }?.payload
-            engine.activate(scenario, payload = previous?.copy(notificationKey = null) ?: TriggerPayload.EMPTY)
+            val kept = previous?.copy(notificationKey = null) ?: TriggerPayload.EMPTY
+            engine.activate(scenario, payload = kept)
         }
         return plan
     }
 
+    // Ends go before fires everywhere, so an end event that is also the scenario's own trigger
+    // restarts it rather than ending it.
     suspend fun onBluetoothDisconnected(mac: String) {
         val definitions = scenarios.observeScenarios().first()
+        endedByBluetoothDisconnect(activations.activations(), mac).forEach { engine.deactivateIfUnchanged(it) }
         val listeners = bluetoothDisconnectListeners(definitions, mac)
         if (listeners.isEmpty()) return
         val state = stateFor(listeners)
@@ -76,11 +82,14 @@ class ConditionMonitor(
         }
     }
 
+    // An end event matches the code whatever the op, as it only says the event arrived.
     suspend fun onHaEvent(event: HaEvent) {
         val definitions = scenarios.observeScenarios().first()
         val listeners = haEventListeners(definitions, event.code)
+        val ended = endedByHaEvent(activations.activations(), event.code)
 
-        haEventLog.record(event, listeners.size)
+        haEventLog.record(event, haEventWaiters(definitions, listeners, ended.map(Activation::scenarioId), event.code))
+        ended.forEach { engine.deactivateIfUnchanged(it) }
         if (listeners.isEmpty()) return
         if (event.op == HaEventOp.END) {
             listeners.forEach { engine.deactivate(it.id) }
@@ -98,6 +107,7 @@ class ConditionMonitor(
     suspend fun onNotificationPosted(notification: PostedNotification, known: List<Scenario>? = null) {
         notifications.withLock {
             val definitions = known ?: scenarios.observeScenarios().first()
+            endedByNotification(activations.activations(), notification).forEach { engine.deactivate(it.scenarioId) }
             val listeners = notificationListeners(definitions, notification)
             if (listeners.isEmpty()) return@withLock
             val state = stateFor(listeners)
@@ -153,17 +163,18 @@ class ConditionMonitor(
     // lands while the replay runs is applied after it rather than overwritten by an older picture.
     suspend fun reconcileNotifications(since: Long, read: () -> NotificationSnapshot?) = notifications.withLock {
         val definitions = scenarios.observeScenarios().first()
+        val running = activations.activations()
         val listening = definitions.filter { it.enabled && it.notificationConditions.isNotEmpty() }
-        if (listening.isEmpty()) return@withLock
+        if (listening.isEmpty() && running.none { it.notificationEnd != null }) return@withLock
         val snapshot = read() ?: return@withLock
         val candidates = snapshot.active.filter { it.postTime > since }
         val firing = listening.filter { scenario -> candidates.any { notificationTrigger(scenario, it) != null } }
         val state = stateFor(firing)
         val plan = notificationReconciliation(
             scenarios = definitions,
-            activations = activations.activations(),
+            activations = running,
             state = state,
-            replay = NotificationReplay(snapshot.active, since, clock.nowMillis()),
+            replay = NotificationReplay(snapshot.active, since, clock.nowMillis(), clock.zone()),
         )
         plan.end.forEach { engine.deactivate(it) }
         plan.fire.forEach { fired ->
@@ -197,7 +208,7 @@ class ConditionMonitor(
     }
 
     private suspend fun fireDueInstants(scenarios: List<Scenario>, state: SystemState) {
-        dueTimeInstants(scenarios, activations.activations(), state).forEach { scenario ->
+        dueTimeInstants(scenarios, activations.activations(), state, clock.nowMillis()).forEach { scenario ->
             val trigger = timeInstantTrigger(scenario, state.clock)
             engine.activate(scenario, trigger = activationTrigger(scenario, state, trigger))
         }

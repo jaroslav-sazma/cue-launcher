@@ -143,10 +143,17 @@ private fun rawDefects(scenario: JsonObject): List<ScenarioDefect> {
         val condition = element as? JsonObject ?: return@forEach
         val rawType = condition.stringFieldOrNull(FIELD_TYPE)
         val type = rawType?.let(ConditionType::fromJsonName)
-        when {
-            type == null -> defects += ScenarioDefect.UnknownEnum("$FIELD_CONDITIONS[].$FIELD_TYPE", rawType.orEmpty())
-            !type.isInstant && FIELD_DURATION in condition ->
-                defects += ScenarioDefect.DurationOnStateCondition(type.jsonName)
+        if (type == null) {
+            defects += ScenarioDefect.UnknownEnum("$FIELD_CONDITIONS[].$FIELD_TYPE", rawType.orEmpty())
+            return@forEach
+        }
+        if (type.isInstant) {
+            unknownUntilType(condition)?.let { until ->
+                defects += ScenarioDefect.UnknownEnum("$FIELD_CONDITIONS[].$FIELD_UNTIL.$FIELD_TYPE", until)
+            }
+        } else {
+            if (FIELD_DURATION in condition) defects += ScenarioDefect.DurationOnStateCondition(type.jsonName)
+            if (FIELD_UNTIL in condition) defects += ScenarioDefect.UntilOnStateCondition(type.jsonName)
         }
         // Any other condition has no extract field, so a stray one is ignored like any unknown key.
         if (type != ConditionType.NOTIFICATION) return@forEach

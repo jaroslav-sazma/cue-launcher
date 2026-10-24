@@ -21,6 +21,7 @@ import app.cue.launcher.designsystem.GLYPH_DELETE
 import app.cue.launcher.designsystem.GlyphIcon
 import app.cue.launcher.designsystem.Tokens
 import app.cue.launcher.engine.SystemState
+import app.cue.launcher.feature.scenarios.ConditionPhrase
 import app.cue.launcher.feature.scenarios.conditionPhrase
 import app.cue.launcher.feature.scenarios.conditionPhraseText
 import app.cue.launcher.feature.scenarios.conditionsText
@@ -36,8 +37,11 @@ import app.cue.launcher.designsystem.Note
 internal fun nameSuggestion(draft: ScenarioDraft): String = if (draft.fallback) {
     stringResource(R.string.builder_fallback_name)
 } else {
-    conditionsText(draft.conditions, draft.match)
+    conditionsText(draft.conditions, draft.match, phrase = ::namePhrase)
 }
+
+// The end each trigger waits for is left to the summary, where there is room for it.
+internal fun namePhrase(condition: Condition): ConditionPhrase = conditionPhrase(condition).copy(until = null)
 
 @Composable
 internal fun ConditionStep(

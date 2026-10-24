@@ -38,6 +38,9 @@ fun ScenarioDefect.description(): String = when (this) {
     is ScenarioDefect.DurationOnStateCondition ->
         "\"durationSec\" is only allowed on instant conditions, not on \"$type\"."
 
+    is ScenarioDefect.UntilOnStateCondition ->
+        "\"until\" is only allowed on instant conditions, not on \"$type\"."
+
     is ScenarioDefect.InvalidDuration -> "\"durationSec\" must be positive, got $durationSec."
 
     is ScenarioDefect.LayoutSizeMismatch ->

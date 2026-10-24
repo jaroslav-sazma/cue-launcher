@@ -1,6 +1,7 @@
 package app.cue.launcher.engine
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.ExtractRule
 import app.cue.launcher.data.scenario.LauncherWidgetType
@@ -50,6 +51,15 @@ class NotificationRulesTest {
         )
 
         assertFalse(usesNotificationListener(scenarios))
+    }
+
+    @Test
+    fun `a notification that only ends the scenario needs the same permission`() {
+        val ending = Condition.HaEvent(code = "washer", until = EndEvent.Notification(packageName = "com.example"))
+
+        assertTrue(usesNotificationListener(listOf(scenario("washer", conditions = listOf(ending)))))
+        val alarm = Condition.HaEvent(code = "washer", until = EndEvent.Alarm)
+        assertFalse(usesNotificationListener(listOf(scenario("alarm", conditions = listOf(alarm)))))
     }
 
     @Test

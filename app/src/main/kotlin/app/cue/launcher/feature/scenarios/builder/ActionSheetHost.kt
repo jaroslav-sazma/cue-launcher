@@ -3,7 +3,9 @@ package app.cue.launcher.feature.scenarios.builder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.TapAction
+import app.cue.launcher.data.scenario.withUntil
 import app.cue.launcher.system.AppActionsRepository
 import app.cue.launcher.system.LauncherAppsRepository
 
@@ -43,7 +45,7 @@ internal fun AppPickerStep(
                 is AppPickRequest.InApp -> screen.show(BuilderSheet.AppActions(request.slot, app))
                 is AppPickRequest.ForCondition -> screen.show(
                     BuilderSheet.Settings(
-                        condition = withWatchedPackage(request.condition, app.component.packageName),
+                        condition = withWatchedPackage(request.condition, app.component.packageName, request.target),
                         index = request.index,
                     ),
                 )
@@ -55,12 +57,22 @@ internal fun AppPickerStep(
     )
 }
 
-private fun withWatchedPackage(condition: Condition.InstantCondition, packageName: String): Condition =
-    when (condition) {
-        is Condition.NotificationFrom -> condition.copy(packageName = packageName)
-        is Condition.NotificationEnded -> condition.copy(packageName = packageName)
+internal fun withWatchedPackage(
+    condition: Condition.InstantCondition,
+    packageName: String,
+    target: AppTarget,
+): Condition {
+    val until = condition.until
+    return when {
+        target == AppTarget.END_EVENT && until is EndEvent.Notification ->
+            condition.withUntil(until.copy(packageName = packageName))
+
+        target == AppTarget.END_EVENT -> condition
+        condition is Condition.NotificationFrom -> condition.copy(packageName = packageName)
+        condition is Condition.NotificationEnded -> condition.copy(packageName = packageName)
         else -> condition
     }
+}
 
 private fun appPickerBack(request: AppPickRequest): BuilderSheet = when (request) {
     is AppPickRequest.OpenApp -> BuilderSheet.ActionPicker(request.slot)

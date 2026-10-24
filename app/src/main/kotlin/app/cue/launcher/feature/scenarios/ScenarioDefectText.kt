@@ -50,6 +50,9 @@ fun defectText(defect: ScenarioDefect): String = when (defect) {
     is ScenarioDefect.DurationOnStateCondition ->
         stringResource(R.string.defect_duration_on_state, defect.type)
 
+    is ScenarioDefect.UntilOnStateCondition ->
+        stringResource(R.string.defect_until_on_state, defect.type)
+
     is ScenarioDefect.InvalidDuration ->
         stringResource(R.string.defect_invalid_duration, defect.durationSec)
 

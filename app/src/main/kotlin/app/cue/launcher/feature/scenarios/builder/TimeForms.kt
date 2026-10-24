@@ -108,11 +108,12 @@ internal fun MomentForm(
             ),
         )
         when (condition) {
-            is Condition.TimeInstant -> TimeInstantForm(
-                condition = condition,
-                onChange = {
-                    lastSetTime = it
-                    onChange(it)
+            is Condition.TimeInstant -> SetTimeFields(
+                at = condition.at,
+                days = condition.days,
+                onChange = { at, days ->
+                    lastSetTime = condition.copy(at = at, days = days)
+                    onChange(lastSetTime)
                 },
             )
 
@@ -122,7 +123,7 @@ internal fun MomentForm(
 }
 
 @Composable
-private fun NextAlarmNote() {
+internal fun NextAlarmNote() {
     val millis = rememberNextAlarmMillis()
     Note(text = millis?.let { nextAlarmText(it) } ?: stringResource(R.string.builder_moment_no_alarm))
 }
@@ -143,9 +144,10 @@ private fun nextAlarmText(millis: Long): String {
 }
 
 @Composable
-private fun TimeInstantForm(
-    condition: Condition.TimeInstant,
-    onChange: (Condition.TimeInstant) -> Unit,
+internal fun SetTimeFields(
+    at: String,
+    days: List<Int>,
+    onChange: (at: String, days: List<Int>) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -153,15 +155,15 @@ private fun TimeInstantForm(
         verticalArrangement = Arrangement.spacedBy(Tokens.Scenarios.rowGap),
     ) {
         TimeField(
-            value = condition.at,
+            value = at,
             label = stringResource(R.string.builder_time_at),
-            onChange = { onChange(condition.copy(at = it)) },
+            onChange = { onChange(it, days) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Tokens.Settings.surfacePadding),
         )
         SectionLabel(title = stringResource(R.string.builder_time_days))
-        DayChips(days = condition.days, onChange = { onChange(condition.copy(days = it)) })
+        DayChips(days = days, onChange = { onChange(at, it) })
     }
 }
 

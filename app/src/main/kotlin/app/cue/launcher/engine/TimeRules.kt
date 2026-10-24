@@ -35,12 +35,15 @@ fun timeWindowOutcome(condition: Condition.TimeWindow, clock: ClockState?): Cond
 fun timeInstantDue(condition: Condition.TimeInstant, clock: ClockState?): Boolean =
     clock != null && minuteOfDayOf(condition.at) == clock.minuteOfDay && clock.isoDayOfWeek in condition.days
 
+// An expired activation the prune has not reached yet is not running: a time end equal to the
+// trigger time would otherwise skip the day it ends on.
 fun dueTimeInstants(
     scenarios: List<Scenario>,
     activations: List<Activation>,
     state: SystemState,
+    now: Long,
 ): List<Scenario> {
-    val running = activations.map(Activation::scenarioId).toSet()
+    val running = activations.filterNot { it.isExpired(now) }.map(Activation::scenarioId).toSet()
     return scenarios.filter { scenario ->
         scenario.enabled &&
             scenario.id !in running &&

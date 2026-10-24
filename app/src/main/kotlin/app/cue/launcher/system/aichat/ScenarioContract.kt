@@ -2,6 +2,8 @@ package app.cue.launcher.system.aichat
 
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionType
+import app.cue.launcher.data.scenario.EndEvent
+import app.cue.launcher.data.scenario.EndEventType
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.ExtractRule
 import app.cue.launcher.data.scenario.LauncherWidgetType
@@ -29,6 +31,10 @@ private val CONTENT_SUBCLASSES: SerialDescriptor = TileContent.serializer().desc
 
 private val ACTION_SUBCLASSES: SerialDescriptor = TapAction.serializer().descriptor.sealedSubclasses()
 
+private val END_EVENT_SUBCLASSES: SerialDescriptor = EndEvent.serializer().descriptor.sealedSubclasses()
+
+internal val END_EVENT_TYPE_NAMES: List<String> = END_EVENT_SUBCLASSES.elementNames.toList()
+
 internal val CONDITION_TYPE_NAMES: List<String> = CONDITION_SUBCLASSES.elementNames.toList()
 
 // The descriptor lists subclasses alphabetically; the meanings give the order a reader expects, and
@@ -44,6 +50,7 @@ internal fun scenarioReference(): String = buildString {
     appendFields(SCENARIO_OWNER, Scenario.serializer().descriptor, indent = "")
     appendLine()
     appendConditions()
+    appendEndEvents()
     appendContent()
     appendLine("### Items")
     appendLine("Each object in a template's `items`:")
@@ -62,11 +69,23 @@ private fun StringBuilder.appendConditions() {
     appendLine("### Conditions")
     appendLine("Each object in `conditions` names its type in `\"type\"`.")
     appendLine()
-    appendLine("State conditions hold while a state lasts; they take `negate` and never `durationSec`:")
+    appendLine("State conditions hold while a state lasts; they take `negate` and never `durationSec` or `until`:")
     ConditionType.entries.filterNot(ConditionType::isInstant).forEach { appendCondition(it) }
     appendLine()
-    appendLine("Instant conditions fire once; they take `durationSec` and never `negate`:")
+    appendLine("Instant conditions fire once; they take `durationSec` and `until` and never `negate`:")
     ConditionType.entries.filter(ConditionType::isInstant).forEach { appendCondition(it) }
+    appendLine()
+}
+
+private fun StringBuilder.appendEndEvents() {
+    appendLine("### End events")
+    appendLine("An instant condition's `until` keeps its tile until another event arrives instead of for a time.")
+    appendLine("Each end event names its type in `\"type\"`:")
+    EndEventType.entries.forEach { type ->
+        appendLine("- `${type.jsonName}`: ${type.meaning()}")
+        appendFields(UNTIL_OWNER, END_EVENT_SUBCLASSES.subclass(type.jsonName), indent = NESTED)
+    }
+    appendLine(END_EVENT_RULES)
     appendLine()
 }
 
@@ -135,6 +154,7 @@ private val OBJECT_NAMES = mapOf(
     "TemplateItem" to "item object",
     "TapAction" to "action object",
     "ExtractRule" to "extract rule object",
+    "EndEvent" to "end event object",
 )
 
 // The item's action reads a lone object as a list of one, which its descriptor cannot tell.
@@ -143,4 +163,5 @@ private val TYPE_OVERRIDES = mapOf("$ITEM_OWNER.action" to "action object, or ar
 internal const val SCENARIO_OWNER = "scenario"
 internal const val ITEM_OWNER = "item"
 internal const val EXTRACT_OWNER = "extract"
+internal const val UNTIL_OWNER = "until"
 private const val NESTED = "  "

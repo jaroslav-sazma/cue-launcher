@@ -4,6 +4,7 @@ import app.cue.launcher.data.ha.HaEntity
 import app.cue.launcher.data.ha.HaEntityFilter
 import app.cue.launcher.data.ha.HaService
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.ScenarioFormat
 import app.cue.launcher.data.scenario.SystemActionType
@@ -192,6 +193,57 @@ class ScenarioGroundingTest {
         assertEquals(
             listOf(GroundingProblem.UnknownPackage("com.invented.navigation")),
             groundingProblems(watching, inventory),
+        )
+    }
+
+    @Test
+    fun `the device and the app an end event names are held to the inventory like a condition's`() {
+        val invented = scenario(
+            listOf(
+                Condition.HaEvent(code = "doorbell", until = EndEvent.BtDisconnected(mac = "11:22:33:44:55:66")),
+                Condition.Alarm(until = EndEvent.Notification(packageName = "com.invented.chat")),
+            ),
+        )
+        val grounded = scenario(
+            listOf(
+                Condition.HaEvent(code = "doorbell", until = EndEvent.BtDisconnected(mac = "aa:bb:cc:dd:ee:ff")),
+                Condition.Alarm(until = EndEvent.Notification(packageName = "com.maps")),
+                Condition.PlaceSaved(until = EndEvent.Notification(packageName = placeholderFor("chat_app"))),
+                Condition.TimeInstant(at = "08:00", until = EndEvent.BtDisconnected()),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                GroundingProblem.UnknownPackage("com.invented.chat"),
+                GroundingProblem.UnknownBluetoothDevice("11:22:33:44:55:66"),
+            ),
+            groundingProblems(invented, inventory),
+        )
+        assertEquals(emptyList<GroundingProblem>(), groundingProblems(grounded, inventory))
+        assertEquals(
+            listOf(GroundingProblem.UnknownPackage("com.invented.chat")),
+            groundingProblems(invented, inventory.copy(devices = null)),
+        )
+    }
+
+    @Test
+    fun `a condition's device and its end event's device are each named`() {
+        val both = scenario(
+            listOf(
+                Condition.BtDisconnected(
+                    mac = "11:22:33:44:55:66",
+                    until = EndEvent.BtDisconnected(mac = "22:33:44:55:66:77"),
+                ),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                GroundingProblem.UnknownBluetoothDevice("11:22:33:44:55:66"),
+                GroundingProblem.UnknownBluetoothDevice("22:33:44:55:66:77"),
+            ),
+            groundingProblems(both, inventory),
         )
     }
 

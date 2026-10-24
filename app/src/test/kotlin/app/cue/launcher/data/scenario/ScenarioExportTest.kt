@@ -58,6 +58,78 @@ class ScenarioExportTest {
     }
 
     @Test
+    fun `a bt mac an end event names is replaced on every instant condition, sharing the device's key`() {
+        val portable = portableScenarios(
+            listOf(
+                scenario(
+                    id = "a",
+                    conditions = listOf(
+                        Condition.BtDisconnected(
+                            mac = "AA:BB:CC:DD:EE:FF",
+                            until = EndEvent.BtDisconnected(mac = "11:22:33:44:55:66"),
+                        ),
+                    ),
+                ),
+                scenario(
+                    id = "b",
+                    conditions = listOf(
+                        Condition.HaEvent(
+                            code = "doorbell",
+                            until = EndEvent.BtDisconnected(mac = "AA:BB:CC:DD:EE:FF"),
+                        ),
+                        Condition.Alarm(until = EndEvent.BtDisconnected()),
+                        Condition.PlaceSaved(until = EndEvent.BtDisconnected(mac = "{{PLACEHOLDER:bt_car}}")),
+                    ),
+                ),
+            ),
+        )
+
+        assertEquals(
+            listOf(
+                Condition.BtDisconnected(
+                    mac = "{{PLACEHOLDER:bt_1}}",
+                    until = EndEvent.BtDisconnected(mac = "{{PLACEHOLDER:bt_2}}"),
+                ),
+                Condition.HaEvent(code = "doorbell", until = EndEvent.BtDisconnected(mac = "{{PLACEHOLDER:bt_1}}")),
+                Condition.Alarm(until = EndEvent.BtDisconnected()),
+                Condition.PlaceSaved(until = EndEvent.BtDisconnected(mac = "{{PLACEHOLDER:bt_car}}")),
+            ),
+            portable.flatMap { it.conditions },
+        )
+        val json = ScenarioFormat.encodeSet(name = "Sada", scenarios = portable)
+        assertFalse(json.contains("AA:BB")) { json }
+        assertFalse(json.contains("11:22")) { json }
+    }
+
+    @Test
+    fun `an end event mac comes back through import as a placeholder to fill in`() {
+        val original = scenario(
+            conditions = listOf(
+                Condition.NotificationFrom(
+                    packageName = "com.example.parcel",
+                    until = EndEvent.BtDisconnected(mac = "AA:BB:CC:DD:EE:FF"),
+                ),
+            ),
+        )
+        val text = ScenarioFormat.encodeSet(name = "Sada", scenarios = portableScenarios(listOf(original)))
+
+        val plan = importPlanOf(ScenarioFormat.read(text) as ScenarioRead.Ok, existingIds = emptySet())
+        val entry = plan.entries.single()
+        assertEquals(setOf("bt_1"), entry.placeholders)
+        assertFalse(entry.scenario.enabled)
+
+        val imported = entry.scenario.conditions.single() as Condition.NotificationFrom
+        assertEquals(EndEvent.BtDisconnected(mac = "{{PLACEHOLDER:bt_1}}"), imported.until)
+        val filled = entry.scenario.copy(
+            enabled = original.enabled,
+            conditions = listOf(imported.withUntil(EndEvent.BtDisconnected(mac = "AA:BB:CC:DD:EE:FF"))),
+        )
+        assertEquals(original, filled)
+        assertTrue(validateScenario(filled).isEmpty())
+        assertTrue(placeholderKeysIn(filled).isEmpty())
+    }
+
+    @Test
     fun `an ssid is replaced and the number is its own series`() {
         val portable = portableScenario(
             scenario(

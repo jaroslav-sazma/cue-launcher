@@ -1,6 +1,7 @@
 package app.cue.launcher.data.aichat
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TileContent
@@ -12,7 +13,8 @@ data class HaNeeds(val blueprint: Boolean, val connection: Boolean) {
 }
 
 fun haNeedsOf(scenario: Scenario, haConfigured: Boolean): HaNeeds {
-    val event = scenario.conditions.any { it is Condition.HaEvent }
+    val event = scenario.conditions.any { it is Condition.HaEvent } ||
+        scenario.instantConditions.any { it.until is EndEvent.HaEvent }
     val state = scenario.conditions.any { it is Condition.HaState }
     val action = (scenario.content as? TileContent.Template)?.items.orEmpty()
         .flatMap { it.actions }

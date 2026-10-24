@@ -26,6 +26,7 @@ internal const val FIELD_SIZE = "size"
 internal const val FIELD_TYPE = "type"
 internal const val FIELD_CONDITIONS = "conditions"
 internal const val FIELD_DURATION = "durationSec"
+internal const val FIELD_UNTIL = "until"
 internal const val FIELD_EXTRACT = "extract"
 internal const val FIELD_EXTRACT_KIND = "kind"
 

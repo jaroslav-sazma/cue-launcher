@@ -4,6 +4,7 @@ import app.cue.launcher.data.aichat.CandidateCheck
 import app.cue.launcher.data.aichat.checkCandidate
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionType
+import app.cue.launcher.data.scenario.EndEventType
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.RingerModeState
@@ -66,6 +67,39 @@ class ScenarioContractTest {
             assertEquals(type.isInstant, "`durationSec`" in entry, type.jsonName)
             assertEquals(!type.isInstant, "`negate`" in entry, type.jsonName)
         }
+    }
+
+    @Test
+    fun `instant conditions point to the end events, extract rules keep their own until`() {
+        val until = "  - `until` (end event object, optional): the event that ends the tile, see End events"
+        ConditionType.entries.forEach { type ->
+            assertEquals(type.isInstant, entryOf(type.jsonName).lines().any { it.startsWith(until) }, type.jsonName)
+        }
+        val extract = reference.substringAfter("### Values from a notification").lines()
+        assertTrue(
+            extract.any { it.startsWith("- `until` (string, optional): only for kind until: the text that ends") },
+            reference,
+        )
+    }
+
+    @Test
+    fun `every end event is taught with exactly its own fields`() {
+        val section = reference.substringAfter("### End events\n").substringBefore("### Content")
+        val lines = section.lines()
+
+        assertEquals(EndEventType.entries.map { it.jsonName }.toSet(), END_EVENT_TYPE_NAMES.toSet())
+        EndEventType.entries.forEach { type ->
+            val start = lines.indexOfFirst { it.startsWith("- `${type.jsonName}`: Ends the tile") }
+            assertTrue(start >= 0, type.jsonName)
+            val fields = lines.drop(start + 1).takeWhile { it.startsWith("  - ") }
+            assertTrue(fields.none { "`durationSec`" in it || "`extract`" in it || "`until`" in it }, type.jsonName)
+        }
+        assertTrue("  - `package` (string, required): " in section, section)
+        assertTrue("  - `code` (string, required): " in section, section)
+        assertTrue("  - `at` (string, required): HH:mm, 24-hour" in section, section)
+        val endDays = "  - `days` (array of integers, optional): ISO weekdays, 1 = Monday to 7 = Sunday, at least one"
+        assertTrue(endDays in section, section)
+        assertTrue("upper bound" in section && "restarts the tile" in section, section)
     }
 
     @Test

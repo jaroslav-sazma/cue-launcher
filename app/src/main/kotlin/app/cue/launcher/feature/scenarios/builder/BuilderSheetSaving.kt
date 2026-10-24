@@ -75,14 +75,16 @@ private fun savedRequest(request: AppPickRequest): List<Any> = when (request) {
         SheetKind.APP_FOR_CONDITION.name,
         ScenarioFormat.encodeConditions(listOf(request.condition)),
         request.index ?: SAVED_ABSENT,
+        request.target.name,
     )
 }
 
 private fun restoredRequest(kind: SheetKind, fields: SavedFields): AppPickRequest? = when (kind) {
     SheetKind.APP_TO_OPEN -> AppPickRequest.OpenApp(fields.slot())
     SheetKind.APP_IN_APP -> AppPickRequest.InApp(fields.slot())
-    else -> (restoredCondition(fields.string()) as? Condition.InstantCondition)
-        ?.let { condition -> AppPickRequest.ForCondition(condition, fields.index()) }
+    else -> (restoredCondition(fields.string()) as? Condition.InstantCondition)?.let { condition ->
+        AppPickRequest.ForCondition(condition, fields.index(), AppTarget.valueOf(fields.string()))
+    }
 }
 
 private fun savedSlot(slot: ActionSlot): List<Any> = listOf(slot.item, slot.action)

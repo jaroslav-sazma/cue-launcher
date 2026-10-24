@@ -428,6 +428,14 @@
     <string name="phrase_ha_event">událost „%1$s“</string>
     <string name="phrase_notification_ended">notifikace od %1$s skončila</string>
     <string name="phrase_place_saved">místo zapamatováno</string>
+    <string name="phrase_with_until">%1$s, %2$s</string>
+    <string name="phrase_until_time">do %1$s</string>
+    <string name="phrase_until_time_days">do %1$s (%2$s)</string>
+    <string name="phrase_until_alarm">do budíku</string>
+    <string name="phrase_until_bt_any">do odpojení Bluetooth</string>
+    <string name="phrase_until_bt_device">do odpojení %1$s</string>
+    <string name="phrase_until_notification">do notifikace z %1$s</string>
+    <string name="phrase_until_ha_event">do události „%1$s“</string>
     <string name="days_workdays">prac. den</string>
     <string name="days_weekend">víkend</string>
     <string name="days_separator">", "</string>
@@ -756,11 +764,26 @@
     <string name="builder_duration_60">60 s</string>
     <string name="builder_duration_300">5 min</string>
     <string name="builder_duration_custom">vlastní</string>
+    <string name="builder_duration_event">událost</string>
     <string name="builder_duration_custom_label">Minut</string>
     <string name="builder_duration_note">Další stejná událost odpočet restartuje.</string>
     <string name="builder_duration_note_ha">Další událost s tímto kódem odpočet restartuje. HA může poslat i ukončovací kód.</string>
     <string name="builder_duration_note_alarm">Počítá se od chvíle, kdy budík zazvoní. Odložený budík odpočet restartuje.</string>
     <string name="builder_duration_note_place">Jak dlouho si místo pamatovat. Zavřením dlaždice se zapomene dřív a uložení dalšího místa odpočet restartuje.</string>
+    <string name="builder_until_section">Skončí, když</string>
+    <string name="builder_until_notification">Přijde notifikace</string>
+    <string name="builder_until_time">Nastane zvolený čas</string>
+    <string name="builder_until_alarm">Zazvoní budík</string>
+    <string name="builder_until_bt">Odpojí se zařízení Bluetooth</string>
+    <string name="builder_until_ha">Přijde událost z Home Assistantu</string>
+    <string name="builder_until_notification_package">Ze které aplikace přijde notifikace, jež dlaždici ukončí</string>
+    <string name="builder_until_time_note">Dlaždice skončí, jakmile tento čas poprvé nastane v některý z vybraných dnů.</string>
+    <string name="builder_until_repeats">Každá taková událost dlaždici zároveň ukazuje, takže když přijde, spustí ji nanovo, místo aby ji ukončila.</string>
+    <string name="builder_until_cap">Nejpozději po</string>
+    <string name="builder_until_cap_none">Bez limitu</string>
+    <string name="builder_until_cap_hours">%1$d h</string>
+    <string name="builder_until_cap_minutes">%1$s min</string>
+    <string name="builder_until_note">Dlaždice zůstane, dokud událost nepřijde, a zavřít ji můžeš kdykoli. Limit ji ukončí i tak, kdyby událost proklouzla bez povšimnutí — třeba notifikace, která přišla a zase zmizela, zatímco Cue: zrovna neposlouchal.</string>
 
     <string name="builder_error_wifi_ssid">Vyber síť, na kterou má podmínka platit.</string>
     <string name="builder_error_ha_code">Zadej párovací kód — bez něj se událost nemá na co navázat.</string>
@@ -776,6 +799,10 @@
     <string name="builder_error_time">Čas zadej ve tvaru 18:00.</string>
     <string name="builder_error_days">Vyber aspoň jeden den.</string>
     <string name="builder_error_duration">Dobu trvání zadej jako kladný počet minut.</string>
+    <string name="builder_error_until_package">Vyber aplikaci, jejíž notifikace dlaždici ukončí.</string>
+    <string name="builder_error_until_code">Zadej párovací kód události, která dlaždici ukončí.</string>
+    <string name="builder_error_until_time">Čas konce zadej ve tvaru 18:00.</string>
+    <string name="builder_error_until_days">Vyber aspoň jeden den, kdy může dlaždice skončit.</string>
 
     <string name="live_state_holds">✓ %1$s Podmínka teď platí.</string>
     <string name="live_state_fails">✗ %1$s Podmínka by teď neplatila.</string>
@@ -1092,6 +1119,7 @@
     <string name="defect_pinned_position">Dlaždici %2$s nejde připnout na %1$d. pozici.</string>
     <string name="defect_multiple_instants">Okamžiková podmínka smí být nejvýš jedna (jsou %1$d).</string>
     <string name="defect_duration_on_state">durationSec patří jen k okamžikové podmínce, ne k %1$s.</string>
+    <string name="defect_until_on_state">until patří jen k okamžikové podmínce, ne k %1$s.</string>
     <string name="defect_invalid_duration">durationSec musí být kladné (je %1$d).</string>
     <string name="defect_layout_size">Rozvržení %1$s nepatří k velikosti %2$s.</string>
     <string name="defect_item_count">Rozvržení %1$s čeká %2$d položek, má %3$d.</string>

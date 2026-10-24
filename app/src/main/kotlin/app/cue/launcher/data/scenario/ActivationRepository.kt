@@ -24,5 +24,7 @@ class ActivationRepository(private val dao: ActivationDao) : ActivationStore {
 
     override suspend fun deactivate(scenarioId: String): Boolean = dao.deleteById(scenarioId) > 0
 
+    override suspend fun deactivateIfUnchanged(activation: Activation): Boolean = dao.deleteIfUnchanged(activation)
+
     override suspend fun pruneExpired(now: Long): Int = dao.deleteExpired(now)
 }

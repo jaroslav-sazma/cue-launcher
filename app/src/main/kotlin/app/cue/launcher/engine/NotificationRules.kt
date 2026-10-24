@@ -1,6 +1,7 @@
 package app.cue.launcher.engine
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.ExtractRule
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.NotificationReply
@@ -14,7 +15,8 @@ import app.cue.launcher.data.scenario.TriggerPayload
 fun usesNotificationListener(scenarios: List<Scenario>): Boolean = scenarios.any { scenario ->
     scenario.conditions.any {
         it is Condition.NotificationFrom || it is Condition.NotificationEnded || it is Condition.MediaPlaying
-    } || (scenario.content as? TileContent.LauncherWidget)?.widget == LauncherWidgetType.MEDIA
+    } || scenario.instantConditions.any { it.until is EndEvent.Notification } ||
+        (scenario.content as? TileContent.LauncherWidget)?.widget == LauncherWidgetType.MEDIA
 }
 
 const val NOTIFICATION_VALUE_NAMESPACE = "notif"

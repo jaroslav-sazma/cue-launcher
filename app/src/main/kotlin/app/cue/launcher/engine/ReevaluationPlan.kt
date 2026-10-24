@@ -24,9 +24,9 @@ fun reevaluationPlan(
         val running = activations.firstOrNull { it.scenarioId == scenario.id }
         when (stateVerdict(scenario, running, state)) {
 
-            // A running activation with an expiry is re-activated to drop it: under ANY a state
-            // condition has taken over from the event, and it must outlast the event's countdown.
-            StateVerdict.ACTIVATE -> if (running == null || running.expiresAt != null) activate += scenario
+            // A running activation an event carries is re-activated to drop its expiry and its end
+            // event: under ANY a state condition has taken over, and it must outlast the event.
+            StateVerdict.ACTIVATE -> if (running == null || running.isEventHeld) activate += scenario
             StateVerdict.KEEP -> Unit
             StateVerdict.DEACTIVATE -> if (running != null) deactivate += scenario.id
         }
@@ -48,7 +48,7 @@ private fun stateVerdict(scenario: Scenario, running: Activation?, state: System
             gate == ConditionOutcome.HOLDS -> StateVerdict.ACTIVATE
 
             // No state condition holds, so only an event can still be carrying the scenario.
-            running?.expiresAt != null -> StateVerdict.KEEP
+            running?.isEventHeld == true -> StateVerdict.KEEP
             else -> StateVerdict.DEACTIVATE
         }
 

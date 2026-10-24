@@ -35,13 +35,18 @@ internal fun HaEventForm(
     onChange: (Condition.HaEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    HaCodeFields(code = condition.code, onChange = { onChange(condition.copy(code = it)) }, modifier = modifier)
+}
+
+@Composable
+internal fun HaCodeFields(code: String, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Tokens.Scenarios.rowGap),
     ) {
         OutlinedTextField(
-            value = condition.code,
-            onValueChange = { onChange(condition.copy(code = it.take(HA_CODE_MAX_LENGTH))) },
+            value = code,
+            onValueChange = { onChange(it.take(HA_CODE_MAX_LENGTH)) },
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Tokens.Settings.surfacePadding),
@@ -64,32 +69,45 @@ internal fun NotificationForm(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Tokens.Scenarios.rowGap),
     ) {
-        TonalRow(onClick = onPickApp) {
-            RowText(
-                title = condition.packageName.ifBlank {
-                    stringResource(R.string.builder_notification_pick_app)
-                },
-                modifier = Modifier.weight(1f),
-                detail = stringResource(R.string.builder_notification_package),
-            )
-            GlyphIcon(
+        WatchedAppRow(packageName = condition.packageName, onPickApp = onPickApp)
+        Note(text = stringResource(R.string.builder_notification_package_note))
+        ContainsField(value = condition.contains, onChange = { onChange(condition.copy(contains = it)) })
+        NotificationExtractSection(condition = condition, access = access, onChange = onChange)
+    }
+}
+
+@Composable
+internal fun WatchedAppRow(
+    packageName: String,
+    onPickApp: (() -> Unit)?,
+    modifier: Modifier = Modifier,
+    @StringRes detail: Int = R.string.builder_notification_package,
+) {
+    TonalRow(onClick = onPickApp, modifier = modifier) {
+        RowText(
+            title = packageName.ifBlank { stringResource(R.string.builder_notification_pick_app) },
+            modifier = Modifier.weight(1f),
+            detail = stringResource(detail),
+        )
+        GlyphIcon(
             name = GLYPH_CHEVRON,
             size = Tokens.Settings.glyph,
             tint = MaterialTheme.colorScheme.outline,
         )
-        }
-        Note(text = stringResource(R.string.builder_notification_package_note))
-        OutlinedTextField(
-            value = condition.contains.orEmpty(),
-            onValueChange = { onChange(condition.copy(contains = it)) },
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Tokens.Settings.surfacePadding),
-            label = { Text(text = stringResource(R.string.builder_notification_contains)) },
-            singleLine = true,
-        )
-        NotificationExtractSection(condition = condition, access = access, onChange = onChange)
     }
+}
+
+@Composable
+internal fun ContainsField(value: String?, onChange: (String) -> Unit, modifier: Modifier = Modifier) {
+    OutlinedTextField(
+        value = value.orEmpty(),
+        onValueChange = onChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = Tokens.Settings.surfacePadding),
+        label = { Text(text = stringResource(R.string.builder_notification_contains)) },
+        singleLine = true,
+    )
 }
 
 @Composable
@@ -103,20 +121,7 @@ internal fun NotificationEndedForm(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(Tokens.Scenarios.rowGap),
     ) {
-        TonalRow(onClick = onPickApp) {
-            RowText(
-                title = condition.packageName.ifBlank {
-                    stringResource(R.string.builder_notification_pick_app)
-                },
-                modifier = Modifier.weight(1f),
-                detail = stringResource(R.string.builder_notification_package),
-            )
-            GlyphIcon(
-                name = GLYPH_CHEVRON,
-                size = Tokens.Settings.glyph,
-                tint = MaterialTheme.colorScheme.outline,
-            )
-        }
+        WatchedAppRow(packageName = condition.packageName, onPickApp = onPickApp)
         val ongoingLabel = stringResource(R.string.builder_notification_ended_ongoing)
         TonalRow(onClick = { onChange(condition.copy(ongoing = !condition.ongoing)) }) {
             RowText(
@@ -159,11 +164,11 @@ private val MIN_LASTED_CHOICES: List<Int?> = listOf(null, 60, 120, 300)
 
 @Composable
 internal fun DurationSection(
-    choice: DurationChoice,
-    custom: String,
-    @StringRes note: Int,
-    onChoice: (DurationChoice) -> Unit,
-    onCustom: (String) -> Unit,
+    condition: Condition,
+    ending: EndingDraft,
+    permissionTick: Int,
+    onPickEndApp: (() -> Unit)?,
+    onChange: (EndingDraft) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -175,24 +180,38 @@ internal fun DurationSection(
             options = DurationChoice.entries.map { entry ->
                 ConnectedChoice(
                     label = durationChipLabel(entry),
-                    selected = entry == choice,
-                    onSelect = { onChoice(entry) },
+                    selected = entry == ending.choice,
+                    onSelect = { onChange(ending.copy(choice = entry)) },
                 )
             },
         )
-        if (choice == DurationChoice.CUSTOM) {
-            OutlinedTextField(
-                value = custom,
-                onValueChange = onCustom,
-                modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = Tokens.Settings.surfacePadding),
-                label = { Text(text = stringResource(R.string.builder_duration_custom_label)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                singleLine = true,
+        when (ending.choice) {
+            DurationChoice.EVENT -> EndEventSection(
+                condition = condition,
+                end = ending.end,
+                capSec = ending.capSec,
+                permissionTick = permissionTick,
+                onPickApp = onPickEndApp,
+                onEnd = { onChange(ending.copy(end = it)) },
+                onCap = { onChange(ending.copy(capSec = it)) },
             )
+
+            DurationChoice.CUSTOM -> {
+                OutlinedTextField(
+                    value = ending.customMinutes,
+                    onValueChange = { onChange(ending.copy(customMinutes = it)) },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Tokens.Settings.surfacePadding),
+                    label = { Text(text = stringResource(R.string.builder_duration_custom_label)) },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
+                )
+                Note(text = stringResource(durationNote(condition)))
+            }
+
+            else -> Note(text = stringResource(durationNote(condition)))
         }
-        Note(text = stringResource(note))
     }
 }
 
@@ -203,4 +222,3 @@ internal fun durationNote(condition: Condition): Int = when (condition) {
     is Condition.PlaceSaved -> R.string.builder_duration_note_place
     else -> R.string.builder_duration_note
 }
-

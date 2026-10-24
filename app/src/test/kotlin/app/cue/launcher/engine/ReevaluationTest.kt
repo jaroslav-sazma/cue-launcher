@@ -3,7 +3,9 @@ package app.cue.launcher.engine
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionMatch
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
+import app.cue.launcher.data.scenario.TriggerPayload
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -15,6 +17,9 @@ class ReevaluationTest {
 
     private fun expiring(id: String, at: Long = 10_000L): List<Activation> =
         listOf(Activation(scenarioId = id, since = 0L, expiresAt = at))
+
+    private fun waiting(id: String): List<Activation> =
+        listOf(Activation(scenarioId = id, since = 0L, payload = TriggerPayload(until = EndEvent.Alarm)))
 
     @Test
     fun `under any one holding condition is enough to activate`() {
@@ -63,6 +68,45 @@ class ReevaluationTest {
 
         assertEquals(listOf(scenario), plan.activate)
         assertTrue(plan.deactivate.isEmpty())
+    }
+
+    @Test
+    fun `under any an activation waiting for its end event outlives a state that does not hold`() {
+        val scenario = scenario(
+            "or",
+            conditions = listOf(Condition.Charging(), Condition.HaEvent(code = "zvonek", until = EndEvent.Alarm)),
+        ).copy(match = ConditionMatch.ANY)
+
+        val plan = reevaluationPlan(listOf(scenario), waiting("or"), SystemState(charging = false))
+
+        assertTrue(plan.isEmpty)
+    }
+
+    @Test
+    fun `under any a state taking over re-activates an activation waiting for its end event`() {
+        val scenario = scenario(
+            "or",
+            conditions = listOf(Condition.Charging(), Condition.HaEvent(code = "zvonek", until = EndEvent.Alarm)),
+        ).copy(match = ConditionMatch.ANY)
+
+        val plan = reevaluationPlan(listOf(scenario), waiting("or"), SystemState(charging = true))
+
+        assertEquals(listOf(scenario), plan.activate)
+        assertTrue(plan.deactivate.isEmpty())
+    }
+
+    @Test
+    fun `an activation waiting for its end event under all is kept while its gate holds`() {
+        val scenario = scenario(
+            "and",
+            conditions = listOf(Condition.Charging(), Condition.HaEvent(code = "zvonek", until = EndEvent.Alarm)),
+        )
+
+        assertTrue(reevaluationPlan(listOf(scenario), waiting("and"), SystemState(charging = true)).isEmpty)
+        assertEquals(
+            listOf("and"),
+            reevaluationPlan(listOf(scenario), waiting("and"), SystemState(charging = false)).deactivate,
+        )
     }
 
     @Test

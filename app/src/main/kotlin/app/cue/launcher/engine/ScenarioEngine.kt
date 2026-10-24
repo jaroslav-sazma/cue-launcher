@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import java.time.Instant
 
 @SingleIn(AppScope::class)
 @Inject
@@ -43,14 +44,19 @@ class ScenarioEngine(
         trigger: Condition.InstantCondition? = null,
         firedAt: Long? = null,
     ): Activation? {
-        val previous = activations.activation(scenario.id)
-        val now = firedAt ?: clock.nowMillis()
-        val activation = activationOf(scenario, now, previous, payload, trigger) ?: return null
+        val now = clock.nowMillis()
+        // An expired row the prune has not reached yet is no previous one: the tile starts afresh.
+        val previous = activations.activation(scenario.id)?.takeUnless { it.isExpired(now) }
+        val at = Instant.ofEpochMilli(firedAt ?: now).atZone(clock.zone())
+        val activation = activationOf(scenario, at, previous, payload, trigger) ?: return null
         activations.activate(activation)
         return activation
     }
 
     suspend fun deactivate(scenarioId: String): Boolean = activations.deactivate(scenarioId)
+
+    suspend fun deactivateIfUnchanged(activation: Activation): Boolean =
+        activations.deactivateIfUnchanged(activation)
 
     suspend fun pruneExpired(): Int = activations.pruneExpired(clock.nowMillis())
 

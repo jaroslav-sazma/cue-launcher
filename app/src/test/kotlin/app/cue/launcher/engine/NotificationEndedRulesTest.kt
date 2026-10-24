@@ -87,9 +87,9 @@ class NotificationEndedRulesTest {
     fun `the end of a notification binds the listener and watches its app`() {
         val parking = scenario("parking", conditions = listOf(NAVIGATION_ENDED))
 
-        assertTrue(needsNotificationPosts(listOf(parking)))
-        assertEquals(setOf(MAPS), notificationPackages(listOf(parking)))
-        assertFalse(needsNotificationPosts(listOf(parking.copy(enabled = false))))
+        assertTrue(needsNotificationPosts(listOf(parking), emptyList()))
+        assertEquals(setOf(MAPS), notificationPackages(listOf(parking), emptyList()))
+        assertFalse(needsNotificationPosts(listOf(parking.copy(enabled = false)), emptyList()))
         assertTrue(usesNotificationListener(listOf(parking)))
     }
 }

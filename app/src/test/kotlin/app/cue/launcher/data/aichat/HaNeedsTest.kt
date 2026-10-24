@@ -1,6 +1,7 @@
 package app.cue.launcher.data.aichat
 
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
@@ -51,6 +52,14 @@ class HaNeedsTest {
         val needs = haNeedsOf(scenario(listOf(Condition.HaEvent(code = "gate"))), haConfigured = false)
 
         assertEquals(HaNeeds(blueprint = true, connection = false), needs)
+    }
+
+    @Test
+    fun `an event that only ends the scenario needs the blueprint too`() {
+        val ending = Condition.Alarm(until = EndEvent.HaEvent(code = "left_home"))
+
+        assertEquals(HaNeeds(blueprint = true, connection = false), haNeedsOf(scenario(listOf(ending)), true))
+        assertFalse(haNeedsOf(scenario(listOf(Condition.Alarm(until = EndEvent.Alarm))), true).any)
     }
 
     @Test

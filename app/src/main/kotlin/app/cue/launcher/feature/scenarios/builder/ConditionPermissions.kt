@@ -16,6 +16,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.feature.scenarios.JitPermission
@@ -32,8 +33,7 @@ import app.cue.launcher.system.locationServicesEnabled
 import app.cue.launcher.system.notifications.notificationListenerEnabled
 
 internal fun conditionRequirements(condition: Condition, access: SystemAccess): List<JitRequirement> = buildList {
-    val usesBluetooth = condition is Condition.BtConnected || condition is Condition.BtDisconnected
-    if (usesBluetooth && !access.bluetoothGranted) add(JitRequirement.Grant(JitPermission.BLUETOOTH))
+    if (usesBluetooth(condition) && !access.bluetoothGranted) add(JitRequirement.Grant(JitPermission.BLUETOOTH))
     if (condition is Condition.Wifi && condition.mode == WifiMode.SSID) {
         if (!access.locationGranted) add(JitRequirement.Grant(JitPermission.LOCATION))
         if (!access.locationEnabled) add(JitRequirement.LocationServices)
@@ -41,13 +41,20 @@ internal fun conditionRequirements(condition: Condition, access: SystemAccess): 
     if (condition is Condition.CalendarEvent && !access.calendarGranted) {
         add(JitRequirement.Grant(JitPermission.CALENDAR))
     }
-    val usesNotificationAccess = condition is Condition.NotificationFrom ||
-        condition is Condition.NotificationEnded ||
-        condition is Condition.MediaPlaying
-    if (usesNotificationAccess && !access.notificationListenerEnabled) {
+    if (usesNotificationAccess(condition) && !access.notificationListenerEnabled) {
         add(JitRequirement.NotificationListener)
     }
 }
+
+// An end event needs what the condition of its type needs.
+private fun usesBluetooth(condition: Condition): Boolean =
+    condition is Condition.BtConnected || condition is Condition.BtDisconnected ||
+        (condition as? Condition.InstantCondition)?.until is EndEvent.BtDisconnected
+
+private fun usesNotificationAccess(condition: Condition): Boolean =
+    condition is Condition.NotificationFrom || condition is Condition.NotificationEnded ||
+        condition is Condition.MediaPlaying ||
+        (condition as? Condition.InstantCondition)?.until is EndEvent.Notification
 
 @Composable
 internal fun conditionRequirementsNow(condition: Condition, tick: Int): List<JitRequirement> {

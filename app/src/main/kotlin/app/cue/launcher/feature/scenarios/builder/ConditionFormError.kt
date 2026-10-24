@@ -3,6 +3,7 @@ package app.cue.launcher.feature.scenarios.builder
 import app.cue.launcher.data.ha.haEntityIdOrNull
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.EXTRACT_MAX_RULES
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.ExtractProblem
 import app.cue.launcher.data.scenario.WEEK_DAYS
 import app.cue.launcher.data.scenario.WifiMode
@@ -11,6 +12,7 @@ import app.cue.launcher.data.scenario.tidyExtractRules
 import app.cue.launcher.data.scenario.tidyHaEntity
 import app.cue.launcher.data.scenario.tidyHaStates
 import app.cue.launcher.data.scenario.tidyPackages
+import app.cue.launcher.data.scenario.withUntil
 import app.cue.launcher.engine.haEventCode
 import app.cue.launcher.feature.scenarios.parseHourMinute
 
@@ -43,6 +45,14 @@ enum class ConditionFormError {
     DAYS,
 
     DURATION,
+
+    END_PACKAGE,
+
+    END_HA_CODE,
+
+    END_TIME,
+
+    END_DAYS,
     ;
 
     companion object {
@@ -83,7 +93,44 @@ fun conditionFormError(condition: Condition): ConditionFormError? = when (condit
     else -> null
 }
 
-fun canonicalCondition(condition: Condition): Condition = when (condition) {
+fun endEventError(end: EndEvent): ConditionFormError? = when (end) {
+    is EndEvent.AtTime -> when {
+        parseTimeOfDay(end.at) == null -> ConditionFormError.END_TIME
+        end.days.none { it in WEEK_DAYS } -> ConditionFormError.END_DAYS
+        else -> null
+    }
+
+    is EndEvent.Notification -> ConditionFormError.END_PACKAGE.takeIf { end.packageName.isBlank() }
+    is EndEvent.HaEvent -> ConditionFormError.END_HA_CODE.takeIf { end.code.isBlank() }
+    EndEvent.Alarm, is EndEvent.BtDisconnected -> null
+}
+
+fun canonicalCondition(condition: Condition): Condition {
+    val canonical = canonicalTrigger(condition)
+    val until = (canonical as? Condition.InstantCondition)?.until
+    return if (canonical is Condition.InstantCondition && until != null) {
+        canonical.withUntil(canonicalEndEvent(until))
+    } else {
+        canonical
+    }
+}
+
+private fun canonicalEndEvent(end: EndEvent): EndEvent = when (end) {
+    is EndEvent.AtTime -> end.copy(
+        at = parseTimeOfDay(end.at) ?: end.at,
+        days = end.days.filter { it in WEEK_DAYS }.distinct().sorted(),
+    )
+
+    is EndEvent.Notification -> end.copy(
+        packageName = end.packageName.trim(),
+        contains = end.contains?.trim()?.ifEmpty { null },
+    )
+
+    is EndEvent.HaEvent -> end.copy(code = haEventCode(end.code).orEmpty())
+    EndEvent.Alarm, is EndEvent.BtDisconnected -> end
+}
+
+private fun canonicalTrigger(condition: Condition): Condition = when (condition) {
     is Condition.TimeWindow -> condition.copy(
         from = parseTimeOfDay(condition.from) ?: condition.from,
         to = parseTimeOfDay(condition.to) ?: condition.to,

@@ -22,7 +22,11 @@ fun conditionSummary(scenario: Scenario): String {
 }
 
 @Composable
-fun conditionsText(conditions: List<Condition>, match: ConditionMatch): String {
+fun conditionsText(
+    conditions: List<Condition>,
+    match: ConditionMatch,
+    phrase: (Condition) -> ConditionPhrase = ::conditionPhrase,
+): String {
     val separator = stringResource(
         if (match == ConditionMatch.ANY) {
             R.string.scenarios_condition_separator_any
@@ -34,7 +38,7 @@ fun conditionsText(conditions: List<Condition>, match: ConditionMatch): String {
     val summary = StringBuilder()
     conditions.forEachIndexed { index, condition ->
         if (index > 0) summary.append(separator)
-        summary.append(conditionPhraseText(conditionPhrase(condition)))
+        summary.append(conditionPhraseText(phrase(condition)))
     }
     return summary.toString()
 }
@@ -49,7 +53,29 @@ fun conditionPhraseText(phrase: ConditionPhrase): String {
         else -> stringResource(phraseResource(phrase.key), argument.orEmpty(), listText(phrase.states, joiner))
     }
     val days = daysText(phrase.days)
-    return if (days.isEmpty()) base else "$days $base"
+    val trigger = if (days.isEmpty()) base else "$days $base"
+    return phrase.until?.let { stringResource(R.string.phrase_with_until, trigger, endPhraseText(it)) } ?: trigger
+}
+
+@Composable
+private fun endPhraseText(phrase: EndPhrase): String {
+    val days = daysText(phrase.days)
+    return when {
+        phrase.key == EndPhraseKey.TIME && days.isNotEmpty() ->
+            stringResource(R.string.phrase_until_time_days, phrase.argument.orEmpty(), days)
+
+        else -> stringResource(
+            when (phrase.key) {
+                EndPhraseKey.TIME -> R.string.phrase_until_time
+                EndPhraseKey.ALARM -> R.string.phrase_until_alarm
+                EndPhraseKey.BT_ANY -> R.string.phrase_until_bt_any
+                EndPhraseKey.BT_DEVICE -> R.string.phrase_until_bt_device
+                EndPhraseKey.NOTIFICATION -> R.string.phrase_until_notification
+                EndPhraseKey.HA_EVENT -> R.string.phrase_until_ha_event
+            },
+            phrase.argument.orEmpty(),
+        )
+    }
 }
 
 @Composable

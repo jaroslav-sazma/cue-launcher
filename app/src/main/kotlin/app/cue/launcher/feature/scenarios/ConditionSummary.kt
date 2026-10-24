@@ -2,6 +2,7 @@ package app.cue.launcher.feature.scenarios
 
 import app.cue.launcher.data.scenario.ALL_WEEK_DAYS
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.WEEK_DAYS
@@ -17,7 +18,26 @@ data class ConditionPhrase(
     val apps: List<String> = emptyList(),
 
     val states: List<String> = emptyList(),
+
+    val until: EndPhrase? = null,
 )
+
+data class EndPhrase(
+    val key: EndPhraseKey,
+
+    val argument: String? = null,
+
+    val days: DaysPhrase = DaysPhrase.EveryDay,
+)
+
+enum class EndPhraseKey {
+    TIME,
+    ALARM,
+    BT_ANY,
+    BT_DEVICE,
+    NOTIFICATION,
+    HA_EVENT,
+}
 
 enum class PhraseKey {
     TIME_WINDOW,
@@ -80,8 +100,23 @@ sealed interface DaysPhrase {
 fun conditionPhrases(scenario: Scenario): List<ConditionPhrase> =
     scenario.conditions.map(::conditionPhrase)
 
+fun conditionPhrase(condition: Condition): ConditionPhrase =
+    triggerPhrase(condition).copy(until = (condition as? Condition.InstantCondition)?.until?.let(::endPhrase))
+
+fun endPhrase(end: EndEvent): EndPhrase = when (end) {
+    is EndEvent.AtTime -> EndPhrase(EndPhraseKey.TIME, shortTime(end.at), daysPhraseOf(end.days))
+    EndEvent.Alarm -> EndPhrase(EndPhraseKey.ALARM)
+    is EndEvent.BtDisconnected -> when (end.mac) {
+        null -> EndPhrase(EndPhraseKey.BT_ANY)
+        else -> EndPhrase(EndPhraseKey.BT_DEVICE, end.mac)
+    }
+
+    is EndEvent.Notification -> EndPhrase(EndPhraseKey.NOTIFICATION, end.packageName)
+    is EndEvent.HaEvent -> EndPhrase(EndPhraseKey.HA_EVENT, end.code)
+}
+
 @Suppress("CyclomaticComplexMethod")
-fun conditionPhrase(condition: Condition): ConditionPhrase = when (condition) {
+private fun triggerPhrase(condition: Condition): ConditionPhrase = when (condition) {
     is Condition.TimeWindow -> ConditionPhrase(
         key = pick(condition.negate, PhraseKey.TIME_WINDOW, PhraseKey.TIME_WINDOW_NEGATED),
         argument = "${shortTime(condition.from)}–${shortTime(condition.to)}",

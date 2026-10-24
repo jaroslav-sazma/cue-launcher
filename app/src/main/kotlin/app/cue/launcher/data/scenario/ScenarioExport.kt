@@ -28,12 +28,20 @@ private fun portableScenario(scenario: Scenario, keys: PlaceholderKeys): Scenari
     content = portableContent(scenario.content),
 )
 
-private fun portableCondition(condition: Condition, keys: PlaceholderKeys): Condition = when (condition) {
-    is Condition.BtConnected -> condition.copy(mac = portable(condition.mac, PREFIX_BT, keys))
-    is Condition.BtDisconnected -> condition.copy(mac = portable(condition.mac, PREFIX_BT, keys))
+private fun portableCondition(condition: Condition, keys: PlaceholderKeys): Condition {
+    val swapped = when (condition) {
+        is Condition.BtConnected -> condition.copy(mac = portable(condition.mac, PREFIX_BT, keys))
+        is Condition.BtDisconnected -> condition.copy(mac = portable(condition.mac, PREFIX_BT, keys))
 
-    is Condition.Wifi -> condition.copy(ssid = portable(condition.ssid, PREFIX_WIFI, keys))
-    else -> condition
+        is Condition.Wifi -> condition.copy(ssid = portable(condition.ssid, PREFIX_WIFI, keys))
+        else -> condition
+    }
+    val until = (swapped as? Condition.InstantCondition)?.until
+    return if (swapped is Condition.InstantCondition && until is EndEvent.BtDisconnected) {
+        swapped.withUntil(until.copy(mac = portable(until.mac, PREFIX_BT, keys)))
+    } else {
+        swapped
+    }
 }
 
 internal fun portableContent(content: TileContent): TileContent = when (content) {

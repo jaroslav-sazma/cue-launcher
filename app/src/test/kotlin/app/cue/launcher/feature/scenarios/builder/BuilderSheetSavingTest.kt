@@ -3,6 +3,7 @@ package app.cue.launcher.feature.scenarios.builder
 import androidx.compose.runtime.saveable.SaverScope
 import app.cue.launcher.data.layout.ComponentRef
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.system.InstalledApp
 import app.cue.launcher.system.widget.AvailableWidget
 import app.cue.launcher.system.widget.WidgetSizeSpec
@@ -38,6 +39,13 @@ class BuilderSheetSavingTest {
             BuilderSheet.AppPicker(AppPickRequest.InApp(slot)),
             BuilderSheet.AppPicker(AppPickRequest.ForCondition(notification, index = null)),
             BuilderSheet.AppPicker(AppPickRequest.ForCondition(notification, index = 3)),
+            BuilderSheet.AppPicker(
+                AppPickRequest.ForCondition(
+                    notification.copy(until = EndEvent.Notification(packageName = "", contains = "offline")),
+                    index = 1,
+                    target = AppTarget.END_EVENT,
+                ),
+            ),
             BuilderSheet.AppActions(slot, app),
             BuilderSheet.SystemAction(slot),
             BuilderSheet.HaAction(slot),

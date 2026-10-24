@@ -3,12 +3,14 @@ package app.cue.launcher.engine
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionMatch
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TriggerPayload
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.ZoneOffset
 
 class NotificationReconciliationTest {
 
@@ -132,10 +134,179 @@ class NotificationReconciliationTest {
 
     @Test
     fun `only an enabled scenario with a notification condition needs the posts`() {
-        assertTrue(needsNotificationPosts(listOf(scenario("parcel", conditions = listOf(parcel())))))
+        assertTrue(needsNotificationPosts(listOf(scenario("parcel", conditions = listOf(parcel()))), emptyList()))
         val disabled = scenario("parcel", conditions = listOf(parcel())).copy(enabled = false)
-        assertFalse(needsNotificationPosts(listOf(disabled)))
-        assertFalse(needsNotificationPosts(listOf(scenario("music", conditions = listOf(Condition.MediaPlaying())))))
+        assertFalse(needsNotificationPosts(listOf(disabled), emptyList()))
+        val music = scenario("music", conditions = listOf(Condition.MediaPlaying()))
+        assertFalse(needsNotificationPosts(listOf(music), emptyList()))
+    }
+
+    @Test
+    fun `a running activation waiting for a notification needs the posts`() {
+        val washer = scenario("washer", conditions = listOf(Condition.HaEvent(code = "washer", until = DELIVERED)))
+
+        assertTrue(needsNotificationPosts(emptyList(), listOf(waiting(since = 0L))))
+        assertFalse(needsNotificationPosts(listOf(washer), emptyList()))
+        val alarm = Activation("wake", since = 0L, payload = TriggerPayload(until = EndEvent.Alarm))
+        assertFalse(needsNotificationPosts(emptyList(), listOf(alarm)))
+    }
+
+    @Test
+    fun `the packages of end events are watched too`() {
+        val washer = scenario("washer", conditions = listOf(Condition.HaEvent(code = "washer", until = DELIVERED)))
+        val edited = Activation(
+            "old",
+            since = 0L,
+            payload = TriggerPayload(until = EndEvent.Notification(packageName = " Com.Example.Old ")),
+        )
+
+        assertEquals(setOf(PARCEL_APP), notificationPackages(listOf(washer), emptyList()))
+        assertEquals(setOf("com.example.old"), notificationPackages(emptyList(), listOf(edited)))
+        assertEquals(emptySet<String>(), notificationPackages(listOf(washer.copy(enabled = false)), emptyList()))
+    }
+
+    @Test
+    fun `a still posted end notification ends the activation waiting for it`() {
+        val plan = reconcile(
+            listOf(tracking()),
+            activations = listOf(waiting(since = 0L)),
+            active = listOf(post("d", at = 2 * MINUTE, text = "Delivered")),
+        )
+
+        assertEquals(listOf("parcel"), plan.end)
+        assertTrue(plan.fire.isEmpty())
+    }
+
+    @Test
+    fun `an end notification older than the activation ends nothing`() {
+        val plan = reconcile(
+            listOf(tracking()),
+            activations = listOf(waiting(since = 3 * MINUTE)),
+            active = listOf(post("d", at = 2 * MINUTE, text = "Delivered")),
+        )
+
+        assertTrue(plan.end.isEmpty())
+    }
+
+    @Test
+    fun `an end posted before the activation fired again ends nothing`() {
+        val refired = Activation(
+            "parcel",
+            since = 0L,
+            payload = TriggerPayload(until = DELIVERED, firedAt = 3 * MINUTE),
+        )
+
+        val plan = reconcile(
+            listOf(tracking()),
+            activations = listOf(refired),
+            active = listOf(post("d", at = 2 * MINUTE, text = "Delivered")),
+        )
+
+        assertTrue(plan.end.isEmpty())
+        assertTrue(plan.fire.isEmpty())
+    }
+
+    @Test
+    fun `an end posted after the last fire still ends a re-fired activation`() {
+        val refired = Activation(
+            "parcel",
+            since = 0L,
+            payload = TriggerPayload(until = DELIVERED, firedAt = 2 * MINUTE),
+        )
+
+        val plan = reconcile(
+            listOf(tracking()),
+            activations = listOf(refired),
+            active = listOf(post("d", at = 3 * MINUTE, text = "Delivered")),
+            now = 3 * MINUTE,
+        )
+
+        assertEquals(listOf("parcel"), plan.end)
+    }
+
+    @Test
+    fun `a capped replayed firing restarts an activation held by its end alone`() {
+        val capped = scenario(
+            "parcel",
+            conditions = listOf(
+                Condition.NotificationFrom(
+                    packageName = PARCEL_APP,
+                    contains = "on its way",
+                    durationSec = (DURATION / 1000).toInt(),
+                    until = DELIVERED,
+                ),
+            ),
+        )
+
+        val plan = reconcile(
+            listOf(capped),
+            activations = listOf(waiting(since = 0L)),
+            active = listOf(post("w", at = 2 * MINUTE, text = "On its way")),
+        )
+
+        assertEquals(listOf("w"), plan.fire.map { it.notification.key })
+        assertTrue(plan.end.isEmpty())
+    }
+
+    @Test
+    fun `an end posted before a later firing ends the old activation and the firing starts a new one`() {
+        val plan = reconcile(
+            listOf(tracking()),
+            activations = listOf(waiting(since = 0L)),
+            active = listOf(
+                post("d", at = 2 * MINUTE, text = "Delivered"),
+                post("w", at = 3 * MINUTE, text = "On its way"),
+            ),
+        )
+
+        assertEquals(listOf("parcel"), plan.end)
+        assertEquals(listOf("w"), plan.fire.map { it.notification.key })
+    }
+
+    @Test
+    fun `an end posted after the last firing leaves nothing running`() {
+        val posts = listOf(
+            post("w", at = 2 * MINUTE, text = "On its way"),
+            post("d", at = 3 * MINUTE, text = "Delivered"),
+        )
+
+        val running = reconcile(listOf(tracking()), activations = listOf(waiting(since = 0L)), active = posts)
+        val idle = reconcile(listOf(tracking()), active = posts)
+
+        assertEquals(listOf("parcel"), running.end)
+        assertTrue(running.fire.isEmpty())
+        assertTrue(idle.end.isEmpty())
+        assertTrue(idle.fire.isEmpty())
+    }
+
+    @Test
+    fun `a post that both ends and fires its scenario restarts it`() {
+        val every = EndEvent.Notification(packageName = PARCEL_APP)
+        val restarting = scenario(
+            "parcel",
+            conditions = listOf(Condition.NotificationFrom(packageName = PARCEL_APP, until = every)),
+        )
+        val running = Activation("parcel", since = 0L, payload = TriggerPayload(until = every))
+
+        val plan = reconcile(
+            listOf(restarting),
+            activations = listOf(running),
+            active = listOf(post("a", at = 2 * MINUTE)),
+        )
+
+        assertEquals(listOf("parcel"), plan.end)
+        assertEquals(listOf("a"), plan.fire.map { it.notification.key })
+    }
+
+    @Test
+    fun `a replayed firing with an end and no duration fires however old it is`() {
+        val plan = reconcile(
+            listOf(tracking()),
+            active = listOf(post("w", at = 2 * MINUTE, text = "On its way")),
+            now = 2 * MINUTE + 100 * DURATION,
+        )
+
+        assertEquals(listOf("w"), plan.fire.map { it.notification.key })
     }
 
     @Suppress("LongParameterList")
@@ -147,7 +318,12 @@ class NotificationReconciliationTest {
         since: Long = SINCE,
         now: Long = 2 * MINUTE + DURATION / 2,
     ): NotificationReconciliation =
-        notificationReconciliation(scenarios, activations, state, NotificationReplay(active, since, now))
+        notificationReconciliation(
+            scenarios,
+            activations,
+            state,
+            NotificationReplay(active, since, now, ZoneOffset.UTC),
+        )
 
     @Test
     fun `the packages scenarios listen to are collected lower-cased`() {
@@ -158,24 +334,34 @@ class NotificationReconciliationTest {
                 .copy(enabled = false),
         )
 
-        assertEquals(setOf("com.example.parcel"), notificationPackages(scenarios))
+        assertEquals(setOf("com.example.parcel"), notificationPackages(scenarios, emptyList()))
     }
+
+    private fun tracking() = scenario(
+        "parcel",
+        conditions = listOf(
+            Condition.NotificationFrom(packageName = PARCEL_APP, contains = "on its way", until = DELIVERED),
+        ),
+    )
+
+    private fun waiting(since: Long) = Activation("parcel", since = since, payload = TriggerPayload(until = DELIVERED))
 
     private fun fromNotification(key: String) =
         Activation("parcel", since = 0L, expiresAt = HOUR, payload = TriggerPayload(notificationKey = key))
 
     private fun parcel() = Condition.NotificationFrom(packageName = PARCEL_APP, durationSec = (DURATION / 1000).toInt())
 
-    private fun post(key: String, at: Long) = PostedNotification(
+    private fun post(key: String, at: Long, text: String = "Pickup code 1234") = PostedNotification(
         key = key,
         packageName = PARCEL_APP,
         title = "Parcel",
-        text = "Pickup code 1234",
+        text = text,
         postTime = at,
     )
 
     private companion object {
         const val PARCEL_APP = "com.example.parcel"
+        val DELIVERED = EndEvent.Notification(packageName = PARCEL_APP, contains = "delivered")
         const val MINUTE = 60_000L
         const val HOUR = 60 * MINUTE
         const val DURATION = 10 * MINUTE

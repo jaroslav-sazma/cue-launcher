@@ -16,7 +16,8 @@ data class QueueEntry(
 
     val payload: TriggerPayload get() = activation?.payload ?: TriggerPayload.EMPTY
 
-    val isClosable: Boolean get() = activation?.expiresAt != null
+    // Also the way out when an end event never arrives.
+    val isClosable: Boolean get() = activation?.isEventHeld == true
 }
 
 data class SizeClassQueue(

@@ -3,11 +3,14 @@ package app.cue.launcher.engine
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionMatch
+import app.cue.launcher.data.scenario.EndEvent
+import app.cue.launcher.data.scenario.TriggerPayload
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.runTest
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -26,6 +29,7 @@ class AlarmMonitorTest {
         val clock = WallClock { testScheduler.currentTime }
         return AlarmMonitor(
             scenarios = scenarios,
+            activations = activations,
             systemState = system,
             engine = ScenarioEngine(
                 scenarios = scenarios,
@@ -165,6 +169,66 @@ class AlarmMonitorTest {
 
         assertEquals(0, system.measurements)
         assertEquals(TOMORROW, alarmMemory.upcoming)
+    }
+
+    @Test
+    fun `a rung alarm ends an activation waiting for it without any alarm scenario`() = runTest {
+        val monitor = monitor()
+        scenarios.emit(scenario("charging", conditions = listOf(Condition.Charging())))
+        activations.put(Activation("tea", since = 0L, payload = TriggerPayload(until = EndEvent.Alarm)))
+        activations.put(Activation("other", since = 0L, payload = TriggerPayload(until = EndEvent.HaEvent("x"))))
+        alarmMemory.upcoming = ALARM_AT
+        advanceTimeBy(ALARM_AT)
+
+        monitor.onNextAlarm { TOMORROW }
+
+        assertEquals(listOf("other"), runningIds())
+        assertEquals(0, system.measurements)
+    }
+
+    @Test
+    fun `a ring leaves alone an activation that fired again after the ring was read`() = runTest {
+        val monitor = monitor()
+        val waiting = Activation("tea", since = 0L, payload = TriggerPayload(until = EndEvent.Alarm, firedAt = 0L))
+        val refired = waiting.copy(payload = waiting.payload.copy(firedAt = ALARM_AT + 1))
+        activations.put(waiting)
+        activations.afterNextRead = { activations.put(refired) }
+        alarmMemory.upcoming = ALARM_AT
+        advanceTimeBy(ALARM_AT + 1)
+
+        monitor.onNextAlarm { TOMORROW }
+
+        assertEquals(listOf(refired), activations.rows())
+    }
+
+    @Test
+    fun `an alarm removed before it rings ends nothing`() = runTest {
+        val monitor = monitor()
+        activations.put(Activation("tea", since = 0L, payload = TriggerPayload(until = EndEvent.Alarm)))
+        alarmMemory.upcoming = ALARM_AT
+
+        monitor.onNextAlarm { null }
+
+        assertEquals(listOf("tea"), runningIds())
+    }
+
+    @Test
+    fun `an alarm that is its own end restarts the activation on the next ring`() = runTest {
+        val monitor = monitor()
+        scenarios.emit(scenario("wake", conditions = listOf(Condition.Alarm(until = EndEvent.Alarm))))
+        alarmMemory.upcoming = ALARM_AT
+        advanceTimeBy(ALARM_AT)
+        monitor.onNextAlarm { ALARM_AT + SNOOZE }
+        val first = activations.rows().single()
+        assertNull(first.expiresAt)
+
+        advanceTimeBy(SNOOZE)
+        monitor.onNextAlarm { null }
+
+        val restarted = activations.rows().single()
+        assertEquals(ALARM_AT, first.since)
+        assertEquals(ALARM_AT + SNOOZE, restarted.since)
+        assertEquals(EndEvent.Alarm, restarted.payload.until)
     }
 }
 

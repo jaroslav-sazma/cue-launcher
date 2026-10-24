@@ -38,6 +38,8 @@ sealed interface ScenarioDefect {
 
     data class DurationOnStateCondition(val type: String) : ScenarioDefect
 
+    data class UntilOnStateCondition(val type: String) : ScenarioDefect
+
     data class InvalidDuration(val durationSec: Int) : ScenarioDefect
 
     data class LayoutSizeMismatch(val layout: TemplateLayout, val size: TileSize) : ScenarioDefect
@@ -77,6 +79,7 @@ fun validateScenario(scenario: Scenario): List<ScenarioDefect> {
     instants.forEach { instant ->
         val duration = instant.durationSec
         if (duration != null && duration <= 0) defects += ScenarioDefect.InvalidDuration(duration)
+        instant.until?.let { defects += endEventDefects(it) }
     }
 
     scenario.conditions.forEach { defects += validateCondition(it) }
@@ -114,6 +117,20 @@ private fun validateCondition(condition: Condition): List<ScenarioDefect> = when
 
     else -> emptyList()
 }
+
+private fun endEventDefects(event: EndEvent): List<ScenarioDefect> = when (event) {
+    is EndEvent.AtTime -> timeDefects("until.at", event.at) + untilDayDefects(event.days)
+    is EndEvent.Notification -> missingIfBlank("until.package", event.packageName)
+    is EndEvent.HaEvent -> missingIfBlank("until.code", event.code)
+    EndEvent.Alarm, is EndEvent.BtDisconnected -> emptyList()
+}
+
+// A time end with no day would never come; a condition with none simply never fires.
+private fun untilDayDefects(days: List<Int>): List<ScenarioDefect> =
+    if (days.isEmpty()) listOf(ScenarioDefect.MissingField("until.days")) else dayDefects(days)
+
+private fun missingIfBlank(field: String, value: String): List<ScenarioDefect> =
+    if (value.isBlank()) listOf(ScenarioDefect.MissingField(field)) else emptyList()
 
 private fun haStateDefects(condition: Condition.HaState): List<ScenarioDefect> = buildList {
     val entity = condition.entity

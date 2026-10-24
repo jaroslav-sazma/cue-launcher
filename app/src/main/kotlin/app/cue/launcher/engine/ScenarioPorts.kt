@@ -28,5 +28,9 @@ interface ActivationStore {
 
     suspend fun deactivate(scenarioId: String): Boolean
 
+    // For an end judged on an earlier read: a state takeover or a re-fire stored since then has a
+    // different row and is left running.
+    suspend fun deactivateIfUnchanged(activation: Activation): Boolean
+
     suspend fun pruneExpired(now: Long): Int
 }

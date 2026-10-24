@@ -57,8 +57,9 @@ class NotificationListenerLink(private val application: Application) {
     private val lock = Any()
 
     // Followed for the whole process from the moment the home screen is first created, not only
-    // while it is started: a scenario saved just before pressing Home must still be heard. The need
-    // can only change on the launcher's own screens, so the collector waits idle otherwise.
+    // while it is started: a scenario saved just before pressing Home must still be heard. Besides
+    // the launcher's own screens, only a background event that starts or ends a tile waiting for a
+    // notification changes the need, so the collector waits idle otherwise.
     suspend fun followNeed(needed: Flow<Boolean>) {
         needed.distinctUntilChanged().collect { wanted ->
             synchronized(lock) {

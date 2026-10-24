@@ -39,20 +39,21 @@ internal fun ConditionSheetContent(
     modifier: Modifier = Modifier,
     @StringRes denied: Int? = null,
     onBack: (() -> Unit)? = null,
-    onPickApp: ((Condition) -> Unit)? = null,
+    onPickApp: ((Condition, AppTarget) -> Unit)? = null,
     diagnosis: Boolean = false,
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
 ) {
     var condition by remember(initial) { mutableStateOf(initial) }
     val haRead = rememberHaEntityRead(ha, condition)
     val shown = remember(state, haRead) { state.withHaRead(haRead) }
-    val instant = condition as? Condition.InstantCondition
-    var choice by remember(initial) { mutableStateOf(durationChoiceOf(instant?.durationSec)) }
     val separator = DecimalFormatSymbols.getInstance(LocalConfiguration.current.locales[0]).decimalSeparator
-    var custom by remember(initial) { mutableStateOf(customMinutesOf(instant?.durationSec, separator)) }
+    var ending by remember(initial) {
+        mutableStateOf((initial as? Condition.InstantCondition)?.let { endingDraftOf(it, separator) })
+    }
+    // The app picker reopens the sheet from what it is handed, so it gets the ending as edited too.
+    val ended = ending?.let { withEnding(condition, it) } ?: condition
 
-    val error = conditionFormError(condition)
-        ?: instant?.let { durationError(choice, custom) }
+    val error = conditionFormError(condition) ?: ending?.let(::endingError)
 
     SheetFrame(
         header = {
@@ -68,11 +69,7 @@ internal fun ConditionSheetContent(
             ConditionSheetFooter(
                 error = error,
                 confirmLabel = confirmLabel,
-                onConfirm = {
-                    onConfirm(
-                        canonicalCondition(withDuration(condition, durationSecondsOf(choice, custom))),
-                    )
-                },
+                onConfirm = { onConfirm(canonicalCondition(ended)) },
             )
         },
     ) {
@@ -81,28 +78,28 @@ internal fun ConditionSheetContent(
             state = shown,
             permissionTick = permissions.tick,
 
-            onPickApp = onPickApp?.let { pick -> { pick(condition) } },
+            onPickApp = onPickApp?.let { pick -> { pick(ended, AppTarget.CONDITION) } },
             onChange = { condition = it },
             onResolve = permissions.resolve,
             ha = ha,
             haRead = haRead,
         )
-        if (instant != null) {
+        ending?.let { current ->
             DurationSection(
-                choice = choice,
-                custom = custom,
-                note = durationNote(condition),
-                onChoice = { choice = it },
-                onCustom = { custom = it },
+                condition = condition,
+                ending = current,
+                permissionTick = permissions.tick,
+                onPickEndApp = onPickApp?.let { pick -> { pick(ended, AppTarget.END_EVENT) } },
+                onChange = { ending = it },
             )
         }
 
-        MissingRequirement(condition = condition, permissions = permissions)
+        MissingRequirement(condition = ended, permissions = permissions)
         denied?.let { Message(text = stringResource(it)) }
         LiveStateLine(condition = condition, state = shown, diagnosis = diagnosis)
 
         if (diagnosis) {
-            PermissionStatusLines(condition = condition, tick = permissions.tick)
+            PermissionStatusLines(condition = ended, tick = permissions.tick)
         }
     }
 }

@@ -2,6 +2,7 @@ package app.cue.launcher.system
 
 import android.app.Application
 import app.cue.launcher.data.settings.SettingsRepository
+import app.cue.launcher.engine.ActivationStore
 import app.cue.launcher.engine.AlarmMonitor
 import app.cue.launcher.engine.ConditionMonitor
 import app.cue.launcher.engine.ScenarioEngine
@@ -45,13 +46,14 @@ class ForegroundSession(
     private val conditionMonitor: ConditionMonitor,
     private val notificationListener: NotificationListenerLink,
     private val scenarios: ScenarioSource,
+    private val activations: ActivationStore,
     private val settings: SettingsRepository,
 ) {
 
     private val prepared = AtomicBoolean(false)
 
-    // These hold state for the home screen and then wait on flows only the launcher's own screens
-    // write to, so once started they cost nothing for the rest of the process.
+    // These hold state for the home screen and then wait on flows only the launcher itself writes
+    // to, so once started they cost nothing for the rest of the process.
     fun prepare() {
         if (!prepared.compareAndSet(false, true)) return
         iconPacks.start(processScope)
@@ -92,7 +94,7 @@ class ForegroundSession(
     private suspend fun followNotificationNeed() {
         notificationListener.followNeed(
             combine(
-                scenarios.observeScenarios().map(::needsNotificationPosts),
+                combine(scenarios.observeScenarios(), activations.observeActivations(), ::needsNotificationPosts),
                 settings.settings.map { it.appearance.notificationBadges },
             ) { scenariosNeedPosts, badgesOn -> scenariosNeedPosts || badgesOn },
         )

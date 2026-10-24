@@ -4,17 +4,24 @@ import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import android.util.Log
 import app.cue.launcher.CueApplication
+import app.cue.launcher.data.scenario.Activation
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.di.AppGraph
 import app.cue.launcher.engine.NotificationSnapshot
 import app.cue.launcher.engine.PostedNotification
+import app.cue.launcher.engine.endEventMatches
+import app.cue.launcher.engine.endedByNotification
+import app.cue.launcher.engine.endsBy
 import app.cue.launcher.engine.following
+import app.cue.launcher.engine.notificationEnd
 import app.cue.launcher.engine.notificationEndCandidates
 import app.cue.launcher.engine.notificationListeners
 import app.cue.launcher.engine.notificationPackages
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
@@ -81,7 +88,7 @@ class CueNotificationListener : NotificationListenerService() {
     private sealed interface Event {
         class Posted(val sbn: StatusBarNotification) : Event
         class Removed(val sbn: StatusBarNotification, val reason: Int, val at: Long) : Event
-        class Watch(val scenarios: List<Scenario>) : Event
+        class Watch(val scenarios: List<Scenario>, val waiting: List<Activation>) : Event
     }
 
     // One per binding. The callbacks only queue what happened, and a single coroutine works through
@@ -107,7 +114,13 @@ class CueNotificationListener : NotificationListenerService() {
 
         fun open(since: Long, after: Job?) {
             watchers = graph.processScope.launch {
-                launch { graph.scenarioRepository.observeScenarios().collect { events.trySend(Event.Watch(it)) } }
+                launch {
+                    val waiting = graph.activationRepository.observeActivations()
+                        .map { running -> running.filter { it.notificationEnd != null } }
+                        .distinctUntilChanged()
+                    combine(graph.scenarioRepository.observeScenarios(), waiting, Event::Watch)
+                        .collect { events.trySend(it) }
+                }
                 graph.settingsRepository.settings
                     .map { it.appearance.notificationBadges }
                     .distinctUntilChanged()
@@ -121,7 +134,7 @@ class CueNotificationListener : NotificationListenerService() {
                         when (event) {
                             is Event.Posted -> posted(event.sbn)
                             is Event.Removed -> removed(event.sbn, event.reason, event.at)
-                            is Event.Watch -> watch(event.scenarios)
+                            is Event.Watch -> watch(event.scenarios, event.waiting)
                         }
                     }
                 }
@@ -166,11 +179,9 @@ class CueNotificationListener : NotificationListenerService() {
             if (known?.listensTo(sbn.packageName) == false) return
             val notification = postedNotificationOf(sbn).following(posted[sbn.key])
             val seen = posted.put(sbn.key, notification) != null
-            val routing = notificationRouting(known?.scenarios) { scenarios ->
-                notificationListeners(scenarios, notification).isNotEmpty()
-            }
+            val routing = notificationRouting(known?.scenarios) { known?.wants(notification) == true }
             if (routing == NotificationRouting.MATCHED && !seen) {
-                Log.i(NOTIFICATION_LISTENER_TAG, "Notification from ${notification.packageName} goes to a trigger")
+                Log.i(NOTIFICATION_LISTENER_TAG, "Notification from ${notification.packageName} goes to a scenario")
             }
             if (routing != NotificationRouting.IGNORED) {
                 val forTile = notification.withTileData(this@CueNotificationListener, sbn)
@@ -199,9 +210,9 @@ class CueNotificationListener : NotificationListenerService() {
 
         // Apps nobody listens to any more leave the index; an app a scenario starts listening to is
         // read in, for the notifications of it that are already posted.
-        private fun watch(scenarios: List<Scenario>) {
+        private fun watch(scenarios: List<Scenario>, waiting: List<Activation>) {
             val previous = watched?.packages
-            val next = Watched(scenarios, notificationPackages(scenarios))
+            val next = Watched(scenarios, waiting)
             watched = next
             posted.values.removeAll { !next.listensTo(it.packageName) }
             val added = if (previous == null) emptySet() else next.packages - previous
@@ -212,9 +223,24 @@ class CueNotificationListener : NotificationListenerService() {
         }
     }
 
-    private class Watched(val scenarios: List<Scenario>, val packages: Set<String>) {
-        fun listensTo(packageName: String): Boolean = packageName.lowercase() in packages
-    }
+}
+
+internal class Watched(val scenarios: List<Scenario>, private val waiting: List<Activation>) {
+
+    val packages: Set<String> = notificationPackages(scenarios, waiting)
+
+    fun listensTo(packageName: String): Boolean = packageName.lowercase() in packages
+
+    fun wants(notification: PostedNotification): Boolean =
+        notificationListeners(scenarios, notification).isNotEmpty() || ends(notification)
+
+    // The definitions count as well: the activation a post is to end may have been fired a
+    // moment ago and not reached this snapshot yet. The monitor reads the running ones itself.
+    private fun ends(notification: PostedNotification): Boolean =
+        endedByNotification(waiting, notification).isNotEmpty() ||
+            scenarios.any { scenario ->
+                scenario.endsBy { it is EndEvent.Notification && endEventMatches(it, notification) }
+            }
 }
 
 internal enum class NotificationRouting { MATCHED, UNJUDGED, IGNORED }

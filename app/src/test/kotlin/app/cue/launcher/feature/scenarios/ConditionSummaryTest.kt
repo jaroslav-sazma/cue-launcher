@@ -2,11 +2,13 @@ package app.cue.launcher.feature.scenarios
 
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionType
+import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.data.scenario.withNegate
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNotEquals
+import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
 
@@ -19,6 +21,24 @@ class ConditionSummaryTest {
         assertEquals(PhraseKey.TIME_WINDOW, phrase.key)
         assertEquals("18–23", phrase.argument)
         assertEquals(DaysPhrase.EveryDay, phrase.days)
+    }
+
+    @Test
+    fun `an instant condition carries its end event and nothing else does`() {
+        val watch = conditionPhrase(
+            Condition.NotificationFrom(
+                packageName = "com.watch",
+                until = EndEvent.Notification(packageName = "com.watch", contains = "offline"),
+            ),
+        )
+        val evening = conditionPhrase(Condition.HaEvent(code = "door", until = EndEvent.AtTime("17:00", listOf(6, 7))))
+
+        assertEquals(PhraseKey.NOTIFICATION, watch.key)
+        assertEquals(EndPhrase(EndPhraseKey.NOTIFICATION, "com.watch"), watch.until)
+        assertEquals(EndPhrase(EndPhraseKey.TIME, "17", DaysPhrase.Weekend), evening.until)
+        assertEquals(EndPhrase(EndPhraseKey.BT_DEVICE, "AA:BB"), endPhrase(EndEvent.BtDisconnected("AA:BB")))
+        assertEquals(EndPhrase(EndPhraseKey.BT_ANY), endPhrase(EndEvent.BtDisconnected()))
+        assertNull(conditionPhrase(Condition.Alarm()).until)
     }
 
     @Test
