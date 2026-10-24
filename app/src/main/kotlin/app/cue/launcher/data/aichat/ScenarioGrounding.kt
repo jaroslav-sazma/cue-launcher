@@ -6,6 +6,7 @@ import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TileContent
+import app.cue.launcher.data.scenario.actionApp
 import app.cue.launcher.data.scenario.hasPlaceholder
 import java.util.Locale
 
@@ -151,8 +152,11 @@ fun groundingProblems(scenario: Scenario, inventory: InventorySnapshot): List<Gr
     }.distinct()
 }
 
+// What an app offers is read in the personal profile only, so a work action has nothing to be
+// checked against and is left to fail on its own tap if it is wrong.
 private fun unknownAppActions(actions: List<TapAction>, inventory: InventorySnapshot): List<GroundingProblem> =
     actions.mapNotNull { action ->
+        if (action.actionApp?.profile != null) return@mapNotNull null
         val packageName = action.inAppPackage() ?: return@mapNotNull null
         val offered = inventory.appActions[packageName] ?: return@mapNotNull null
         val target = action.inAppTarget()

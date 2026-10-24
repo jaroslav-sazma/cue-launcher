@@ -1,11 +1,13 @@
 package app.cue.launcher.feature.home
 
+import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
+import app.cue.launcher.data.scenario.actionApp
 import app.cue.launcher.designsystem.glyph.mdiGlyphName
 
 val TileContent.Template.wholeTileActions: List<TapAction>
@@ -19,8 +21,8 @@ fun Scenario.tileLabel(): String = templateItem()?.label ?: name
 fun templateGlyphName(item: TemplateItem): String? =
     mdiGlyphName(item.icon) ?: item.primaryAction?.let(::derivedGlyphName)
 
-fun templateIconPackage(item: TemplateItem): String? =
-    if (mdiGlyphName(item.icon) != null) null else item.primaryAction?.iconPackage
+fun templateIconApp(item: TemplateItem): ActionApp? =
+    if (mdiGlyphName(item.icon) != null) null else item.primaryAction?.actionApp
 
 val SYSTEM_ACTION_GLYPHS: Map<SystemActionType, String> = mapOf(
     SystemActionType.RINGER_SILENT to "volume-off",
@@ -51,15 +53,3 @@ private fun derivedGlyphName(action: TapAction): String? = when (action) {
     is TapAction.DeepLink,
     -> null
 }
-
-private val TapAction.iconPackage: String?
-    get() = when (this) {
-        is TapAction.App -> packageName
-        is TapAction.Shortcut -> packageName
-        is TapAction.ActivityLaunch -> packageName
-        is TapAction.Capability -> packageName
-        is TapAction.DeepLink,
-        is TapAction.SystemAction,
-        is TapAction.HaAction,
-        -> null
-    }

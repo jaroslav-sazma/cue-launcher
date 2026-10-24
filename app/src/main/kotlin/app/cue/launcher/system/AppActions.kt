@@ -30,6 +30,10 @@ data class AppActionEntry(
 
 data class AppActionGroup(val kind: AppActionKind, val entries: List<AppActionEntry>)
 
+enum class AppActionSource { OWN, WORK, WORK_PAUSED }
+
+data class AppActions(val source: AppActionSource, val entries: List<AppActionEntry>)
+
 fun appActionGroups(entries: List<AppActionEntry>): List<AppActionGroup> =
     AppActionKind.entries.mapNotNull { kind ->
         entries.filter { it.kind == kind }

@@ -1,6 +1,7 @@
 package app.cue.launcher.system
 
 import app.cue.launcher.data.ha.HaProbe
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
@@ -21,6 +22,30 @@ class ActionRoutingTest {
         val route = actionRouteOf(TapAction.App(packageName = "com.spotify.music"))
 
         assertEquals(ActionRoute.MainActivity("com.spotify.music"), route)
+    }
+
+    @Test
+    fun `an action of a work app keeps its profile on the way to the launch`() {
+        val outlook = "com.microsoft.office.outlook"
+
+        assertEquals(
+            ActionRoute.MainActivity(outlook, AppProfile.WORK),
+            actionRouteOf(TapAction.App(packageName = outlook, profile = AppProfile.WORK)),
+        )
+        assertEquals(
+            ActionRoute.Shortcut(outlook, "compose", AppProfile.WORK),
+            actionRouteOf(TapAction.Shortcut(packageName = outlook, shortcutId = "compose", profile = AppProfile.WORK)),
+        )
+        assertEquals(
+            ActionRoute.Capability(outlook, "actions.intent.CREATE_MESSAGE", AppProfile.WORK),
+            actionRouteOf(
+                TapAction.Capability(
+                    packageName = outlook,
+                    capability = "actions.intent.CREATE_MESSAGE",
+                    profile = AppProfile.WORK,
+                ),
+            ),
+        )
     }
 
     @Test

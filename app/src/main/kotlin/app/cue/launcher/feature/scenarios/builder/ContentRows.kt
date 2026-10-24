@@ -117,7 +117,7 @@ internal fun IconRow(
     TonalRow(onClick = onClick, modifier = modifier) {
         ScenarioItemIcon(
             glyph = previewGlyphName(item),
-            iconPackage = previewIconPackage(item),
+            iconApp = previewIconApp(item),
             launcherApps = launcherApps,
         )
         RowText(

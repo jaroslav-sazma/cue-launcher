@@ -7,6 +7,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import app.cue.launcher.data.scenario.TapAction
@@ -16,6 +17,7 @@ import app.cue.launcher.designsystem.rememberExpandedSheetState
 import app.cue.launcher.system.AppActionsRepository
 import app.cue.launcher.system.InstalledApp
 import app.cue.launcher.system.LauncherAppsRepository
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,6 +67,7 @@ private fun ActionPickerContent(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val scope = rememberCoroutineScope()
     when (val current = level) {
         ActionPickerLevel.Choice -> ActionChoiceSheetContent(
             onPick = { choice -> onLevel(levelFor(choice)) },
@@ -74,11 +77,12 @@ private fun ActionPickerContent(
 
         is ActionPickerLevel.Apps -> AppPickerSheetContent(
             launcherApps = launcherApps,
+            withWorkApps = true,
             onPick = { app ->
                 if (current.inApp) {
                     onLevel(ActionPickerLevel.AppActions(app))
                 } else {
-                    onConfirm(TapAction.App(app.component.packageName))
+                    scope.launch { onConfirm(launcherApps.openAction(app)) }
                 }
             },
             onClose = onDismiss,

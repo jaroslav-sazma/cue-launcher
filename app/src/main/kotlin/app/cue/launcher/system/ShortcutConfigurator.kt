@@ -7,7 +7,9 @@ import android.content.pm.LauncherActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
+import android.os.UserHandle
 import android.util.Log
+import app.cue.launcher.data.layout.ComponentRef
 import app.cue.launcher.data.scenario.TapAction
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -35,8 +37,8 @@ class ShortcutConfigurator(
     // opening one does. Without the home role the rows would be offered and then fail on the tap,
     // so they are left out and the sheet says why instead. The creators are still collected —
     // whether a picker can be opened or not, it must never show up among the app screens.
-    fun pickersOf(packageName: String): ShortcutPickers {
-        val pickers = pickers(packageName)
+    fun pickersOf(packageName: String, user: UserHandle = profiles.own): ShortcutPickers {
+        val pickers = pickers(packageName, user)
         val offered = if (canReadShortcuts()) pickers else emptyList()
         return ShortcutPickers(
             entries = offered.map { picker ->
@@ -54,18 +56,22 @@ class ShortcutConfigurator(
         )
     }
 
-    private fun pickers(packageName: String): List<LauncherActivityInfo> =
-        launcherApps.shortcutConfigActivities(packageName, profiles.own, TAG)
+    private fun pickers(packageName: String, user: UserHandle): List<LauncherActivityInfo> =
+        launcherApps.shortcutConfigActivities(packageName, user, TAG)
 
-    suspend fun intentFor(packageName: String, className: String): IntentSender? =
+    suspend fun intentFor(app: ComponentRef, className: String): IntentSender? =
         withContext(Dispatchers.Default) {
-            pickers(packageName)
+            val user = profiles.userOf(app.userSerial) ?: return@withContext null
+            pickers(app.packageName, user)
                 .firstOrNull { it.componentName.className == className }
                 ?.let(::pickerIntent)
         }
 
-    suspend fun resolve(result: Intent?): ConfiguredShortcut? = withContext(Dispatchers.Default) {
-        result?.let { pinnedShortcut(it) ?: legacyShortcut(it) }
+    // A legacy result is a link or an app screen, which only the launcher's own profile can start,
+    // so a picker of a work app has to hand back a pinned shortcut.
+    suspend fun resolve(result: Intent?, app: ComponentRef): ConfiguredShortcut? = withContext(Dispatchers.Default) {
+        val own = app.userSerial == profiles.ownSerial
+        result?.let { pinnedShortcut(it) ?: legacyShortcut(it).takeIf { own } }
     }
 
     private fun pickerIntent(picker: LauncherActivityInfo): IntentSender? = try {
@@ -84,7 +90,11 @@ class ShortcutConfigurator(
         ?.let { info ->
             ConfiguredShortcut(
                 label = info.shortLabel?.toString()?.takeIf { it.isNotBlank() },
-                action = TapAction.Shortcut(packageName = info.`package`, shortcutId = info.id),
+                action = TapAction.Shortcut(
+                    packageName = info.`package`,
+                    shortcutId = info.id,
+                    profile = profiles.appProfileOf(info.userHandle),
+                ),
             )
         }
 

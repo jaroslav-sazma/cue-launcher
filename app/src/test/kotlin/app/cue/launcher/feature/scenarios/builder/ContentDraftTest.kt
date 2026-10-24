@@ -1,6 +1,7 @@
 package app.cue.launcher.feature.scenarios.builder
 
 import app.cue.launcher.data.layout.ComponentRef
+import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
@@ -161,11 +162,11 @@ class ContentDraftTest {
         val item = TemplateItemDraft(actions = listOf(DraftAction(openApp)))
 
         assertNull(previewGlyphName(item))
-        assertEquals("com.spotify.music", previewIconPackage(item))
-        assertNull(previewIconPackage(item.copy(icon = "mdi:gate")))
-        assertNull(previewIconPackage(TemplateItemDraft()))
+        assertEquals(ActionApp("com.spotify.music"), previewIconApp(item))
+        assertNull(previewIconApp(item.copy(icon = "mdi:gate")))
+        assertNull(previewIconApp(TemplateItemDraft()))
         assertNull(
-            previewIconPackage(
+            previewIconApp(
                 TemplateItemDraft(
                     actions = listOf(DraftAction(TapAction.SystemAction(SystemActionType.FLASHLIGHT))),
                 ),
@@ -179,7 +180,7 @@ class ContentDraftTest {
 
         assertEquals("gate", previewGlyphName(chosen))
         assertNull(previewGlyphName(chosen.copy(icon = null)))
-        assertEquals("com.spotify.music", previewIconPackage(chosen.copy(icon = null)))
+        assertEquals(ActionApp("com.spotify.music"), previewIconApp(chosen.copy(icon = null)))
     }
 
     @Test

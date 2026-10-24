@@ -152,6 +152,7 @@ inside the chip under the glyph. An item without one shows the glyph alone.
 
 ```json
 { "kind": "app",        "package": "com.spotify.music" }
+{ "kind": "app",        "package": "com.microsoft.office.outlook", "profile": "work" }
 { "kind": "shortcut",   "package": "…", "shortcutId": "…" }
 { "kind": "deeplink",   "uri": "google.navigation:q=Home" }
 { "kind": "deeplink",   "uri": "intent://devices/controller#Intent;scheme=googlehome;package=com.google.android.apps.chromecast.app;end" }
@@ -166,6 +167,12 @@ inside the chip under the glyph. An item without one shows the glyph alone.
 app can do*, `activity` an *App screen*, and `deeplink` both *Links into the app* and a custom link.
 `entity`, `data`, `confirm` (default `false`) and `stateEntity` are optional on an `ha` action;
 `stateEntity` is *Icon state from* and is written only when set.
+
+`profile` is optional on `app`, `shortcut` and `capability`, the only kinds Android lets a launcher
+start in another profile. Its one value is `"work"`: the action starts the app in the work profile,
+and on a phone without one it reports its target missing. Left out, the action runs in the personal
+profile, and that is how it is written — an action of the personal profile carries no `profile` at
+all. Any other value is an unknown enum and rejects the scenario.
 
 ## Values from a notification
 

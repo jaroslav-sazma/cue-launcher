@@ -1,6 +1,7 @@
 package app.cue.launcher.feature.scenarios.builder
 
 import app.cue.launcher.data.layout.ComponentRef
+import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.data.scenario.LauncherWidgetType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
@@ -10,7 +11,7 @@ import app.cue.launcher.data.scenario.TileSize
 import app.cue.launcher.data.scenario.hasPlaceholder
 import app.cue.launcher.designsystem.glyph.mdiGlyphName
 import app.cue.launcher.feature.home.templateGlyphName
-import app.cue.launcher.feature.home.templateIconPackage
+import app.cue.launcher.feature.home.templateIconApp
 import app.cue.launcher.feature.scenarios.reordered
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
@@ -211,7 +212,7 @@ private val TemplateLayout.needsText: Boolean
 fun previewGlyphName(item: TemplateItemDraft): String? =
     item.toItem()?.let(::templateGlyphName) ?: mdiGlyphName(item.icon)
 
-fun previewIconPackage(item: TemplateItemDraft): String? = item.toItem()?.let(::templateIconPackage)
+fun previewIconApp(item: TemplateItemDraft): ActionApp? = item.toItem()?.let(::templateIconApp)
 
 fun encodeContentDraft(draft: ContentDraft): String = draftJson.encodeToString(draft)
 

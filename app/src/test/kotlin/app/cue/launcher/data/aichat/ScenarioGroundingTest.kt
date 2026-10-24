@@ -3,6 +3,7 @@ package app.cue.launcher.data.aichat
 import app.cue.launcher.data.ha.HaEntity
 import app.cue.launcher.data.ha.HaEntityFilter
 import app.cue.launcher.data.ha.HaService
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.Scenario
@@ -333,6 +334,18 @@ class ScenarioGroundingTest {
             ),
             groundingProblems(draft, offered),
         )
+    }
+
+    @Test
+    fun `an in-app action of the work profile is not held against what the personal app offers`() {
+        val offered = inventory.copy(appActions = mapOf("com.maps" to emptyList()))
+        val draft = scenario(
+            emptyList(),
+            TapAction.Shortcut("com.maps", "gym", profile = AppProfile.WORK),
+            TapAction.Capability("com.maps", "actions.intent.GET_THING", profile = AppProfile.WORK),
+        )
+
+        assertEquals(emptyList<GroundingProblem>(), groundingProblems(draft, offered))
     }
 
     @Test

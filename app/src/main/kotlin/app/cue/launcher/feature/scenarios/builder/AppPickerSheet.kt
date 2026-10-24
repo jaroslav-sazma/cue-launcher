@@ -1,6 +1,7 @@
 package app.cue.launcher.feature.scenarios.builder
 
 import android.app.Activity
+import androidx.annotation.StringRes
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
 import androidx.activity.result.contract.ActivityResultContracts.StartIntentSenderForResult
@@ -47,6 +48,8 @@ import app.cue.launcher.feature.icons.rememberAppIcon
 import app.cue.launcher.system.AppActionEntry
 import app.cue.launcher.system.AppActionGroup
 import app.cue.launcher.system.AppActionKind
+import app.cue.launcher.system.AppActionSource
+import app.cue.launcher.system.AppActions
 import app.cue.launcher.system.AppActionsRepository
 import app.cue.launcher.system.InstalledApp
 import app.cue.launcher.system.LauncherAppsRepository
@@ -69,14 +72,19 @@ internal fun AppPickerSheetContent(
     launcherApps: LauncherAppsRepository,
     onPick: (InstalledApp) -> Unit,
     onClose: () -> Unit,
+    withWorkApps: Boolean,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
-    val ownSerial = remember(launcherApps) { launcherApps.profiles.serialOf(launcherApps.profiles.own) }
-    val apps by produceState<List<InstalledApp>?>(initialValue = null, launcherApps, ownSerial) {
-        value = launcherApps.installedApps()
-            .filter { it.component.userSerial == ownSerial }
-            .distinctBy { it.component.packageName }
+    val apps by produceState<List<InstalledApp>?>(initialValue = null, launcherApps, withWorkApps) {
+        value = if (withWorkApps) {
+            launcherApps.actionApps()
+        } else {
+            val ownSerial = launcherApps.profiles.ownSerial
+            launcherApps.installedApps()
+                .filter { it.component.userSerial == ownSerial }
+                .distinctBy { it.component.packageName }
+        }
     }
     var query by rememberSaveable { mutableStateOf("") }
     val index = remember(apps) { appSearchIndexOf(apps.orEmpty().map { SearchableApp(it) }) }
@@ -177,18 +185,18 @@ internal fun AppActionSheetContent(
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
 ) {
-    val packageName = app.component.packageName
+    val component = app.component
 
-    val entries by produceState<List<AppActionEntry>?>(null, appActions, packageName) {
-        value = appActions.actionsOf(packageName)
+    val actions by produceState<AppActions?>(null, appActions, component) {
+        value = appActions.actionsOf(component)
     }
-    val groups = remember(entries) { entries?.let(::appActionGroups).orEmpty() }
+    val groups = remember(actions) { actions?.entries?.let(::appActionGroups).orEmpty() }
     var configFailed by remember { mutableStateOf(false) }
     val configurator = appActions.shortcutConfig
     val canReadShortcuts = remember(configurator) { configurator.canReadShortcuts() }
     val open = rememberAppActionOpener(
         configurator = configurator,
-        packageName = packageName,
+        app = component,
         onPick = onPick,
         onFailed = { configFailed = true },
         onStart = { configFailed = false },
@@ -206,11 +214,13 @@ internal fun AppActionSheetContent(
         modifier = modifier,
         scrollable = false,
     ) {
-        when {
-            entries == null -> SheetNote(text = stringResource(R.string.action_in_app_loading))
-            !canReadShortcuts -> SheetNote(text = stringResource(R.string.action_in_app_needs_home))
-            groups.isEmpty() -> SheetNote(text = stringResource(R.string.action_in_app_empty))
+        val loaded = actions
+        val note = if (loaded == null) {
+            R.string.action_in_app_loading
+        } else {
+            appActionsNote(loaded.source, canReadShortcuts, empty = groups.isEmpty())
         }
+        if (note != null) SheetNote(text = stringResource(note))
         if (configFailed) SheetNote(text = stringResource(R.string.action_in_app_config_failed))
 
         LazyColumn(verticalArrangement = Arrangement.spacedBy(Tokens.Scenarios.rowGap)) {
@@ -219,12 +229,23 @@ internal fun AppActionSheetContent(
     }
 }
 
+// Of a work app only shortcuts can be started, so its notes never promise links or app screens.
+@StringRes
+private fun appActionsNote(source: AppActionSource, canReadShortcuts: Boolean, empty: Boolean): Int? = when {
+    source == AppActionSource.WORK_PAUSED -> R.string.action_in_app_work_paused
+    !canReadShortcuts && source == AppActionSource.WORK -> R.string.action_in_app_needs_home_work
+    !canReadShortcuts -> R.string.action_in_app_needs_home
+    source == AppActionSource.WORK -> R.string.action_in_app_work
+    empty -> R.string.action_in_app_empty
+    else -> null
+}
+
 // The whole configure-then-pin dance lives here: the pinning launcher, the label it has to carry
 // across the activity result, and the intent lookup. The sheet itself only renders rows.
 @Composable
 private fun rememberAppActionOpener(
     configurator: ShortcutConfigurator,
-    packageName: String,
+    app: ComponentRef,
     onPick: (TapAction, String) -> Unit,
     onFailed: () -> Unit,
     onStart: () -> Unit,
@@ -233,7 +254,7 @@ private fun rememberAppActionOpener(
     val scope = rememberCoroutineScope()
     val configure = rememberLauncherForActivityResult(StartIntentSenderForResult()) { result ->
         scope.launch {
-            val configured = configurator.resolve(result.data)
+            val configured = configurator.resolve(result.data, app)
             when {
                 configured != null -> onPick(configured.action, configured.label ?: pendingLabel)
                 result.resultCode == Activity.RESULT_OK -> onFailed()
@@ -246,7 +267,7 @@ private fun rememberAppActionOpener(
             onPick = onPick,
             onConfigure = { label, configActivity ->
                 scope.launch {
-                    val sender = configurator.intentFor(packageName, configActivity)
+                    val sender = configurator.intentFor(app, configActivity)
                     if (sender == null) {
                         onFailed()
                     } else {

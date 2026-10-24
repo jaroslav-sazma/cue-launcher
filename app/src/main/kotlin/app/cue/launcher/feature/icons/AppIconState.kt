@@ -7,6 +7,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import app.cue.launcher.data.layout.ComponentRef
+import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.data.scenario.IconMode
 import app.cue.launcher.designsystem.IconTint
 import app.cue.launcher.designsystem.LocalSurfaceIconTint
@@ -55,13 +56,13 @@ internal fun rememberShortcut(
 
 @Composable
 internal fun rememberTintedPackageIcon(
-    iconPackage: String?,
+    iconApp: ActionApp?,
     launcherApps: LauncherAppsRepository,
     tint: IconTint,
 ): ImageBitmap? {
     val revision by launcherApps.iconRevision.collectAsStateWithLifecycle()
-    val icon by produceState<ImageBitmap?>(null, iconPackage, revision, tint) {
-        val component = iconPackage?.let { launcherApps.mainActivityOf(it) }
+    val icon by produceState<ImageBitmap?>(null, iconApp, revision, tint) {
+        val component = iconApp?.let { launcherApps.mainActivityOf(it.packageName, it.profile) }
         value = component?.let { launcherApps.tintedIcon(it, tint) }
     }
     return icon
@@ -69,13 +70,13 @@ internal fun rememberTintedPackageIcon(
 
 @Composable
 internal fun rememberPackageIcon(
-    iconPackage: String?,
+    iconApp: ActionApp?,
     launcherApps: LauncherAppsRepository,
 ): ImageBitmap? {
     val revision by launcherApps.iconRevision.collectAsStateWithLifecycle()
     val surfaceTint = tintForSurface(launcherApps)
-    val icon by produceState<ImageBitmap?>(null, iconPackage, revision, surfaceTint) {
-        val component = iconPackage?.let { launcherApps.mainActivityOf(it) }
+    val icon by produceState<ImageBitmap?>(null, iconApp, revision, surfaceTint) {
+        val component = iconApp?.let { launcherApps.mainActivityOf(it.packageName, it.profile) }
         value = component?.let {
             if (surfaceTint == null) launcherApps.icon(it) else launcherApps.surfaceIcon(it, surfaceTint)
         }

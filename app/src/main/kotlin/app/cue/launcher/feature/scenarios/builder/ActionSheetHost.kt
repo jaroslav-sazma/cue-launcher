@@ -1,6 +1,7 @@
 package app.cue.launcher.feature.scenarios.builder
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.EndEvent
@@ -8,6 +9,7 @@ import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.withUntil
 import app.cue.launcher.system.AppActionsRepository
 import app.cue.launcher.system.LauncherAppsRepository
+import kotlinx.coroutines.launch
 
 @Composable
 internal fun ActionPickerStep(screen: BuilderState, slot: ActionSlot, modifier: Modifier) {
@@ -33,12 +35,14 @@ internal fun AppPickerStep(
     request: AppPickRequest,
     modifier: Modifier,
 ) {
+    val scope = rememberCoroutineScope()
     AppPickerSheetContent(
         launcherApps = launcherApps,
+        withWorkApps = request !is AppPickRequest.ForCondition,
         onPick = { app ->
             when (request) {
-                is AppPickRequest.OpenApp -> {
-                    screen.setAction(request.slot, TapAction.App(app.component.packageName), app.label)
+                is AppPickRequest.OpenApp -> scope.launch {
+                    screen.setAction(request.slot, launcherApps.openAction(app), app.label)
                     screen.show(null)
                 }
 

@@ -81,6 +81,7 @@
     <string name="clock_widget_alarm_tomorrow">Tomorrow %1$s</string>
     <string name="clock_widget_alarm_day">%1$s %2$s</string>
     <string name="action_target_missing">The target of the action is no longer on the phone.</string>
+    <string name="action_work_paused">Work apps are paused. Turn them on and tap again.</string>
     <string name="action_failed">The action could not be carried out.</string>
     <string name="action_ha_not_configured">The connection to Home Assistant is not set up. Add it in Settings → Home Assistant.</string>
     <string name="action_ha_unreachable">Home Assistant cannot be reached.</string>
@@ -533,6 +534,7 @@
     <string name="builder_action_deeplink">Link · %1$s</string>
     <string name="builder_action_capability">In an app · %1$s</string>
     <string name="builder_action_activity">App screen · %1$s</string>
+    <string name="builder_action_work">%1$s (work)</string>
     <string name="builder_action_system">System action · %1$s</string>
     <string name="builder_action_ha">HA action · %1$s</string>
     <string name="builder_icon_section">Icon</string>
@@ -858,6 +860,9 @@
     <string name="app_list_loading">Loading the apps…</string>
     <string name="action_in_app_loading">Looking for what can be launched in the app…</string>
     <string name="action_in_app_empty">Nothing specific can be launched in this app. Go back and choose “Open an app”.</string>
+    <string name="action_in_app_work">This app is in your work profile, so only its shortcuts can be started from here. Links and app screens open in the personal profile only, which is why they are not offered.</string>
+    <string name="action_in_app_work_paused">Work apps are paused, so the shortcuts of this app cannot be read. Turn them on and open it again.</string>
+    <string name="action_in_app_needs_home_work">Only the default home app may read what apps offer as shortcuts, and a work app offers nothing else that can be started from here. Make Cue: the default launcher and the shortcuts will show up here.</string>
     <string name="action_in_app_needs_home">Only the default home app may read what apps offer as shortcuts. Make Cue: the default launcher and the shortcuts will show up here; links and app screens work either way.</string>
     <string name="action_in_app_config_failed">The app did not hand any shortcut back. Pick another one.</string>
     <string name="action_kind_shortcuts">App shortcuts</string>

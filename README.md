@@ -531,6 +531,15 @@ open the app first, you choose the target there — a calendar, a settings page,
 launcher keeps what comes back. One the scenario format cannot hold is turned down with a note
 rather than saved half-way.
 
+Apps of a **work profile** are offered too, with the briefcase they carry in the drawer, and the
+action remembers the profile it was picked in: a swipe set to the work Outlook opens the work
+Outlook, and the action reads *Open an app · Outlook (work)*. Of a work app, *Something in an app*
+offers only its shortcuts — app shortcuts, shortcuts you pick in the app and what the app can do —
+because Android opens links and app screens in the personal profile only. While work apps are
+paused, opening a work app brings up Android's offer to turn them on, and a work shortcut asks you
+to turn them on and tap again. On a phone without a work profile, such an action says its target is
+no longer on the phone.
+
 A link can also be a serialized intent starting with `intent:` or `android-app:` — the form Home
 Assistant hands out, and the only one that can name a target app. So
 `intent://devices/controller?hgs_device_id=…#Intent;scheme=googlehome;package=com.google.android.apps.chromecast.app;end`

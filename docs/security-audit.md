@@ -105,11 +105,18 @@ browser, with only the device model, the Android build and the app version in th
 
 Shortcut and capability launches go through `LauncherApps`, which enforces its own rules. A shortcut
 that comes from an app's own picker is never executed as the intent that app handed back: the modern
-result is accepted only as a `PinItemRequest` the launcher pins and stores by package and id, and a
-legacy result is mapped into a URI or a component, and only when it carries no extras and no action
-beyond `VIEW`/`MAIN` — anything else is refused. Template values from an event payload are
-substituted into tile *text* only — the action of a tile is never templated, so payload data cannot
-redirect where a tap goes.
+result is accepted only as a `PinItemRequest` the launcher pins and stores by package, id and
+profile, and a legacy result is mapped into a URI or a component, and only when it carries no extras
+and no action beyond `VIEW`/`MAIN` — anything else is refused, and so is any legacy result of a work
+app. Template values from an event payload are substituted into tile *text* only — the action of a
+tile is never templated, so payload data cannot redirect where a tap goes.
+
+An app, shortcut or capability action can name the work profile, picked or imported alike. It then
+starts only what `LauncherApps` starts there — an app's main activity, its shortcuts and its
+capabilities — which is the reach the drawer already has over work apps; links and app screens go
+out as intents and never carry a profile. The work profile is found by its user type, so a clone
+profile some phones show to the launcher never receives a work action, and a phone without a work
+profile reports the target missing. The import preview names such an action with *(work)*.
 
 A notification condition can pull values out of every matching notification, by rules that come
 from scenario data and possibly from an imported file. A rule is not a pattern language but a short

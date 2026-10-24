@@ -19,7 +19,9 @@ import android.util.Log
 import androidx.compose.ui.graphics.ImageBitmap
 import app.cue.launcher.data.launchlog.LaunchLogRepository
 import app.cue.launcher.data.layout.ComponentRef
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.IconMode
+import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.designsystem.IconTint
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -128,19 +130,39 @@ class LauncherAppsRepository(
 
     val icons: IconAppearance get() = iconLoader.appearance
 
-    suspend fun mainActivityOf(packageName: String): ComponentRef? =
+    suspend fun mainActivityOf(packageName: String, profile: AppProfile? = null): ComponentRef? =
         withContext(Dispatchers.Default) {
-            val serial = profiles.serialOf(profiles.own)
-            launcherApps.getActivityList(packageName, profiles.own)
+            val user = profiles.userFor(profile) ?: return@withContext null
+            launcherApps.getActivityList(packageName, user)
                 .firstOrNull()
                 ?.componentName
-                ?.toComponentRef(serial)
+                ?.toComponentRef(profiles.serialOf(user))
         }
 
+    // A name is the same in every profile, so an app that lives only in the work profile is still
+    // named rather than shown as its package.
     suspend fun labelOf(packageName: String): String? =
         withContext(Dispatchers.Default) {
-            launcherApps.getActivityList(packageName, profiles.own).firstOrNull()?.label?.toString()
+            labelIn(packageName, profiles.own)
+                ?: profiles.actionUsers().filterNot(profiles::isOwn).firstNotNullOfOrNull { labelIn(packageName, it) }
         }
+
+    private fun labelIn(packageName: String, user: UserHandle): String? =
+        launcherApps.getActivityList(packageName, user).firstOrNull()?.label?.toString()
+
+    suspend fun openAction(app: InstalledApp): TapAction.App = withContext(Dispatchers.Default) {
+        TapAction.App(
+            packageName = app.component.packageName,
+            profile = profiles.userOf(app.component.userSerial)?.let(profiles::appProfileOf),
+        )
+    }
+
+    suspend fun actionApps(): List<InstalledApp> = withContext(Dispatchers.Default) {
+        val serials = profiles.actionUsers().mapTo(HashSet(), profiles::serialOf)
+        queryApps()
+            .filter { it.component.userSerial in serials }
+            .distinctBy { it.component.packageName to it.component.userSerial }
+    }
 
     // The profiles whose packages can be asked about right now, by serial. A paused or locked
     // profile, or a private space this launcher may not see, answers every query with nothing,

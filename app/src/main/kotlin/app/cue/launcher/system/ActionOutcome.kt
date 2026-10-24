@@ -44,6 +44,8 @@ enum class ActionOutcome {
     NO_PLACE,
 
     GOOGLE_TV_MISSING,
+
+    WORK_PAUSED,
 }
 
 // Only the Google TV app opens its remote, so a missing target can name the app that is missing.

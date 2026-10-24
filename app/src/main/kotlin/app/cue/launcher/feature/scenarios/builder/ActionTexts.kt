@@ -3,8 +3,15 @@ package app.cue.launcher.feature.scenarios.builder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.cue.launcher.R
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.system.AppActionKind
+
+@Composable
+internal fun inProfile(name: String, profile: AppProfile?): String = when (profile) {
+    null -> name
+    AppProfile.WORK -> stringResource(R.string.builder_action_work, name)
+}
 
 @Composable
 internal fun actionChoiceLabel(choice: ActionChoice): String = stringResource(

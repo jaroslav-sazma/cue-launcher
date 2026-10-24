@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.designsystem.AppIcon
 import app.cue.launcher.designsystem.GlyphIcon
 import app.cue.launcher.designsystem.LocalCueColors
@@ -15,14 +16,14 @@ import app.cue.launcher.system.LauncherAppsRepository
 @Composable
 internal fun ScenarioItemIcon(
     glyph: String?,
-    iconPackage: String?,
+    iconApp: ActionApp?,
     launcherApps: LauncherAppsRepository,
     modifier: Modifier = Modifier,
     size: Dp = Tokens.Size.glyphInTile,
     tint: Color? = null,
 ) {
-    val icon = rememberPackageIcon(iconPackage, launcherApps)
-    if (iconPackage != null) {
+    val icon = rememberPackageIcon(iconApp, launcherApps)
+    if (iconApp != null) {
 
         AppIcon(icon = icon, contentDescription = null, modifier = modifier, size = size)
         return

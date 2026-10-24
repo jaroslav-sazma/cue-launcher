@@ -2,13 +2,14 @@ package app.cue.launcher.system
 
 import app.cue.launcher.data.ha.HaServiceCall
 import app.cue.launcher.data.ha.haServiceCallOf
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 
 sealed interface ActionRoute {
 
-    data class MainActivity(val packageName: String) : ActionRoute
+    data class MainActivity(val packageName: String, val profile: AppProfile? = null) : ActionRoute
 
     data class Activity(val packageName: String, val className: String) : ActionRoute
 
@@ -16,9 +17,17 @@ sealed interface ActionRoute {
 
     data class IntentUri(val uri: String) : ActionRoute
 
-    data class Shortcut(val packageName: String, val shortcutId: String) : ActionRoute
+    data class Shortcut(
+        val packageName: String,
+        val shortcutId: String,
+        val profile: AppProfile? = null,
+    ) : ActionRoute
 
-    data class Capability(val packageName: String, val capability: String) : ActionRoute
+    data class Capability(
+        val packageName: String,
+        val capability: String,
+        val profile: AppProfile? = null,
+    ) : ActionRoute
 
     data class Ringer(val mode: RingerModeState) : ActionRoute
 
@@ -47,9 +56,10 @@ enum class SystemScreenTarget {
     SETTINGS,
 }
 
+@Suppress("CyclomaticComplexMethod")
 fun actionRouteOf(action: TapAction): ActionRoute = when (action) {
     is TapAction.App -> action.packageName.nonBlank()
-        ?.let(ActionRoute::MainActivity)
+        ?.let { packageName -> ActionRoute.MainActivity(packageName, action.profile) }
         ?: ActionRoute.Malformed
 
     is TapAction.ActivityLaunch -> activityRoute(action)
@@ -57,11 +67,11 @@ fun actionRouteOf(action: TapAction): ActionRoute = when (action) {
     is TapAction.DeepLink -> deepLinkRoute(action.uri)
 
     is TapAction.Shortcut -> pair(action.packageName, action.shortcutId)
-        ?.let { (packageName, id) -> ActionRoute.Shortcut(packageName, id) }
+        ?.let { (packageName, id) -> ActionRoute.Shortcut(packageName, id, action.profile) }
         ?: ActionRoute.Malformed
 
     is TapAction.Capability -> pair(action.packageName, action.capability)
-        ?.let { (packageName, capability) -> ActionRoute.Capability(packageName, capability) }
+        ?.let { (packageName, capability) -> ActionRoute.Capability(packageName, capability, action.profile) }
         ?: ActionRoute.Malformed
 
     is TapAction.SystemAction -> systemActionRoute(action.action)

@@ -1,5 +1,7 @@
 package app.cue.launcher.feature.home
 
+import app.cue.launcher.data.scenario.ActionApp
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
@@ -22,7 +24,7 @@ class TemplateContentTest {
 
         assertEquals("gate", templateGlyphName(item))
 
-        assertNull(templateIconPackage(item))
+        assertNull(templateIconApp(item))
     }
 
     @Test
@@ -30,7 +32,7 @@ class TemplateContentTest {
         val item = TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.FLASHLIGHT)))
 
         assertEquals("flashlight", templateGlyphName(item))
-        assertNull(templateIconPackage(item))
+        assertNull(templateIconApp(item))
     }
 
     @Test
@@ -48,7 +50,7 @@ class TemplateContentTest {
         val item = TemplateItem(actions = listOf(TapAction.HaAction(service = "cover.open_cover")))
 
         assertEquals(HA_GLYPH, templateGlyphName(item))
-        assertNull(templateIconPackage(item))
+        assertNull(templateIconApp(item))
     }
 
     @Test
@@ -62,8 +64,32 @@ class TemplateContentTest {
 
         actions.forEach { action ->
             val item = TemplateItem(actions = listOf(action))
-            assertEquals("com.android.chrome", templateIconPackage(item)) { action.toString() }
+            assertEquals(ActionApp("com.android.chrome"), templateIconApp(item)) { action.toString() }
             assertNull(templateGlyphName(item)) { action.toString() }
+        }
+    }
+
+    @Test
+    fun `a work app action is drawn with the icon of the work app`() {
+        val actions = listOf(
+            TapAction.App(packageName = "com.microsoft.office.outlook", profile = AppProfile.WORK),
+            TapAction.Shortcut(
+                packageName = "com.microsoft.office.outlook",
+                shortcutId = "compose",
+                profile = AppProfile.WORK,
+            ),
+            TapAction.Capability(
+                packageName = "com.microsoft.office.outlook",
+                capability = "actions.intent.CREATE_MESSAGE",
+                profile = AppProfile.WORK,
+            ),
+        )
+
+        actions.forEach { action ->
+            val item = TemplateItem(actions = listOf(action))
+            assertEquals(ActionApp("com.microsoft.office.outlook", AppProfile.WORK), templateIconApp(item)) {
+                action.toString()
+            }
         }
     }
 
@@ -72,7 +98,7 @@ class TemplateContentTest {
         val item = TemplateItem(actions = listOf(TapAction.DeepLink(uri = "google.navigation:q=Domů")))
 
         assertNull(templateGlyphName(item))
-        assertNull(templateIconPackage(item))
+        assertNull(templateIconApp(item))
     }
 
     @Test

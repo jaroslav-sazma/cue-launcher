@@ -38,12 +38,13 @@ import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import app.cue.launcher.R
+import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.placeholderKeysIn
 import app.cue.launcher.designsystem.GlyphIcon
 import app.cue.launcher.designsystem.Tokens
 import app.cue.launcher.feature.home.templateGlyphName
-import app.cue.launcher.feature.home.templateIconPackage
+import app.cue.launcher.feature.home.templateIconApp
 import app.cue.launcher.feature.home.templateItem
 import app.cue.launcher.system.LauncherAppsRepository
 import app.cue.launcher.designsystem.RowSwitch
@@ -64,7 +65,7 @@ internal fun ScenarioRow(
     val item = remember(scenario) { scenario.templateItem() }
     val glyph = remember(item) { item?.let(::templateGlyphName) }
 
-    val iconPackage = remember(item) { item?.let(::templateIconPackage) }
+    val iconApp = remember(item) { item?.let(::templateIconApp) }
     val toggleLabel = stringResource(R.string.scenarios_enabled_toggle)
     val dragged = drag.state.isDragged(drag.key, drag.index)
     val move = if (dragged) priorityMove(drag.group, drag.index, drag.state.target) else null
@@ -85,7 +86,7 @@ internal fun ScenarioRow(
         leadingContent = {
             ScenarioLeadingIcon(
                 glyph = glyph,
-                iconPackage = iconPackage,
+                iconApp = iconApp,
                 launcherApps = launcherApps,
                 toned = toned,
             )
@@ -159,7 +160,7 @@ private fun ScenarioRowTrailing(
 @Composable
 private fun ScenarioLeadingIcon(
     glyph: String?,
-    iconPackage: String?,
+    iconApp: ActionApp?,
     launcherApps: LauncherAppsRepository,
     toned: Boolean,
     modifier: Modifier = Modifier,
@@ -176,7 +177,7 @@ private fun ScenarioLeadingIcon(
     ) {
         ScenarioItemIcon(
             glyph = glyph,
-            iconPackage = iconPackage,
+            iconApp = iconApp,
             launcherApps = launcherApps,
             size = Tokens.Settings.leadingGlyph,
             tint = if (toned) scheme.onPrimary else scheme.onSurfaceVariant,

@@ -83,6 +83,7 @@
     <string name="clock_widget_alarm_tomorrow">Zítra %1$s</string>
     <string name="clock_widget_alarm_day">%1$s %2$s</string>
     <string name="action_target_missing">Cíl akce už v telefonu není.</string>
+    <string name="action_work_paused">Pracovní aplikace jsou pozastavené. Zapni je a klepni znovu.</string>
     <string name="action_failed">Akci se nepodařilo provést.</string>
     <string name="action_ha_not_configured">Spojení s Home Assistantem není nastavené. Doplň ho v Nastavení → Home Assistant.</string>
     <string name="action_ha_unreachable">Na Home Assistant se nedovoláme.</string>
@@ -538,6 +539,7 @@
     <string name="builder_action_deeplink">Odkaz · %1$s</string>
     <string name="builder_action_capability">V aplikaci · %1$s</string>
     <string name="builder_action_activity">Obrazovka aplikace · %1$s</string>
+    <string name="builder_action_work">%1$s (pracovní)</string>
     <string name="builder_action_system">Systémová akce · %1$s</string>
     <string name="builder_action_ha">HA akce · %1$s</string>
     <string name="builder_icon_section">Ikona</string>
@@ -865,6 +867,9 @@
     <string name="app_list_loading">Načítám aplikace…</string>
     <string name="action_in_app_loading">Hledám, co jde v aplikaci spustit…</string>
     <string name="action_in_app_empty">V téhle aplikaci nejde spustit nic konkrétního. Vrať se zpět a zvol „Otevřít aplikaci“.</string>
+    <string name="action_in_app_work">Tahle aplikace je v pracovním profilu, takže odsud jdou spustit jen její zkratky. Odkazy a obrazovky aplikace se otevírají jen v osobním profilu, proto tu nejsou.</string>
+    <string name="action_in_app_work_paused">Pracovní aplikace jsou pozastavené, takže zkratky téhle aplikace nejde přečíst. Zapni je a otevři ji znovu.</string>
+    <string name="action_in_app_needs_home_work">Co aplikace nabízejí jako zkratky, smí číst jen výchozí launcher, a u pracovní aplikace odsud nic jiného spustit nejde. Nastav Cue: jako výchozí a zkratky se tu objeví.</string>
     <string name="action_in_app_needs_home">Co aplikace nabízejí jako zkratky, smí číst jen výchozí launcher. Nastav Cue: jako výchozí a zkratky se tu objeví; odkazy a obrazovky aplikací fungují tak jako tak.</string>
     <string name="action_in_app_config_failed">Aplikace žádnou zkratku nevrátila. Zvol jinou.</string>
     <string name="action_kind_shortcuts">Zkratky aplikace</string>

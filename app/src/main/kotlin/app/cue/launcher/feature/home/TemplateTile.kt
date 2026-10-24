@@ -228,8 +228,8 @@ fun TemplateItemIcon(
 
     onLongClick: (() -> Unit)? = null,
 ) {
-    val iconPackage = remember(item) { templateIconPackage(item) }
-    val icon = rememberTintedPackageIcon(iconPackage, launcherApps, bentoIconTint(glyphTint))
+    val iconApp = remember(item) { templateIconApp(item) }
+    val icon = rememberTintedPackageIcon(iconApp, launcherApps, bentoIconTint(glyphTint))
     var bounds by remember(item) { mutableStateOf<Rect?>(null) }
     val clickable = modifier
         .size(Tokens.Size.icon)

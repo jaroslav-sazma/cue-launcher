@@ -7,7 +7,10 @@ import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
 import android.net.Uri
+import android.os.UserHandle
 import android.util.Log
+import app.cue.launcher.data.layout.ComponentRef
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.TapAction
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -47,17 +50,38 @@ class AppActionsRepository(
                 activityEntries(packageName, pickers.creators)
         }
 
+    // Links and app screens are started as intents, and an intent only ever reaches the launcher's
+    // own profile. Of a work app only what LauncherApps starts in its profile is offered: shortcuts.
+    suspend fun actionsOf(app: ComponentRef): AppActions = withContext(Dispatchers.Default) {
+        val user = profiles.userOf(app.userSerial)
+        val profile = user?.let(profiles::appProfileOf)
+        when {
+            user != null && profiles.isOwn(user) -> AppActions(AppActionSource.OWN, actionsOf(app.packageName))
+            user == null || profile == null -> AppActions(AppActionSource.WORK, emptyList())
+            !profiles.isReadable(user) -> AppActions(AppActionSource.WORK_PAUSED, emptyList())
+            else -> {
+                val published = shortcutsOf(app.packageName, user)
+                val entries = shortcutEntries(app.packageName, published, profile) +
+                    shortcutConfig.pickersOf(app.packageName, user).entries +
+                    capabilityEntries(app.packageName, published, profile)
+                AppActions(AppActionSource.WORK, entries)
+            }
+        }
+    }
+
     // Asked first, as the query itself answers a launcher that is not the default with an exception,
     // logged with its stack for every one of the apps the chat brief reads.
-    private fun shortcutsOf(packageName: String): List<ShortcutInfo> = if (shortcutConfig.canReadShortcuts()) {
-        launcherApps.appShortcutInfos(packageName, profiles.own, TAG)
-    } else {
-        emptyList()
-    }
+    private fun shortcutsOf(packageName: String, user: UserHandle = profiles.own): List<ShortcutInfo> =
+        if (shortcutConfig.canReadShortcuts()) {
+            launcherApps.appShortcutInfos(packageName, user, TAG)
+        } else {
+            emptyList()
+        }
 
     private fun shortcutEntries(
         packageName: String,
         shortcuts: List<ShortcutInfo>,
+        profile: AppProfile? = null,
     ): List<AppActionEntry> = shortcuts
         .filter { it.isEnabled }
         .map { info ->
@@ -68,13 +92,14 @@ class AppActionsRepository(
                     ?: info.longLabel?.toString()?.takeIf { it.isNotBlank() }
                     ?: info.id,
                 detail = null,
-                action = TapAction.Shortcut(packageName = packageName, shortcutId = info.id),
+                action = TapAction.Shortcut(packageName = packageName, shortcutId = info.id, profile = profile),
             )
         }
 
     private fun capabilityEntries(
         packageName: String,
         shortcuts: List<ShortcutInfo>,
+        profile: AppProfile? = null,
     ): List<AppActionEntry> = shortcuts
         .filter { it.isEnabled }
         .flatMap { info -> info.capabilities.map { it.name } }
@@ -84,7 +109,7 @@ class AppActionsRepository(
                 kind = AppActionKind.CAPABILITY,
                 label = capabilityLabel(capability),
                 detail = capability,
-                action = TapAction.Capability(packageName = packageName, capability = capability),
+                action = TapAction.Capability(packageName = packageName, capability = capability, profile = profile),
             )
         }
 

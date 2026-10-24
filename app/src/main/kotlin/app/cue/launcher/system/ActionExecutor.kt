@@ -11,11 +11,13 @@ import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.graphics.Rect
 import android.net.Uri
+import android.os.UserHandle
 import android.provider.AlarmClock
 import android.provider.CalendarContract
 import android.util.Log
 import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.data.ha.HaServiceCall
+import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.NotificationReply
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.engine.ActivationStore
@@ -85,12 +87,12 @@ class ActionExecutor(
     @Suppress("CyclomaticComplexMethod")
     private suspend fun run(action: TapAction, sourceBounds: Rect? = null): ActionOutcome =
         when (val route = actionRouteOf(action)) {
-            is ActionRoute.MainActivity -> launchApp(route.packageName, sourceBounds)
+            is ActionRoute.MainActivity -> launchApp(route.packageName, route.profile, sourceBounds)
             is ActionRoute.Activity -> start(activityIntent(route), sourceBounds)
             is ActionRoute.ViewUri -> start(Intent(Intent.ACTION_VIEW, Uri.parse(route.uri)), sourceBounds)
             is ActionRoute.IntentUri -> startIntentUri(route.uri, sourceBounds)
-            is ActionRoute.Shortcut -> startShortcut(route.packageName, route.shortcutId, sourceBounds)
-            is ActionRoute.Capability -> startCapability(route.packageName, route.capability, sourceBounds)
+            is ActionRoute.Shortcut -> startShortcut(route, sourceBounds)
+            is ActionRoute.Capability -> startCapability(route, sourceBounds)
             is ActionRoute.Ringer -> systemActions.setRingerMode(route.mode)
             is ActionRoute.DoNotDisturb -> systemActions.setDoNotDisturb(route.enabled)
             ActionRoute.Torch -> systemActions.toggleTorch()
@@ -149,8 +151,14 @@ class ActionExecutor(
         }
     }
 
-    private suspend fun launchApp(packageName: String, sourceBounds: Rect?): ActionOutcome {
-        val component = launcherApps.mainActivityOf(packageName) ?: return ActionOutcome.TARGET_MISSING
+    // A paused work profile needs nothing here: the system puts its own prompt to turn work apps on
+    // in front of the main activity.
+    private suspend fun launchApp(
+        packageName: String,
+        profile: AppProfile?,
+        sourceBounds: Rect?,
+    ): ActionOutcome {
+        val component = launcherApps.mainActivityOf(packageName, profile) ?: return ActionOutcome.TARGET_MISSING
         return if (launcherApps.launch(component, sourceBounds)) ActionOutcome.DONE else ActionOutcome.FAILED
     }
 
@@ -173,7 +181,7 @@ class ActionExecutor(
     suspend fun openMedia(packageName: String, sourceBounds: Rect? = null): ActionOutcome {
         val session = mediaPlayers.sessionActivity(packageName)
         if (session != null && sendActivity(session)) return ActionOutcome.DONE
-        return launchApp(packageName, sourceBounds)
+        return launchApp(packageName, profile = null, sourceBounds)
     }
 
     // A pending intent runs with its creator's rights, and a player sitting in the background has
@@ -282,26 +290,37 @@ class ActionExecutor(
             ?: intent.`package`
             ?: "a ${intent.data?.scheme ?: "data-less"} ${intent.action ?: "intent"}"
 
-    private suspend fun startShortcut(
-        packageName: String,
-        shortcutId: String,
-        sourceBounds: Rect?,
-    ): ActionOutcome = shortcutOutcome(packageName) {
-        service.startShortcut(packageName, shortcutId, sourceBounds, null, profiles.own)
-    }
+    private suspend fun startShortcut(route: ActionRoute.Shortcut, sourceBounds: Rect?): ActionOutcome =
+        inProfile(route.profile) { user ->
+            shortcutOutcome(route.packageName) {
+                service.startShortcut(route.packageName, route.shortcutId, sourceBounds, null, user)
+            }
+        }
 
-    private suspend fun startCapability(
-        packageName: String,
-        capability: String,
-        sourceBounds: Rect?,
+    private suspend fun startCapability(route: ActionRoute.Capability, sourceBounds: Rect?): ActionOutcome =
+        inProfile(route.profile) { user ->
+            val shortcut = withContext(Dispatchers.Default) { shortcutWith(route.packageName, route.capability, user) }
+            if (shortcut == null) {
+                ActionOutcome.TARGET_MISSING
+            } else {
+                shortcutOutcome(route.packageName) { service.startShortcut(shortcut, sourceBounds, null) }
+            }
+        }
+
+    // A work action on a phone without a work profile has nowhere to go. A paused or locked profile
+    // answers every shortcut query with nothing, which would read as the target being gone.
+    private suspend fun inProfile(
+        profile: AppProfile?,
+        start: suspend (UserHandle) -> ActionOutcome,
     ): ActionOutcome {
-        val shortcut = withContext(Dispatchers.Default) { shortcutWith(packageName, capability) }
+        val user = withContext(Dispatchers.Default) { profiles.userFor(profile) }
             ?: return ActionOutcome.TARGET_MISSING
-        return shortcutOutcome(packageName) { service.startShortcut(shortcut, sourceBounds, null) }
+        val readable = withContext(Dispatchers.Default) { profiles.isReadable(user) }
+        return if (readable) start(user) else ActionOutcome.WORK_PAUSED
     }
 
-    private fun shortcutWith(packageName: String, capability: String): ShortcutInfo? {
-        val shortcuts = service.appShortcutInfos(packageName, profiles.own, TAG)
+    private fun shortcutWith(packageName: String, capability: String, user: UserHandle): ShortcutInfo? {
+        val shortcuts = service.appShortcutInfos(packageName, user, TAG)
         val id = shortcutForCapability(
 
             candidates = shortcuts.map { info ->

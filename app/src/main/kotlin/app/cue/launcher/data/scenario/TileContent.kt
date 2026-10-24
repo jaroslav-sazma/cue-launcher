@@ -115,15 +115,23 @@ internal object TapActionsSerializer :
 @JsonClassDiscriminator("kind")
 sealed interface TapAction {
 
+    // profile was added after schemaVersion 1 froze; null is the launcher's own profile and is never
+    // written, so an action of the personal profile exports exactly as before.
     @Serializable
     @SerialName("app")
-    data class App(@SerialName("package") val packageName: String) : TapAction
+    data class App(
+        @SerialName("package") val packageName: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val profile: AppProfile? = null,
+    ) : TapAction
 
     @Serializable
     @SerialName("shortcut")
     data class Shortcut(
         @SerialName("package") val packageName: String,
         val shortcutId: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val profile: AppProfile? = null,
     ) : TapAction
 
     @Serializable
@@ -135,6 +143,8 @@ sealed interface TapAction {
     data class Capability(
         @SerialName("package") val packageName: String,
         val capability: String,
+        @EncodeDefault(EncodeDefault.Mode.NEVER)
+        val profile: AppProfile? = null,
     ) : TapAction
 
     @Serializable
@@ -164,6 +174,28 @@ sealed interface TapAction {
         val stateEntity: String? = null,
     ) : TapAction
 }
+
+@Serializable
+enum class AppProfile {
+    @SerialName("work")
+    WORK,
+}
+
+// A link or an app screen can only be started in the launcher's own profile, so only App, Shortcut
+// and Capability ever name another one.
+data class ActionApp(val packageName: String, val profile: AppProfile? = null)
+
+val TapAction.actionApp: ActionApp?
+    get() = when (this) {
+        is TapAction.App -> ActionApp(packageName, profile)
+        is TapAction.Shortcut -> ActionApp(packageName, profile)
+        is TapAction.Capability -> ActionApp(packageName, profile)
+        is TapAction.ActivityLaunch -> ActionApp(packageName)
+        is TapAction.DeepLink,
+        is TapAction.SystemAction,
+        is TapAction.HaAction,
+        -> null
+    }
 
 @Serializable
 enum class SystemActionType(val jsonName: String) {

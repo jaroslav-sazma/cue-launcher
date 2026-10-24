@@ -228,6 +228,9 @@ private val FIELD_NOTES: Map<String, String> = mapOf(
     "item.action" to "one action object, or an array of them run in order on one tap",
     "system.action" to "see System actions",
     "shortcutId" to "the part of a `shortcut` line after the slash",
+    "profile" to
+        "\"work\" starts the app in the work profile; leave it out unless the user asks for the work app, " +
+        "as the inventory does not say which profile an app is in",
     "uri" to "see Links and deep links",
     "capability" to "the part of a `capability` line after the slash",
     "component" to "the full class name, the part of an `activity` line after the slash",

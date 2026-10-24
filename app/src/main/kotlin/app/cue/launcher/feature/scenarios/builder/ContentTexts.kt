@@ -85,17 +85,19 @@ internal fun actionSummary(action: TapAction?, actionLabel: String? = null): Str
     // An action read from a saved or imported scenario carries no label of its own.
     is TapAction.App -> stringResource(
         R.string.builder_action_app,
-        actionLabel ?: appListText(listOf(action.packageName), AppJoiner.OR),
+        inProfile(actionLabel ?: appListText(listOf(action.packageName), AppJoiner.OR), action.profile),
     )
 
     is TapAction.Shortcut -> stringResource(
         R.string.builder_action_shortcut,
-        actionLabel ?: appListText(listOf(action.packageName), AppJoiner.OR),
+        inProfile(actionLabel ?: appListText(listOf(action.packageName), AppJoiner.OR), action.profile),
     )
 
     is TapAction.DeepLink -> stringResource(R.string.builder_action_deeplink, actionLabel ?: action.uri)
-    is TapAction.Capability ->
-        stringResource(R.string.builder_action_capability, actionLabel ?: action.capability)
+    is TapAction.Capability -> stringResource(
+        R.string.builder_action_capability,
+        inProfile(actionLabel ?: action.capability, action.profile),
+    )
 
     is TapAction.ActivityLaunch ->
         stringResource(R.string.builder_action_activity, actionLabel ?: action.component)
@@ -111,7 +113,7 @@ internal fun iconSummary(item: TemplateItemDraft): String {
     val glyph = previewGlyphName(item)
     return when {
         glyph != null -> mdiIconReference(glyph)
-        previewIconPackage(item) != null -> stringResource(R.string.builder_icon_app)
+        previewIconApp(item) != null -> stringResource(R.string.builder_icon_app)
         else -> stringResource(R.string.builder_icon_none)
     }
 }

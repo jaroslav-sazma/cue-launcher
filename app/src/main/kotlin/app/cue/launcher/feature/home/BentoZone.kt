@@ -400,12 +400,12 @@ private fun DynamicFolderChip(
 @Composable
 private fun FolderPreviewIcon(entry: QueueEntry, launcherApps: LauncherAppsRepository) {
     val item = entry.scenario.templateItem()
-    val iconPackage = remember(item) { item?.let(::templateIconPackage) }
+    val iconApp = remember(item) { item?.let(::templateIconApp) }
     val glyphTint = item
         ?.let { templateIconTint(it, entry.payload.semantic, entry.accentedEntities) }
         ?: LocalCueColors.current.textPrimary
     val tint = bentoIconTint(glyphTint)
-    val icon = rememberTintedPackageIcon(iconPackage, launcherApps, tint)
+    val icon = rememberTintedPackageIcon(iconApp, launcherApps, tint)
     if (icon != null) {
         CompositionLocalProvider(LocalTintedIcons provides true) {
             AppIcon(
