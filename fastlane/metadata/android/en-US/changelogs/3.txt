@@ -1,0 +1,1 @@
+A tile can now stay until an event ends it — a notification, a set time, the alarm, a Bluetooth disconnect or a Home Assistant event — instead of a countdown. Text uses the phone's own typeface, rounded like Pixel. Updated libraries.
