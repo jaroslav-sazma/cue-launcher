@@ -37,13 +37,14 @@ out of device-to-device transfer when moving to a new phone:
   home;
 - notification titles and texts: a notification that activates a scenario has its title and text
   stored with the tile it raised, until that tile ends (after 60 seconds unless the scenario sets
-  its own duration or an event that ends it) or the notification goes away, together with any values
-  the scenario's rules pulled out of it. While the notification listener is bound, the title and
-  text of each posted notification from an app a scenario listens to are also held in memory, to
-  tell whether one is still there when another is dismissed; other apps' notifications are not kept,
-  once the scenarios are loaded shortly after the listener binds. A notification shown as a sample
-  while building such a rule is held only by the open form. Notification count badges, when switched
-  on, keep in memory only each notification's key and a few flags — never its title or text;
+  its own duration or an event that ends it) or — when no such event is set — the notification goes
+  away, together with any values the scenario's rules pulled out of it. While the notification
+  listener is bound, the title and text of each posted notification from an app a scenario listens
+  to are also held in memory, to tell whether one is still there when another is dismissed; other
+  apps' notifications are not kept, once the scenarios are loaded shortly after the listener binds.
+  A notification shown as a sample while building such a rule is held only by the open form.
+  Notification count badges, when switched on, keep in memory only each notification's key and a
+  few flags — never its title or text;
 - a remembered place: its coordinates and the time it was saved, read once at the user's tap and
   stored with the tile that shows it until that tile expires or is closed; never exported;
 - the Home Assistant event log (the last 100 events with their payloads, clearable), the apps the

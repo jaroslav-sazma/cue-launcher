@@ -113,7 +113,11 @@ class ConditionMonitor(
             val state = stateFor(listeners)
             dueNotifications(definitions, state, notification).forEach { scenario ->
                 val trigger = notificationTrigger(scenario, notification)
-                val payload = notificationPayload(notification, trigger?.extract.orEmpty())
+                val payload = notificationPayload(
+                    notification,
+                    trigger?.extract.orEmpty(),
+                    dismissible = trigger?.until == null,
+                )
                 engine.activate(scenario, payload, activationTrigger(scenario, state, trigger))
             }
         }
@@ -125,7 +129,9 @@ class ConditionMonitor(
         known: List<Scenario>? = null,
     ) = notifications.withLock {
         val definitions = known ?: scenarios.observeScenarios().first()
-        notificationEndListeners(definitions, removed, active).forEach { engine.deactivate(it.id) }
+        val ending = notificationEndListeners(definitions, removed, active)
+        if (ending.isEmpty()) return@withLock
+        heldByNotification(activations.activations(), ending).forEach { engine.deactivate(it) }
     }
 
     // endedAt is when the listener heard of it, not when the queue got to it, so a wait in the
@@ -180,7 +186,11 @@ class ConditionMonitor(
         plan.fire.forEach { fired ->
             val notification = snapshot.enrich(fired.notification)
             val trigger = notificationTrigger(fired.scenario, notification)
-            val payload = notificationPayload(notification, trigger?.extract.orEmpty())
+            val payload = notificationPayload(
+                notification,
+                trigger?.extract.orEmpty(),
+                dismissible = trigger?.until == null,
+            )
             engine.activate(
                 scenario = fired.scenario,
                 payload = payload,

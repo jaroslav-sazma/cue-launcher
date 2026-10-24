@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
+import java.time.Instant
 import java.time.ZoneOffset
 
 class NotificationReconciliationTest {
@@ -309,6 +310,42 @@ class NotificationReconciliationTest {
         assertEquals(listOf("w"), plan.fire.map { it.notification.key })
     }
 
+    @Test
+    fun `a tile with an end outlives its dismissed notification and still ends by its end`() {
+        val scenario = tracking()
+        val fired = post("w", at = 0L, text = "On its way")
+        val trigger = notificationTrigger(scenario, fired)
+        val running = requireNotNull(
+            activationOf(
+                scenario,
+                Instant.ofEpochMilli(0L).atZone(ZoneOffset.UTC),
+                payload = notificationPayload(fired, dismissible = trigger?.until == null),
+                trigger = trigger,
+            ),
+        )
+
+        val dismissed = reconcile(listOf(scenario), activations = listOf(running), active = emptyList())
+        val delivered = reconcile(
+            listOf(scenario),
+            activations = listOf(running),
+            active = listOf(post("d", at = 2 * MINUTE, text = "Delivered")),
+        )
+
+        assertTrue(dismissed.end.isEmpty())
+        assertEquals(listOf("parcel"), delivered.end)
+    }
+
+    @Test
+    fun `under ANY the post of a condition with an end does not keep a plain tile`() {
+        val impulse = Condition.NotificationFrom(packageName = WATCH_APP, until = DELIVERED)
+        val any = scenario("parcel", conditions = listOf(impulse, parcel())).copy(match = ConditionMatch.ANY)
+        val watch = PostedNotification(key = "watch", packageName = WATCH_APP, postTime = SINCE - MINUTE)
+
+        val plan = reconcile(listOf(any), activations = listOf(fromNotification("a")), active = listOf(watch))
+
+        assertEquals(listOf("parcel"), plan.end)
+    }
+
     @Suppress("LongParameterList")
     private fun reconcile(
         scenarios: List<Scenario> = listOf(scenario("parcel", conditions = listOf(parcel()))),
@@ -361,6 +398,7 @@ class NotificationReconciliationTest {
 
     private companion object {
         const val PARCEL_APP = "com.example.parcel"
+        const val WATCH_APP = "com.example.watch"
         val DELIVERED = EndEvent.Notification(packageName = PARCEL_APP, contains = "delivered")
         const val MINUTE = 60_000L
         const val HOUR = 60 * MINUTE

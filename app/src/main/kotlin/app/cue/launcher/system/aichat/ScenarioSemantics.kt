@@ -54,7 +54,9 @@ internal fun ConditionType.meaning(): String = when (this) {
     ConditionType.NOTIFICATION ->
         "Fires when the app `package` posts a notification, optionally only one whose title or text " +
             "contains `contains` (any case). `extract` rules pull values out of it for the tile's texts, " +
-            "and dismissing the notification ends the tile. Needs notification access."
+            "and dismissing the notification ends the tile — unless the condition has an `until`, which makes " +
+            "the notification only the start: the tile then ignores the dismissal and waits for its end " +
+            "event. Needs notification access."
     ConditionType.HA_EVENT ->
         "Fires when Home Assistant sends an event with this `code` through Cue:'s blueprint automation: a " +
             "doorbell, a finished washer. Fields of the event's payload read as `{ha:field}`, and an end event " +
@@ -87,7 +89,8 @@ internal const val END_EVENT_RULES: String =
         "alongside is an upper bound, worth adding when the end could slip past unseen, such as a " +
         "notification posted and dismissed again while Cue: could not hear it. An end event equal to the trigger " +
         "only restarts the tile, so tell them apart, as with `contains`: a watch app posting \"connected\" " +
-        "starts the tile and its \"offline\" ends it. The user can always close a waiting tile."
+        "starts the tile and its \"offline\" ends it; dismissing \"connected\" does not. The user can always " +
+        "close a waiting tile."
 
 internal fun TemplateLayout.meaning(): String {
     val texts = when (this) {

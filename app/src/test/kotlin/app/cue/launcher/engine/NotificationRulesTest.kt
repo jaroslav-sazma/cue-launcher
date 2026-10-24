@@ -1,6 +1,8 @@
 package app.cue.launcher.engine
 
+import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.ConditionMatch
 import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.ExtractRule
@@ -14,6 +16,7 @@ import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
 import app.cue.launcher.data.scenario.TileProgress
 import app.cue.launcher.data.scenario.TileSize
+import app.cue.launcher.data.scenario.TriggerPayload
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -216,6 +219,47 @@ class NotificationTriggerRulesTest {
     }
 
     @Test
+    fun `dismissing the notification of a condition with an end ends nothing`() {
+        val ends = listOf(
+            EndEvent.Notification(packageName = "cz.zasilkovna.app", contains = "vydána"),
+            EndEvent.AtTime(at = "17:00"),
+        )
+
+        ends.forEach { until ->
+            val scenarios = listOf(scenario("shipment", conditions = listOf(CONDITION.copy(until = until))))
+
+            assertTrue(notificationEndCandidates(scenarios, posted()).isEmpty(), "$until")
+            assertTrue(notificationEndListeners(scenarios, posted(), active = emptyList()).isEmpty(), "$until")
+        }
+    }
+
+    @Test
+    fun `under ANY only a plain condition makes a dismissal an end`() {
+        val impulse = Condition.NotificationFrom(packageName = "cz.alza", until = EndEvent.Alarm)
+        val any = scenario("shipment", conditions = listOf(impulse, CONDITION)).copy(match = ConditionMatch.ANY)
+        val scenarios = listOf(any)
+        val alza = posted(key = "alza", packageName = "cz.alza", title = "Alza")
+
+        assertTrue(notificationEndListeners(scenarios, alza, active = emptyList()).isEmpty())
+        assertEquals(1, notificationEndListeners(scenarios, posted(), active = listOf(alza)).size)
+        val second = posted(key = "second", title = "Second shipment")
+        assertTrue(notificationEndListeners(scenarios, posted(), active = listOf(second)).isEmpty())
+    }
+
+    @Test
+    fun `a dismissal ends only a tile that kept the key of its notification`() {
+        val ending = listOf(watching(), watching("held"), watching("impulse"))
+        val running = listOf(
+            Activation("shipment", since = 0L, payload = TriggerPayload(notificationKey = "first")),
+            Activation("held", since = 0L),
+            Activation("impulse", since = 0L, payload = TriggerPayload(until = EndEvent.Alarm, firedAt = 0L)),
+            Activation("other", since = 0L, payload = TriggerPayload(notificationKey = "other")),
+        )
+
+        assertEquals(listOf("shipment"), heldByNotification(running, ending))
+    }
+
+    @Test
     fun `the payload carries title and text with a namespace`() {
         val payload = notificationPayload(posted(title = "Zásilkovna", text = "Kód 1234"))
 
@@ -232,6 +276,16 @@ class NotificationTriggerRulesTest {
     @Test
     fun `the payload does not carry an icon`() {
         assertEquals(null, notificationPayload(posted()).icon)
+    }
+
+    @Test
+    fun `only a dismissible payload carries the notification key`() {
+        val kept = notificationPayload(posted(), listOf(KOD))
+        val impulse = notificationPayload(posted(), listOf(KOD), dismissible = false)
+
+        assertEquals("first", kept.notificationKey)
+        assertEquals(null, impulse.notificationKey)
+        assertEquals(kept.fields, impulse.fields)
     }
 }
 

@@ -26,6 +26,14 @@ fun notificationPackages(scenarios: List<Scenario>, activations: List<Activation
     .plus(activations.mapNotNull { it.notificationEnd?.packageName })
     .mapTo(mutableSetOf()) { it.trim().lowercase() }
 
+// The definitions only say a dismissal may end the scenario. Under ANY the running tile may have been
+// fired by a condition with an end event, or taken over by a state; only a tile that kept the key of
+// the notification that fired it goes with the dismissal, as on a replay.
+fun heldByNotification(running: List<Activation>, ending: List<Scenario>): List<String> {
+    val ids = ending.mapTo(mutableSetOf(), Scenario::id)
+    return running.filter { it.scenarioId in ids && it.payload.notificationKey != null }.map(Activation::scenarioId)
+}
+
 data class NotificationFiring(val scenario: Scenario, val notification: PostedNotification)
 
 // What is posted when the listener binds again. enrich reads what only the notification itself can
@@ -62,9 +70,11 @@ fun notificationReconciliation(
     val dismissed = activations
         .filter { activation -> activation.payload.notificationKey?.let { it !in posted } == true }
         .mapNotNull { activation -> scenarios.firstOrNull { it.id == activation.scenarioId } }
-        .filter { scenario -> scenario.notificationConditions.isNotEmpty() }
+        .filter { scenario -> scenario.dismissibleNotificationConditions.isNotEmpty() }
         .filter { scenario ->
-            scenario.notificationConditions.none { condition -> active.any { notificationMatches(condition, it) } }
+            scenario.dismissibleNotificationConditions.none { condition ->
+                active.any { notificationMatches(condition, it) }
+            }
         }
         .map(Scenario::id)
 

@@ -380,10 +380,10 @@ A few of them need a word more:
   alarm set, the condition simply waits. As the end of a tile, the next ring ends it, even one the
   launcher notices only later.
 - **Notification from an app** works while you are in another app too, so the tile is ready when you
-  come back, and it goes away when you dismiss the notification. Android hides one-time codes from
-  apps it does not trust: since Android 15, a notification in which the system detects a one-time
-  password reaches Cue: with its content redacted, so a value in it cannot be read and its tile does
-  not appear.
+  come back, and it goes away when you dismiss the notification — unless the tile waits for an end
+  of its own ([Until an event](#until-an-event)). Android hides one-time codes from apps it does not
+  trust: since Android 15, a notification in which the system detects a one-time password reaches
+  Cue: with its content redacted, so a value in it cannot be read and its tile does not appear.
 - **Notification ended** counts the app taking its notification down or you swiping it away; the
   system tidying up — an uninstall, a snooze, a channel switched off — does not. *Shown for at
   least* leaves out a notification that goes away sooner: Google Maps flashes one for a moment as a
@@ -404,10 +404,10 @@ A few of them need a word more:
   tile stays hidden, turned around or not — see [A state as a condition](#9-a-state-as-a-condition).
 
 **An event's tile ends** when its time runs out, when you close it (long-press → Close), when the
-notification that brought it is dismissed, when the event it waits for arrives, or — for a Home
-Assistant event — when an end event with the same code arrives. If Android ends the launcher in the
-meantime, an event's tile comes back with the time it had left, and every state is checked afresh
-whenever you return to the home screen.
+event it waits for arrives, when the notification that brought it is dismissed — unless it waits
+for an event — or, for a Home Assistant event, when an end event with the same code arrives. If
+Android ends the launcher in the meantime, an event's tile comes back with the time it had left,
+and every state is checked afresh whenever you return to the home screen.
 
 #### Until an event
 
@@ -421,8 +421,9 @@ condition needs.
 > A child's watch app posts *Watch connected* when the watch turns on and *Watch offline* when it
 > turns off. A *Notification from an app* condition for the watch app with *Text contains*
 > `connected`, ending when *A notification arrives* from the same app with *Text contains*
-> `offline`, shows the tile while the watch is on: *Watch offline* ends it, and so does dismissing
-> *Watch connected*, as it does any tile a notification brought.
+> `offline`, shows the tile while the watch is on: *Watch offline* ends it. Dismissing *Watch
+> connected* does not — with an end set, the notification only starts the tile, which stays until
+> *Watch offline*, the limit below or Close.
 
 - **The same event cannot end its own tile.** When every event that would end the tile also shows it
   — the very same event, or one the condition covers, as a condition with no *Text contains* covers

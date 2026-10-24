@@ -5,6 +5,7 @@ import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.EndEvent
 import app.cue.launcher.data.scenario.ExtractKind
 import app.cue.launcher.data.scenario.ExtractRule
+import app.cue.launcher.data.scenario.TriggerPayload
 import app.cue.launcher.data.scenario.WifiMode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
@@ -661,7 +662,8 @@ class ConditionMonitorTest {
     fun `cancelling a notification does not consult the state gate`() = runTest {
         val monitor = monitor()
         scenarios.emit(scenario("parcel", conditions = listOf(parcel(), Condition.Charging())))
-        activations.put(Activation(scenarioId = "parcel", since = 0L, expiresAt = MINUTE))
+        val fired = TriggerPayload(notificationKey = "first")
+        activations.put(Activation(scenarioId = "parcel", since = 0L, expiresAt = MINUTE, payload = fired))
         system.emit(SystemState(charging = false))
 
         monitor.onNotificationRemoved(parcelNotification(), active = emptyList())

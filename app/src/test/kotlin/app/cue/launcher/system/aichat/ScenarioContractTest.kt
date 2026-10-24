@@ -103,6 +103,15 @@ class ScenarioContractTest {
     }
 
     @Test
+    fun `a dismissal ends a notification tile only while no end event is set`() {
+        val notification = entryOf("notification")
+        val section = reference.substringAfter("### End events\n").substringBefore("### Content")
+
+        assertTrue("dismissing the notification ends the tile — unless the condition has an `until`" in notification)
+        assertTrue("dismissing \"connected\" does not" in section, section)
+    }
+
+    @Test
     fun `every enum value of the format is spelled out`() {
         val values = TileSize.entries.map { it.jsonName } +
             listOf(WifiMode.ANY, WifiMode.SSID).map { it.name.lowercase() } +

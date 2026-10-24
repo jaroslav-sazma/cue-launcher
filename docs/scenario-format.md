@@ -123,14 +123,16 @@ set. It takes one of five types, each with the fields of the condition of the sa
 | `ha_event` | `code` | Home Assistant sends that event code |
 
 With `until` the 60-second default no longer applies, so without `durationSec` the event is what
-ends the tile — apart from closing it with a long-press → **Close**, the notification that fired it
-being dismissed, or a state condition failing under `"match": "all"`. A `durationSec` given
-alongside is a safety cap: whichever comes first, the event or the end of the countdown, ends the
-tile. A `time_instant` end is fixed as a moment when the tile appears, so a later time-zone change
-does not move it. A `notification` end that is posted and dismissed again while Cue:'s notification
-listener is not connected is missed; the tile then stays until it is closed or the cap runs out,
-which is what a `durationSec` alongside is for. An older version of Cue: ignores `until` like any
-unknown field and ends the tile by the countdown.
+ends the tile — apart from closing it with a long-press → **Close** or a state condition failing
+under `"match": "all"`. On a `notification` condition, `until` of any type makes the notification
+only the start: dismissing it leaves the tile, which waits for its end, whereas the tile of a
+`notification` condition without `until` also ends when the notification that fired it is
+dismissed. A `durationSec` given alongside is a safety cap: whichever comes first, the event or the
+end of the countdown, ends the tile. A `time_instant` end is fixed as a moment when the tile
+appears, so a later time-zone change does not move it. A `notification` end that is posted and
+dismissed again while Cue:'s notification listener is not connected is missed; the tile then stays
+until it is closed or the cap runs out, which is what a `durationSec` alongside is for. An older
+version of Cue: ignores `until` like any unknown field and ends the tile by the countdown.
 
 ## Content
 

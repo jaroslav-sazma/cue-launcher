@@ -78,7 +78,7 @@ fun notificationEndListeners(
     return notificationEndCandidates(scenarios, removed).filter { scenario ->
 
         // Under ANY a scenario watches several apps; it ends only once none of them is left.
-        scenario.notificationConditions.none { condition ->
+        scenario.dismissibleNotificationConditions.none { condition ->
             remaining.any { notificationMatches(condition, it) }
         }
     }
@@ -87,14 +87,24 @@ fun notificationEndListeners(
 fun notificationEndCandidates(
     scenarios: List<Scenario>,
     removed: PostedNotification,
-): List<Scenario> = scenarios.filter { scenario -> notificationTrigger(scenario, removed) != null }
+): List<Scenario> = scenarios.filter { scenario ->
+    scenario.dismissibleNotificationConditions.any { notificationMatches(it, removed) }
+}
 
 val Scenario.notificationConditions: List<Condition.NotificationFrom>
     get() = instantConditions.filterIsInstance<Condition.NotificationFrom>()
 
+// A notification condition with an end event is only the impulse: its tile waits for that end, so
+// its notification going away neither ends the tile nor keeps alive a tile another condition fired.
+val Scenario.dismissibleNotificationConditions: List<Condition.NotificationFrom>
+    get() = notificationConditions.filter { it.until == null }
+
+// dismissible is decided by the condition that fired, before a state gate under ANY can stand in
+// for it as the trigger: a tile fired by a condition with an end never carries the key.
 fun notificationPayload(
     notification: PostedNotification,
     extract: List<ExtractRule> = emptyList(),
+    dismissible: Boolean = true,
 ): TriggerPayload = TriggerPayload(
     fields = notificationTextFields(notification) + buildMap {
         // Reserved names never come out of extractFields, so a rule cannot replace title or text.
@@ -105,7 +115,7 @@ fun notificationPayload(
     progress = notification.progress?.takeIf { progressTrack(it) != null },
     semantic = notification.semantic,
     reply = notification.reply,
-    notificationKey = notification.key,
+    notificationKey = notification.key.takeIf { dismissible },
 )
 
 internal fun notificationTextFields(notification: PostedNotification): Map<String, String> = buildMap {
