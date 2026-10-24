@@ -4,7 +4,6 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.VectorConverter
 import androidx.compose.foundation.gestures.awaitEachGesture
 import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -27,6 +26,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import app.cue.launcher.designsystem.Tokens
 import app.cue.launcher.designsystem.rememberReducedMotion
 import app.cue.launcher.designsystem.spatialFastSpec
+import app.cue.launcher.feature.dragdrop.awaitLongPress
 import app.cue.launcher.feature.dragdrop.trackLiftedPointer
 import kotlin.math.PI
 import kotlin.math.cos
@@ -196,7 +196,7 @@ private suspend fun PointerInputScope.detectFolderReorder(
 ) {
     awaitEachGesture {
         val down = awaitFirstDown(requireUnconsumed = false)
-        awaitLongPressOrCancellation(down.id) ?: return@awaitEachGesture
+        if (!awaitLongPress(down)) return@awaitEachGesture
         onStart()
         when (val moved = trackLiftedPointer(down.id, onDrag)) {
             null -> onCancel()

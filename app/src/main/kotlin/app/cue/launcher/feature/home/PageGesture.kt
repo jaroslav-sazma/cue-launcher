@@ -8,6 +8,19 @@ object PageGesture {
     fun triggersAction(travelXPx: Float, travelYPx: Float, thresholdPx: Float): Boolean =
         -travelXPx >= thresholdPx && -travelXPx > abs(travelYPx)
 
+    // Mirrors awaitLongPress: a pointer still within the slop when the long-press timeout runs
+    // out has become a lift, a reorder or a menu, so it must never be read as a swipe afterwards.
+    fun swipeHold(
+        distanceFromDownPx: Float,
+        elapsedMillis: Long,
+        slopPx: Float,
+        longPressTimeoutMillis: Long,
+    ): SwipeHold = when {
+        elapsedMillis >= longPressTimeoutMillis -> SwipeHold.LONG_PRESS
+        distanceFromDownPx > slopPx -> SwipeHold.SWIPE
+        else -> SwipeHold.UNDECIDED
+    }
+
     fun startsInEdgeZone(
         startX: Float,
         containerWidthPx: Float,
@@ -26,3 +39,5 @@ object PageGesture {
         else -> 0
     }
 }
+
+enum class SwipeHold { UNDECIDED, SWIPE, LONG_PRESS }
