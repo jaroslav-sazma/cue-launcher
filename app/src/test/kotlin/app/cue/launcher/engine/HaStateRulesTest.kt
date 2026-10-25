@@ -1,7 +1,11 @@
 package app.cue.launcher.engine
 
+import app.cue.launcher.data.ha.HaIconAttributes
+import app.cue.launcher.data.ha.HaIconSet
+import app.cue.launcher.data.ha.HaIconTable
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.LauncherWidgetType
+import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
 import app.cue.launcher.data.scenario.TemplateLayout
@@ -303,5 +307,82 @@ class HaStateRulesTest {
             setOf("sensor.teplota", "cover.gate", "light.hall"),
             haStateRefs(listOf(tile), emptyList(), now = 0L),
         )
+    }
+
+    @Test
+    fun `only an icon nobody chose follows Home Assistant`() {
+        val content = TileContent.Template(
+            layout = TemplateLayout.FOUR_ICONS,
+            items = listOf(
+                TemplateItem(actions = listOf(TapAction.HaAction("cover.toggle", entity = "cover.gate"))),
+                TemplateItem(
+                    icon = "mdi:lightbulb-group",
+                    actions = listOf(TapAction.HaAction("light.toggle", entity = "light.hall")),
+                ),
+                TemplateItem(
+                    actions = listOf(
+                        TapAction.HaAction("lock.open", entity = "lock.front_door", stateEntity = "binary_sensor.door"),
+                    ),
+                ),
+                TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.FLASHLIGHT))),
+            ),
+        )
+        val tile = scenario2x2("ikony", content).copy(conditions = emptyList())
+
+        assertEquals(setOf("cover.gate", "binary_sensor.door"), haGlyphEntities(content))
+        assertEquals(setOf("cover.gate", "binary_sensor.door"), haGlyphRefs(listOf(tile), emptyList(), now = 0L))
+    }
+
+    // The event's glyph goes on every Home Assistant icon left empty, so there is nothing to look up.
+    @Test
+    fun `an event that brings a glyph needs no icons from Home Assistant`() {
+        val tile = scenario2x2("zvonek", iconTemplate("cover.gate"))
+        val withGlyph = activation("zvonek").copy(payload = TriggerPayload(icon = "mdi:bell-ring"))
+
+        assertEquals(emptySet<String>(), haGlyphRefs(listOf(tile), listOf(withGlyph), now = 0L))
+        assertEquals(setOf("cover.gate"), haGlyphRefs(listOf(tile), listOf(activation("zvonek")), now = 0L))
+    }
+
+    @Test
+    fun `the icon follows the state and the device class of its entity`() {
+        val content = iconTemplate("cover.gate")
+        val table = HaIconTable(
+            instance = "home",
+            version = "2026.10.1",
+            domains = mapOf(
+                "cover" to mapOf(
+                    "_" to HaIconSet("mdi:window-open", mapOf("closed" to "mdi:window-closed")),
+                    "gate" to HaIconSet("mdi:gate-open", mapOf("closed" to "mdi:gate")),
+                ),
+            ),
+        )
+        val icons = HaIconContext(mapOf("cover.gate" to HaIconAttributes(deviceClass = "gate")), table)
+
+        val closed = haTileGlyphs(content, haStateValues(mapOf("cover.gate" to "closed")), icons)
+        val open = haTileGlyphs(content, haStateValues(mapOf("cover.gate" to "open")), icons)
+
+        assertEquals("mdi:gate", closed.getValue("cover.gate").first())
+        assertEquals("mdi:gate-open", open.getValue("cover.gate").first())
+        assertEquals(emptyMap<String, List<String>>(), haTileGlyphs(content, emptyMap(), HaIconContext()))
+    }
+
+    @Test
+    fun `a queue entry carries the icons of its entities`() {
+        val tile = scenario2x2("brana", iconTemplate("cover.gate")).copy(conditions = emptyList())
+        val table = HaIconTable(
+            instance = "home",
+            version = "2026.10.1",
+            domains = mapOf("cover" to mapOf("_" to HaIconSet("mdi:window-open"))),
+        )
+
+        val queues = sizeClassQueues(
+            scenarios = listOf(tile),
+            activations = emptyList(),
+            now = 0L,
+            haStates = mapOf("cover.gate" to "open"),
+            haIcons = HaIconContext(table = table),
+        )
+
+        assertEquals(mapOf("cover.gate" to listOf("mdi:window-open")), queues.medium.entries.single().haGlyphs)
     }
 }

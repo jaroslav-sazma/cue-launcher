@@ -4,6 +4,7 @@ import app.cue.launcher.data.ha.HaConfig
 import app.cue.launcher.data.ha.HaConfigRepository
 import app.cue.launcher.data.ha.HaEndpoint
 import app.cue.launcher.data.ha.HaEntityList
+import app.cue.launcher.data.ha.HaIconTable
 import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.data.ha.HaServiceCall
 import app.cue.launcher.data.ha.HaServiceList
@@ -11,6 +12,7 @@ import app.cue.launcher.data.ha.HaServiceNamesCache
 import app.cue.launcher.data.ha.HaStateRead
 import app.cue.launcher.data.ha.haAttempt
 import app.cue.launcher.data.ha.haDiagnose
+import app.cue.launcher.data.ha.haIconInstance
 import app.cue.launcher.data.ha.haInstanceKey
 import app.cue.launcher.data.ha.haUrlIsLocal
 import app.cue.launcher.system.BiometricGate
@@ -28,6 +30,7 @@ class HaGateway(
     private val client: HaClient,
     private val stateClient: HaStateClient,
     private val serviceClient: HaServiceClient,
+    private val iconClient: HaIconClient,
     private val access: HaAccess,
     private val discovery: HaDiscovery,
     private val gate: BiometricGate,
@@ -75,6 +78,16 @@ class HaGateway(
                 else -> serviceClient.names(endpoint, token.value, language)
             }
         }
+    }
+
+    // Read once per version of the instance, so one try on the first address is enough, as for the
+    // names; a table that did not come stays as it was.
+    suspend fun icons(domains: Set<String>): HaIconTable? {
+        val config = configs.config().takeIf(HaConfig::isConfigured) ?: return null
+        val endpoint = selector.endpoints(config, selector.network()).firstOrNull()
+        val token = endpoint?.let { access.bearer(config, it) as? HaBearer.Token }
+        val icons = if (endpoint != null && token != null) iconClient.icons(endpoint, token.value, domains) else null
+        return icons?.let { HaIconTable(haIconInstance(config), it.version, it.domains, asked = domains) }
     }
 
     // The live channel runs only at home. Away, every pass across the home screen would otherwise

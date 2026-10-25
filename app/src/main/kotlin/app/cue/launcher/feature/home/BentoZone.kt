@@ -47,6 +47,7 @@ import app.cue.launcher.designsystem.LocalCueColors
 import app.cue.launcher.designsystem.LocalTintedIcons
 import app.cue.launcher.designsystem.TileSurface
 import app.cue.launcher.designsystem.Tokens
+import app.cue.launcher.designsystem.glyph.LocalMdiGlyphs
 import app.cue.launcher.designsystem.toTextStyle
 import app.cue.launcher.designsystem.labelOnZoneStyle
 import app.cue.launcher.designsystem.menuAnchorBounds
@@ -228,6 +229,7 @@ private fun BentoTileContent(
 
                 payload = entry.payload,
                 accented = entry.accentedEntities,
+                haGlyphs = entry.haGlyphs,
                 onReply = { replyOpen = true }.takeIf { reply != null },
             )
 
@@ -360,6 +362,7 @@ private fun BentoChipIcon(
             level = GlassLevel.REGULAR,
 
             glyphTint = templateIconTint(item, entry.payload.semantic, entry.accentedEntities),
+            stateGlyphs = templateStateGlyphs(item, entry.haGlyphs, LocalMdiGlyphs.current),
             contentDescription = entry.scenario.tileLabel(),
             onLongClick = onLongClick,
         )
@@ -416,8 +419,9 @@ private fun FolderPreviewIcon(entry: QueueEntry, launcherApps: LauncherAppsRepos
         }
         return
     }
+    val stateGlyphs = item?.let { templateStateGlyphs(it, entry.haGlyphs, LocalMdiGlyphs.current) }.orEmpty()
     GlyphIcon(
-        name = item?.let(::templateGlyphName),
+        name = item?.let { templateGlyphName(it, stateGlyphs) },
         size = Tokens.Folder.glyphInField,
         tint = glyphTint,
     )

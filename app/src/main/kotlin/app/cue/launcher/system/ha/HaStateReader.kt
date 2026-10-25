@@ -3,6 +3,9 @@ package app.cue.launcher.system.ha
 import app.cue.launcher.data.ha.HA_LIVE_POLL_MILLIS
 import app.cue.launcher.data.ha.HA_LIVE_RECONNECT_MILLIS
 import app.cue.launcher.data.ha.HA_LIVE_SETTLED_MILLIS
+import app.cue.launcher.data.ha.HaIconAttributes
+import app.cue.launcher.data.ha.HaIconTable
+import app.cue.launcher.data.ha.HaLiveListener
 import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.data.ha.HaStateRead
 import app.cue.launcher.data.ha.haLiveWait
@@ -21,6 +24,7 @@ import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.transformLatest
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
@@ -32,19 +36,24 @@ import kotlinx.coroutines.withTimeoutOrNull
 @SingleIn(AppScope::class)
 class HaStateReader internal constructor(
     private val states: suspend (Set<String>) -> HaStateRead,
-    private val live: suspend (Set<String>, suspend (Map<String, String>) -> Unit) -> Boolean,
+    private val live: suspend (Set<String>, HaLiveListener) -> Boolean,
     private val clock: WallClock,
+    private val icons: (Set<String>) -> Flow<HaIconTable?> = { flowOf(null) },
 ) : HaStateSource {
 
     @Inject
-    constructor(gateway: HaGateway, socket: HaSocket, clock: WallClock) :
-        this(gateway::states, socket::consume, clock)
+    constructor(gateway: HaGateway, socket: HaSocket, clock: WallClock, icons: HaIconReader) :
+        this(gateway::states, socket::consume, clock, icons::observe)
 
     private val refreshes = MutableStateFlow(0)
 
     private val nudges = MutableStateFlow(0)
 
     private val cached = MutableStateFlow<Map<String, CachedState>>(emptyMap())
+
+    // Kept apart from the states and never aged out: all they decide is which icon to draw, and a
+    // device class outlives the entity going unavailable for a while.
+    private val attributes = MutableStateFlow<Map<String, HaIconAttributes>>(emptyMap())
 
     private val reading = Mutex()
 
@@ -87,6 +96,13 @@ class HaStateReader internal constructor(
             .distinctUntilChanged()
     }
 
+    override fun observeAttributes(entities: Set<String>): Flow<Map<String, HaIconAttributes>> {
+        if (entities.isEmpty()) return flowOf(emptyMap())
+        return attributes.map { known -> known.filterKeys(entities::contains) }.distinctUntilChanged()
+    }
+
+    override fun observeIcons(domains: Set<String>): Flow<HaIconTable?> = icons(domains)
+
     override fun refresh() {
         refreshes.update { it + 1 }
     }
@@ -108,6 +124,7 @@ class HaStateReader internal constructor(
         )
         val result = states(stale)
         val now = clock.nowMillis()
+        attributes.update { it + result.attributes }
         store(result.values, now, drop = stale)
         result.copy(values = known + result.values, atMillis = now)
     }
@@ -125,7 +142,8 @@ class HaStateReader internal constructor(
             var wait = HA_LIVE_RECONNECT_MILLIS
             while (isActive) {
                 val openedAt = clock.nowMillis()
-                val streamed = live(entities) { values ->
+                val streamed = live(entities) { values, read ->
+                    attributes.update { it + read }
                     store(values, clock.nowMillis(), drop = entities)
                     send(values)
                 }

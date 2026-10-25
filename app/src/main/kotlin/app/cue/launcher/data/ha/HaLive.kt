@@ -19,7 +19,11 @@ data class HaLiveState(
     // counting it as a working channel is what would leave a tile with a value that never changes.
     val streamed: Boolean = false,
     val values: Map<String, String> = emptyMap(),
+    val attributes: Map<String, HaIconAttributes> = emptyMap(),
+    val version: String? = null,
 )
+
+typealias HaLiveListener = suspend (Map<String, String>, Map<String, HaIconAttributes>) -> Unit
 
 data class HaLiveStep(
     val state: HaLiveState,
@@ -34,8 +38,15 @@ fun haLiveStep(
     entities: Set<String>,
     token: String,
 ): HaLiveStep = when (textOf(message[HA_LIVE_TYPE])) {
-    HA_LIVE_AUTH_REQUIRED -> HaLiveStep(state, send = haLiveAuth(token))
-    HA_LIVE_AUTH_OK -> HaLiveStep(state.copy(authorized = true), send = haLiveSubscribe(entities))
+    HA_LIVE_AUTH_REQUIRED -> HaLiveStep(
+        state.copy(version = haVersionOf(message) ?: state.version),
+        send = haLiveAuth(token),
+    )
+
+    HA_LIVE_AUTH_OK -> HaLiveStep(
+        state.copy(authorized = true, version = haVersionOf(message) ?: state.version),
+        send = haLiveSubscribe(entities),
+    )
     HA_LIVE_AUTH_INVALID -> HaLiveStep(state, refused = true)
     HA_LIVE_EVENT -> event(state, message[HA_LIVE_EVENT] as? JsonObject, entities)
 
@@ -49,7 +60,11 @@ fun haLiveStep(
 private fun event(state: HaLiveState, event: JsonObject?, entities: Set<String>): HaLiveStep = when (event) {
     null -> HaLiveStep(state)
     else -> HaLiveStep(
-        state = state.copy(streamed = true, values = haLiveValues(state.values, event, entities)),
+        state = state.copy(
+            streamed = true,
+            values = haLiveValues(state.values, event, entities),
+            attributes = haLiveAttributes(state.attributes, event, entities),
+        ),
         emit = true,
     )
 }
@@ -143,12 +158,16 @@ private const val HA_LIVE_SUBSCRIBE_ENTITIES = "subscribe_entities"
 
 private const val HA_LIVE_SUBSCRIPTION_ID = 1
 
-private const val HA_LIVE_ADD = "a"
+internal const val HA_LIVE_ADD = "a"
 
-private const val HA_LIVE_CHANGE = "c"
+internal const val HA_LIVE_CHANGE = "c"
 
-private const val HA_LIVE_REMOVE = "r"
+internal const val HA_LIVE_REMOVE = "r"
 
-private const val HA_LIVE_DIFF_ADD = "+"
+internal const val HA_LIVE_DIFF_ADD = "+"
+
+internal const val HA_LIVE_DIFF_REMOVE = "-"
+
+internal const val HA_LIVE_ATTRIBUTES = "a"
 
 private const val HA_LIVE_STATE = "s"

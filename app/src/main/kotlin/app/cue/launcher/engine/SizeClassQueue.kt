@@ -1,5 +1,7 @@
 package app.cue.launcher.engine
 
+import app.cue.launcher.data.ha.HaIconAttributes
+import app.cue.launcher.data.ha.HaIconTable
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TileContent
@@ -10,6 +12,9 @@ data class QueueEntry(
     val scenario: Scenario,
     val activation: Activation?,
     val accentedEntities: Set<String> = emptySet(),
+
+    // Best first: the ones after it only stand in for a name the bundled font lacks.
+    val haGlyphs: Map<String, List<String>> = emptyMap(),
 ) {
 
     val isFallback: Boolean get() = activation == null
@@ -19,6 +24,11 @@ data class QueueEntry(
     // Also the way out when an end event never arrives.
     val isClosable: Boolean get() = activation?.isEventHeld == true
 }
+
+data class HaIconContext(
+    val attributes: Map<String, HaIconAttributes> = emptyMap(),
+    val table: HaIconTable? = null,
+)
 
 data class SizeClassQueue(
     val size: TileSize,
@@ -56,12 +66,13 @@ fun sizeClassQueues(
     activations: List<Activation>,
     now: Long,
     haStates: Map<String, String> = emptyMap(),
+    haIcons: HaIconContext = HaIconContext(),
 ): BentoQueues {
     val byScenario = activations.associateBy(Activation::scenarioId)
     val states = haStateValues(haStates)
     val entries = scenarios
         .filter { it.enabled && it.size in BENTO_SIZES && it.content.isRenderable }
-        .mapNotNull { scenario -> scenario.queueEntry(byScenario[scenario.id], now, states) }
+        .mapNotNull { scenario -> scenario.queueEntry(byScenario[scenario.id], now, states, haIcons) }
         .groupBy { it.scenario.size }
     return BentoQueues(
         BENTO_SIZES.associateWith { size ->
@@ -74,13 +85,14 @@ private fun Scenario.queueEntry(
     activation: Activation?,
     now: Long,
     states: Map<String, String>,
+    icons: HaIconContext,
 ): QueueEntry? {
     val running = activation?.takeUnless { it.isExpired(now) }
     return when {
 
-        isFallback -> entryWithPayload(TriggerPayload.EMPTY, activation = null, states)
+        isFallback -> entryWithPayload(TriggerPayload.EMPTY, activation = null, states, icons)
         running == null -> null
-        else -> entryWithPayload(running.payload, running, states)
+        else -> entryWithPayload(running.payload, running, states, icons)
     }
 }
 
@@ -88,12 +100,14 @@ private fun Scenario.entryWithPayload(
     payload: TriggerPayload,
     activation: Activation?,
     states: Map<String, String>,
+    icons: HaIconContext,
 ): QueueEntry? {
     val resolved = resolveTemplateValues(content, payload, states) ?: return null
     return QueueEntry(
         scenario = if (resolved === content) this else copy(content = resolved),
         activation = activation,
         accentedEntities = haAccentedEntities(content, states),
+        haGlyphs = haTileGlyphs(resolved, states, icons),
     )
 }
 

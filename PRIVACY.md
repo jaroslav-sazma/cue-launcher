@@ -70,6 +70,8 @@ The app keeps its data in its private storage on the phone:
   Assistant screen;
 - your Home Assistant addresses, the pairing secret, and the credential, which is encrypted with a
   key in the Android Keystore;
+- the list of default icons your Home Assistant uses, read from it when a tile needs one and again
+  after it updates;
 - the last description assembled for an AI chat, as a file in the app's cache, replaced by the next
   one, and, in the settings, what you chose to include and whether a pasted answer is still awaited.
 

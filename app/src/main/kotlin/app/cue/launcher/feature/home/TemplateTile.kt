@@ -48,6 +48,7 @@ import app.cue.launcher.designsystem.LocalCueColors
 import app.cue.launcher.designsystem.LocalTintedIcons
 import app.cue.launcher.designsystem.TileSurface
 import app.cue.launcher.designsystem.Tokens
+import app.cue.launcher.designsystem.glyph.LocalMdiGlyphs
 import app.cue.launcher.designsystem.toTextStyle
 import app.cue.launcher.designsystem.labelsVisibleAt
 import app.cue.launcher.engine.haIconEntity
@@ -64,6 +65,7 @@ fun TemplateTileContent(
     modifier: Modifier = Modifier,
     payload: TriggerPayload = TriggerPayload.EMPTY,
     accented: Set<String> = emptySet(),
+    haGlyphs: Map<String, List<String>> = emptyMap(),
     onReply: (() -> Unit)? = null,
 ) {
     val colors = LocalCueColors.current
@@ -84,11 +86,11 @@ fun TemplateTileContent(
             TemplateLayout.FOUR_ICONS -> {
                 val rows = template.items.chunked(ICONS_PER_ROW)
                 rows.take(1).forEach { row ->
-                    TemplateActionRow(row, launcherApps, actions, payload.semantic, accented, labelled)
+                    TemplateActionRow(row, launcherApps, actions, payload.semantic, accented, haGlyphs, labelled)
                 }
                 progressBar(Modifier)
                 rows.drop(1).forEach { row ->
-                    TemplateActionRow(row, launcherApps, actions, payload.semantic, accented, labelled)
+                    TemplateActionRow(row, launcherApps, actions, payload.semantic, accented, haGlyphs, labelled)
                 }
             }
 
@@ -103,7 +105,9 @@ fun TemplateTileContent(
                 // The action row is measured first, so a long text loses its last line instead of
                 // squeezing the chips and their labels.
                 TemplateTexts(template, progressBar, modifier = Modifier.weight(1f, fill = false))
-                TemplateActionRow(template.items, launcherApps, actions, payload.semantic, accented, labelled)
+                TemplateActionRow(
+                    template.items, launcherApps, actions, payload.semantic, accented, haGlyphs, labelled,
+                )
             }
 
             TemplateLayout.ICON_TEXT -> TemplateTexts(template, progressBar)
@@ -153,6 +157,7 @@ private fun TemplateActionRow(
     actions: TileActions,
     semantic: SemanticStyle,
     accented: Set<String>,
+    haGlyphs: Map<String, List<String>>,
     labelled: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -175,6 +180,8 @@ private fun TemplateActionRow(
                     // itself and sits in the middle of it.
                     caption = item.label?.takeIf { labelled },
                     glyphTint = templateIconTint(item, semantic, accented),
+                    captionTint = templateInk(semantic),
+                    stateGlyphs = templateStateGlyphs(item, haGlyphs, LocalMdiGlyphs.current),
                 )
             }
         }
@@ -209,9 +216,16 @@ internal fun templateIconTint(
     item: TemplateItem,
     semantic: SemanticStyle,
     accented: Set<String>,
-): Color = with(LocalCueColors.current) {
-    if (haIconEntity(item)?.let { it in accented } == true) accent else ink(semantic, textPrimary)
+): Color = if (haIconEntity(item)?.let { it in accented } == true) {
+    LocalCueColors.current.accent
+} else {
+    templateInk(semantic)
 }
+
+// The accent is for the glyph alone; a caption keeps the colour of every other action's.
+@Composable
+internal fun templateInk(semantic: SemanticStyle): Color =
+    with(LocalCueColors.current) { ink(semantic, textPrimary) }
 
 @Composable
 fun TemplateItemIcon(
@@ -224,6 +238,8 @@ fun TemplateItemIcon(
     // The text under the glyph, inside the chip. Without one the glyph is centred in the chip.
     caption: String? = null,
     glyphTint: Color = LocalCueColors.current.textPrimary,
+    captionTint: Color = LocalCueColors.current.textPrimary,
+    stateGlyphs: List<String> = emptyList(),
     contentDescription: String? = item.label,
 
     onLongClick: (() -> Unit)? = null,
@@ -252,11 +268,11 @@ fun TemplateItemIcon(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            TemplateGlyph(item, icon, glyphTint, contentDescription)
+            TemplateGlyph(item, stateGlyphs, icon, glyphTint, contentDescription)
             caption?.let {
                 Text(
                     text = it,
-                    color = glyphTint,
+                    color = captionTint,
                     style = Tokens.Template.labelInChip.toTextStyle(),
                     maxLines = Tokens.Type.LABEL_LINES,
                     overflow = Tokens.Type.labelOverflow,
@@ -272,6 +288,7 @@ fun TemplateItemIcon(
 @Composable
 private fun TemplateGlyph(
     item: TemplateItem,
+    stateGlyphs: List<String>,
     icon: ImageBitmap?,
     glyphTint: Color,
     contentDescription: String?,
@@ -283,7 +300,7 @@ private fun TemplateGlyph(
         return
     }
     GlyphIcon(
-        name = templateGlyphName(item),
+        name = templateGlyphName(item, stateGlyphs),
         size = Tokens.Size.glyphInTile,
         tint = glyphTint,
         contentDescription = contentDescription,

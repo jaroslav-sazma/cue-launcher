@@ -10,17 +10,22 @@ import app.cue.launcher.data.scenario.TileContent
 
 fun haStateRefs(scenarios: List<Scenario>, activations: List<Activation>, now: Long): Set<String> {
     val byScenario = activations.associateBy(Activation::scenarioId)
-    return scenarios
-        .filter { scenario ->
-            val activation = byScenario[scenario.id]
-            scenario.enabled && scenario.size in BENTO_SIZES &&
-                (scenario.isFallback || activation?.isExpired(now) == false)
-        }
+    return visibleScenarios(scenarios, byScenario, now)
         // A payload field whose name happens to contain a dot looks exactly like an entity id. The
         // event already carried its value, so reading it over REST would be a request for nothing.
         .flatMapTo(mutableSetOf()) { scenario ->
             (haStateRefs(scenario.content) + haIconRefs(scenario.content)) - suppliedRefs(byScenario[scenario.id])
         }
+}
+
+internal fun visibleScenarios(
+    scenarios: List<Scenario>,
+    byScenario: Map<String, Activation>,
+    now: Long,
+): List<Scenario> = scenarios.filter { scenario ->
+    val activation = byScenario[scenario.id]
+    scenario.enabled && scenario.size in BENTO_SIZES &&
+        (scenario.isFallback || activation?.isExpired(now) == false)
 }
 
 fun haGateEntities(scenarios: List<Scenario>): Set<String> = scenarios

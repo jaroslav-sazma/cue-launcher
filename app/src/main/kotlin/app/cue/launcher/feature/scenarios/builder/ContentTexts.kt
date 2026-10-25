@@ -7,6 +7,7 @@ import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileSize
 import app.cue.launcher.designsystem.glyph.mdiIconReference
+import app.cue.launcher.engine.haGlyphEntity
 import app.cue.launcher.feature.scenarios.AppJoiner
 import app.cue.launcher.feature.scenarios.appListText
 
@@ -112,6 +113,7 @@ internal fun actionSummary(action: TapAction?, actionLabel: String? = null): Str
 internal fun iconSummary(item: TemplateItemDraft): String {
     val glyph = previewGlyphName(item)
     return when {
+        item.toItem()?.let(::haGlyphEntity) != null -> stringResource(R.string.builder_icon_ha_state)
         glyph != null -> mdiIconReference(glyph)
         previewIconApp(item) != null -> stringResource(R.string.builder_icon_app)
         else -> stringResource(R.string.builder_icon_none)

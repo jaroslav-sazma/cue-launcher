@@ -542,6 +542,7 @@
     <string name="builder_icon_custom">custom · change</string>
     <string name="builder_icon_none">No icon</string>
     <string name="builder_icon_app">App icon</string>
+    <string name="builder_icon_ha_state">Follows the state in Home Assistant</string>
 
     <string name="builder_icon_loading">Searching the icons…</string>
     <string name="builder_icon_ha_note">The same names as in Home Assistant.</string>

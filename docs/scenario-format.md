@@ -142,9 +142,12 @@ version of Cue: ignores `until` like any unknown field and ends the tile by the 
 | `launcher_widget` | `widget`: `"calendar"` (4×2) · `"clock"` (4×2) · `"media"` (4×2) · `"searchbar"` (2×1, static area only). No tap action — clicks belong to the widget |
 | `app_widget` | `package`, `provider`, `appWidgetId` — always a **string**, either a placeholder or a bound id as text (`"8"`) |
 
-`icon` is an MDI name (`"mdi:gate"`); `null` means "derive it from the action". `label` names the
-icon: on a `1×1` it is the caption under the chip, on `text_two_icons` and `four_icons` it sits
-inside the chip under the glyph. An item without one shows the glyph alone.
+`icon` is an MDI name (`"mdi:gate"`); `null` means "derive it from the action", which for an `ha`
+action is the `icon` of the Home Assistant event that raised the tile, if it brought one, and
+otherwise, with an entity, the icon Home Assistant draws for that entity — for `stateEntity` when it
+is set — following its state. `label` names the icon: on a `1×1` it is the caption under the chip,
+on `text_two_icons` and `four_icons` it sits inside the chip under the glyph. An item without one
+shows the glyph alone.
 
 ## Actions
 

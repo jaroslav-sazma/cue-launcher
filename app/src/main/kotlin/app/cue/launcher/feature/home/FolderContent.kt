@@ -56,6 +56,7 @@ import app.cue.launcher.designsystem.LocalCueColors
 import app.cue.launcher.designsystem.MenuAnchor
 import app.cue.launcher.designsystem.Tokens
 import app.cue.launcher.designsystem.dropTargetOutline
+import app.cue.launcher.designsystem.glyph.LocalMdiGlyphs
 import app.cue.launcher.designsystem.labelOnZoneStyle
 import app.cue.launcher.designsystem.menuAnchorBounds
 import app.cue.launcher.engine.QueueEntry
@@ -123,6 +124,7 @@ internal fun DynamicFolderContent(
                     actions = actions,
                     level = GlassLevel.THICK,
                     glyphTint = templateIconTint(item, entry.payload.semantic, entry.accentedEntities),
+                    stateGlyphs = templateStateGlyphs(item, entry.haGlyphs, LocalMdiGlyphs.current),
                     contentDescription = item.label,
                 )
             }

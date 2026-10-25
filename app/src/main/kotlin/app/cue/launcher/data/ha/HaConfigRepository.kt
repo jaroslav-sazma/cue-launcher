@@ -6,6 +6,7 @@ import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 
@@ -14,6 +15,12 @@ import kotlinx.coroutines.flow.map
 class HaConfigRepository(private val dataStore: DataStore<LauncherSettings>) {
 
     val config: Flow<HaConfig> = dataStore.data.map { it.ha.toConfig(HaTokenCipher::open) }
+
+    // Which instance is set up, if any, without opening the credential: the home screen asks on every
+    // restart of its queues, and the Keystore need not be woken for that.
+    val iconInstance: Flow<String?> = dataStore.data
+        .map { settings -> settings.ha.toConfig { SEALED }.takeIf(HaConfig::isConfigured)?.let(::haIconInstance) }
+        .distinctUntilChanged()
 
     val eventSecret: Flow<String> = dataStore.data.map { it.ha.eventSecret.orEmpty() }
 
@@ -103,3 +110,5 @@ class HaConfigRepository(private val dataStore: DataStore<LauncherSettings>) {
         }
     }
 }
+
+private const val SEALED = "sealed"

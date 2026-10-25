@@ -1,6 +1,7 @@
 package app.cue.launcher.system.ha
 
 import app.cash.turbine.test
+import app.cue.launcher.data.ha.HaIconAttributes
 import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.data.ha.HaStateRead
 import app.cue.launcher.engine.WallClock
@@ -139,6 +140,20 @@ class HaStateReaderTest {
             awaitComplete()
         }
         assertEquals(0, reads)
+    }
+
+    // A device class stays put while its entity is unavailable, or a gate would turn into a window.
+    @Test
+    fun `the attributes of a read outlive its state`() = runTest {
+        val reader = reader()
+        val gate = HaIconAttributes(deviceClass = "gate")
+        answer = { read(DOOR to "open").copy(attributes = mapOf(DOOR to gate)) }
+        reader.read(setOf(DOOR))
+        answer = { read().copy(attributes = emptyMap()) }
+        reader.read(setOf(DOOR), force = true)
+
+        assertEquals(mapOf(DOOR to gate), reader.observeAttributes(setOf(DOOR, TV)).first())
+        assertEquals(emptyMap<String, HaIconAttributes>(), reader.observeAttributes(setOf(TV)).first())
     }
 
     private fun read(vararg states: Pair<String, String>): HaStateRead =

@@ -31,9 +31,16 @@ class ScenarioEngine(
         combine(scenarios.observeScenarios(), activations.observeActivations(), ::EngineInput)
             .distinctUntilChanged()
             .flatMapLatest { input ->
-                val refs = haStateRefs(input.scenarios, input.activations, clock.nowMillis())
-                haStates.observeStates(refs).map { states ->
-                    sizeClassQueues(input.scenarios, input.activations, clock.nowMillis(), states)
+                val now = clock.nowMillis()
+                val refs = haStateRefs(input.scenarios, input.activations, now)
+                val glyphRefs = haGlyphRefs(input.scenarios, input.activations, now)
+                combine(
+                    haStates.observeStates(refs),
+                    haStates.observeAttributes(glyphRefs),
+                    haStates.observeIcons(glyphRefs.mapTo(mutableSetOf()) { it.substringBefore('.') }),
+                ) { states, attributes, icons ->
+                    val context = HaIconContext(attributes, icons)
+                    sizeClassQueues(input.scenarios, input.activations, clock.nowMillis(), states, context)
                 }
             }
             .distinctUntilChanged()

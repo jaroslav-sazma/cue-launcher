@@ -2,8 +2,10 @@ package app.cue.launcher.system.ha
 
 import android.util.Log
 import app.cue.launcher.data.ha.HaEndpoint
+import app.cue.launcher.data.ha.HaIconAttributes
 import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.data.ha.HaStateRead
+import app.cue.launcher.data.ha.haIconAttributesOf
 import app.cue.launcher.data.ha.haStatePath
 import app.cue.launcher.data.ha.haStateUsable
 import dev.zacsweers.metro.AppScope
@@ -15,6 +17,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -41,18 +44,25 @@ class HaStateClient(private val http: HaHttp) {
             .map { entity -> async { entity to read(endpoint, token, entity) } }
             .awaitAll()
         val values = mutableMapOf<String, String>()
+        val attributes = mutableMapOf<String, HaIconAttributes>()
         var failure: HaProbe? = null
         for ((entity, result) in results) {
             when (result) {
-                is HaStateResult.Value -> values[entity] = result.state
+                is HaStateResult.Read -> {
+                    // An unreadable state is not a transport failure: the instance answered. Reporting
+                    // it as one would keep the launcher from remembering which endpoint works.
+                    result.state?.let { values[entity] = it }
+                    result.attributes?.let { attributes[entity] = it }
+                }
 
-                // An unreadable state is not a transport failure: the instance answered. Reporting it
-                // as one would keep the launcher from remembering which endpoint works.
-                HaStateResult.Unusable -> Unit
                 is HaStateResult.Failed -> failure = worst(failure, result.probe)
             }
         }
-        HaStateRead(probe = failure ?: HaProbe.Ok(values.size, millis = 0L), values = values)
+        HaStateRead(
+            probe = failure ?: HaProbe.Ok(values.size, millis = 0L),
+            values = values,
+            attributes = attributes,
+        )
     }
 
     // A network failure outranks an HTTP one: it is the only kind that may send the whole read to the
@@ -67,7 +77,7 @@ class HaStateClient(private val http: HaHttp) {
         val response = http.get(endpoint.url + haStatePath(entity), token)
         when {
             !response.status.isSuccess() -> HaStateResult.Failed(HaProbe.Http(response.status.value))
-            else -> stateOf(response.bodyAsText())?.let(HaStateResult::Value) ?: HaStateResult.Unusable
+            else -> readOf(response.bodyAsText())
         }
     } catch (cause: CancellationException) {
         throw cause
@@ -76,19 +86,25 @@ class HaStateClient(private val http: HaHttp) {
         HaStateResult.Failed(HaProbe.Network(cause.message ?: cause::class.simpleName))
     }
 
-    private fun stateOf(body: String): String? = runCatching {
-        http.json.parseToJsonElement(body).jsonObject[STATE_FIELD]?.jsonPrimitive?.content
-    }.getOrNull()?.takeIf(::haStateUsable)
+    private fun readOf(body: String): HaStateResult.Read {
+        val read = runCatching { http.json.parseToJsonElement(body).jsonObject }.getOrNull()
+        return HaStateResult.Read(
+            state = runCatching { read?.get(STATE_FIELD)?.jsonPrimitive?.content }.getOrNull()
+                ?.takeIf(::haStateUsable),
+            attributes = haIconAttributesOf(read?.get(ATTRIBUTES_FIELD) as? JsonObject),
+        )
+    }
 
     private sealed interface HaStateResult {
-        data class Value(val state: String) : HaStateResult
-        data object Unusable : HaStateResult
+        data class Read(val state: String?, val attributes: HaIconAttributes?) : HaStateResult
         data class Failed(val probe: HaProbe) : HaStateResult
     }
 
     private companion object {
 
         const val STATE_FIELD = "state"
+
+        const val ATTRIBUTES_FIELD = "attributes"
 
         const val TAG = "HaStates"
     }

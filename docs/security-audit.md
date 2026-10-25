@@ -233,6 +233,18 @@ the services only when the entities answered, for the check of a pasted answer o
 service, and both are held with the rest of its inventory only while its screen is in front, for at
 most two minutes (section 11).
 
+The home screen reads one thing more, and only while a visible tile has a Home Assistant button
+without an icon of its own: Home Assistant's default icons for the domains of those buttons, asked
+with `frontend/get_icons` over the WebSocket API, with the credential the launcher already holds,
+of the address listed first; the socket closes once the answer is in or after five seconds. The
+table holds nothing but icon names per domain, device class and state, and decides nothing but
+which glyph a tile draws. It is stored outside the backups, under a SHA-256 digest of the
+instance's identity rather than its addresses, and read again only for a domain it was not read for
+or when a live channel's handshake with the same instance announces another Home Assistant version.
+A refused request counts as an answer with no icons; a read that got no answer is not retried for
+15 minutes unless a live channel authenticates in the meantime. The `device_class` and `icon`
+attributes the table is matched with come with the state reads the tiles already make.
+
 Local network access is a permission of its own since Android 17. The launcher asks for it only when
 the configured address is a local one, and an instance picked in the system picker does not need it
 at all — that approval covers the one service the user chose, which is less reach than the
@@ -582,6 +594,13 @@ The properties above are not left to a future reader's memory:
 - `HaServiceNamesTest` — the request for service names sends the token only when asked, asks for
   nothing but the services' translations, treats a refused token or a failed answer as final, and
   takes nothing from the answer but service names.
+- `HaIconsTest` — the request for icons sends the token only when asked, asks for nothing but the
+  component icons of the domains named, treats a refused token or a refused request as final, takes
+  nothing from the answer but icon names, and records the instance only as a digest that does not
+  contain its address.
+- `HaIconReaderTest` — the icon table is read only while a tile needs it, never kept for an instance
+  other than the one set up, read again only for a missing domain or a new version of the same
+  instance, and a failed read waits before the next unless a handshake has come through since.
 - `HaServiceNamesCacheTest` — names read for one instance, address or language are never reused for
   another, and a read that failed is not kept.
 - `HaServiceCallTest`, `HaStateRulesTest` — a service name and an entity id have the shape that

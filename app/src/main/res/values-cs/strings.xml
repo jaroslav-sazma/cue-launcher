@@ -547,6 +547,7 @@
     <string name="builder_icon_custom">vlastní · změnit</string>
     <string name="builder_icon_none">Bez ikony</string>
     <string name="builder_icon_app">Ikona aplikace</string>
+    <string name="builder_icon_ha_state">Podle stavu v Home Assistantu</string>
 
     <string name="builder_icon_loading">Hledám v ikonách…</string>
     <string name="builder_icon_ha_note">Stejné názvy jako v Home Assistantu.</string>

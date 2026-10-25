@@ -7,6 +7,7 @@ import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
+import app.cue.launcher.designsystem.glyph.MdiGlyphs
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -51,6 +52,26 @@ class TemplateContentTest {
 
         assertEquals(HA_GLYPH, templateGlyphName(item))
         assertNull(templateIconApp(item))
+    }
+
+    @Test
+    fun `an HA action without an icon draws what Home Assistant would, a chosen icon stays`() {
+        val action = TapAction.HaAction(service = "cover.open_cover", entity = "cover.gate")
+        val glyphs = listOf("mdi:gate", "mdi:gate-open")
+
+        assertEquals("gate", templateGlyphName(TemplateItem(actions = listOf(action)), glyphs))
+        val chosen = TemplateItem(icon = "mdi:boom-gate", actions = listOf(action))
+        assertEquals("boom-gate", templateGlyphName(chosen, glyphs))
+    }
+
+    @Test
+    fun `a name the bundled font does not know gives way to the next`() {
+        val item = TemplateItem(actions = listOf(TapAction.HaAction(service = "cover.toggle", entity = "cover.gate")))
+        val font = MdiGlyphs(mapOf("gate-open" to 0xF0299))
+        val glyphs = mapOf("cover.gate" to listOf("mdi:gate-future", "mdi:gate-open"))
+
+        assertEquals(listOf("mdi:gate-open"), templateStateGlyphs(item, glyphs, font))
+        assertEquals(emptyList<String>(), templateStateGlyphs(item, emptyMap(), font))
     }
 
     @Test

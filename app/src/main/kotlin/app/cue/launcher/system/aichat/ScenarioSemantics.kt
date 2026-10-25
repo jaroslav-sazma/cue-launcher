@@ -224,7 +224,8 @@ private val FIELD_NOTES: Map<String, String> = mapOf(
     "label" to "a caption in the user's language, about 12 characters fit; may hold `{namespace:key}` values",
     "icon" to
         "\"mdi:<name>\" from Material Design Icons, the names Home Assistant uses (\"mdi:gate\"); leave it " +
-        "out to show the icon of the app or the action",
+        "out to show the icon of the app or the action — on a Home Assistant action that is the icon " +
+        "Home Assistant draws for the entity, which follows its state",
     "item.action" to "one action object, or an array of them run in order on one tap",
     "system.action" to "see System actions",
     "shortcutId" to "the part of a `shortcut` line after the slash",

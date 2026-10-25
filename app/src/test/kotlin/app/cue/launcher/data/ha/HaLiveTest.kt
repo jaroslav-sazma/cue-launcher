@@ -46,6 +46,25 @@ class HaLiveTest {
         assertNull(step.send)
     }
 
+    @Test
+    fun `the handshake announces the version of the instance`() {
+        val required = step(HaLiveState(), """{"type":"auth_required","ha_version":"2026.9.1"}""").state
+        val ok = step(required, """{"type":"auth_ok"}""").state
+
+        assertEquals("2026.9.1", required.version)
+        assertEquals("2026.9.1", ok.version)
+    }
+
+    @Test
+    fun `an event carries the attributes that choose the icon`() {
+        val step = step(
+            HaLiveState(),
+            """{"id":1,"type":"event","event":{"a":{"sensor.a":{"s":"21.5","a":{"device_class":"temperature"}}}}}""",
+        )
+
+        assertEquals(mapOf("sensor.a" to HaIconAttributes(deviceClass = "temperature")), step.state.attributes)
+    }
+
     // Authenticating proves nothing on its own: the caller has to keep polling until an event arrives,
     // or a channel that dies right after auth_ok would silently freeze every value on the screen.
     @Test

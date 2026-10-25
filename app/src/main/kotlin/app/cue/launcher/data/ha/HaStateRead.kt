@@ -5,6 +5,7 @@ data class HaStateRead(
     val values: Map<String, String> = emptyMap(),
 
     val atMillis: Long = 0L,
+    val attributes: Map<String, HaIconAttributes> = emptyMap(),
 ) {
 
     fun missing(entities: Set<String>): Set<String> = entities - values.keys

@@ -623,9 +623,20 @@ it. That is for the one button you want to press without looking.
 ### Icons and colour
 
 A button's icon comes **from its action** — an app's own icon, a system action's glyph, the glyph
-from a Home Assistant event, or `mdi:home-assistant`. Any of them can be replaced from the full
-**Material Design Icons** set, about 7,000 glyphs under the same names Home Assistant uses, so
-`mdi:gate` is what you would expect.
+from a Home Assistant event, or, for a Home Assistant action, the icon Home Assistant itself draws
+for the entity. Any of them can be replaced from the full **Material Design Icons** set, about 7,000
+glyphs under the same names Home Assistant uses, so `mdi:gate` is what you would expect.
+
+A **Home Assistant action without an icon of its own follows its entity**, the way Home Assistant's
+dashboards do: a lock shows `mdi:lock` while locked and `mdi:lock-open-variant` while unlocked, a
+cover of the class *gate* shows `mdi:gate` while closed and `mdi:gate-open` while open. An icon you
+set on the entity in Home Assistant is used as it is, whatever the state, and so is a glyph the
+Home Assistant event that raised the tile brings. The builder calls such a button *Follows the state
+in Home Assistant*; choose an icon and it stays fixed, *Restore the icon from the action* brings the
+changing one back. The icons come from your instance: Cue: asks for those of the kinds of entity on
+your tiles once, and again after Home Assistant updates. Until then, or when your instance cannot
+be reached that way, the button shows `mdi:home-assistant`. An icon newer than the ones that come
+with the app gives way to the entity's usual one.
 
 All tiles share one design: the same glass, the same shape, single-colour glyphs. An app icon in a
 tile is drawn tinted too, whatever the *Icons* setting says; that setting is for the home screen,
@@ -633,15 +644,17 @@ the docks and the drawer.
 
 The **accent colour** marks a Home Assistant entity whose state is "active": a gate icon lights up
 while the gate is `open`, `on`, `opening`, `playing`, `home`, `unlocked`, `heat` or `cool`, and goes
-back to normal otherwise. Every icon answers for itself, so a tile with four Home Assistant buttons
-can have the gate lit and the lamp not.
+back to normal otherwise. Only the icon lights up; the caption under it keeps the colour of every
+other button. Every icon answers for itself, so a tile with four Home Assistant buttons can have the
+gate lit and the lamp not.
 
 The entity that counts is the one the action calls, unless the action names another in **Icon state
 from**. That one replaces it: a door button that runs `lock.open` on `lock.front_door` with *Icon
 state from* `binary_sensor.front_door_contact` lights up while the contact reports the door open,
-and the lock's own state no longer matters for the icon. A value there that is not one valid entity
-id leaves the icon in the ordinary colour. Note that an entity behind an icon is then read from your
-instance, in the same burst as the tile's other values.
+and without an icon of its own shows the contact's door icon; the lock's own state no longer matters
+for the icon. A value there that is not one valid entity id leaves the icon in the ordinary colour
+and on `mdi:home-assistant`. Note that an entity behind an icon is then read from your instance, in
+the same burst as the tile's other values.
 
 A notification that declares a style — info, safe, caution, danger — passes that colour to the icons
 of its tile, but a lit entity keeps the accent anyway: what is true right now outranks the mood of
@@ -867,8 +880,8 @@ Assistant's own action editor filters them; with no entity, every service is off
 stay free text, so with the instance out of reach there is simply no menu and whatever you type is
 taken as it is. Service names follow the app's language when Home Assistant has them translated.
 
-**Icon state from** takes no part in the call; it only decides the icon's colour — see
-[Icons and colour](#icons-and-colour).
+**Icon state from** takes no part in the call; it only decides the icon's colour and, on a button
+without an icon of its own, which icon it shows — see [Icons and colour](#icons-and-colour).
 
 **Ask for confirmation** makes the tap raise the system prompt first — fingerprint or face, with the
 screen lock as the fallback — and the call goes out only once it passes. It is per action, so the

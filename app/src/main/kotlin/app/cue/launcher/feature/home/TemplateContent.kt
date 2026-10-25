@@ -8,7 +8,9 @@ import app.cue.launcher.data.scenario.TemplateItem
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
 import app.cue.launcher.data.scenario.actionApp
+import app.cue.launcher.designsystem.glyph.MdiGlyphs
 import app.cue.launcher.designsystem.glyph.mdiGlyphName
+import app.cue.launcher.engine.haIconEntity
 
 val TileContent.Template.wholeTileActions: List<TapAction>
     get() = if (layout == TemplateLayout.TEXT_ONLY) items.firstOrNull()?.actions.orEmpty() else emptyList()
@@ -18,8 +20,16 @@ fun Scenario.templateItem(): TemplateItem? =
 
 fun Scenario.tileLabel(): String = templateItem()?.label ?: name
 
-fun templateGlyphName(item: TemplateItem): String? =
-    mdiGlyphName(item.icon) ?: item.primaryAction?.let(::derivedGlyphName)
+// stateGlyphs are what Home Assistant would draw for the item's entity, already narrowed to the
+// glyphs the bundled font has.
+fun templateGlyphName(item: TemplateItem, stateGlyphs: List<String> = emptyList()): String? =
+    mdiGlyphName(item.icon) ?: stateGlyphs.firstNotNullOfOrNull(::mdiGlyphName)
+        ?: item.primaryAction?.let(::derivedGlyphName)
+
+// The font is bundled and Home Assistant's icon names move on with every release, so a name the font
+// does not have yet gives way to the next one.
+fun templateStateGlyphs(item: TemplateItem, haGlyphs: Map<String, List<String>>, font: MdiGlyphs): List<String> =
+    haIconEntity(item)?.let(haGlyphs::get).orEmpty().filter { font.codePointOf(it) != null }
 
 fun templateIconApp(item: TemplateItem): ActionApp? =
     if (mdiGlyphName(item.icon) != null) null else item.primaryAction?.actionApp
