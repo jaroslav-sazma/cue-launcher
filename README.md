@@ -27,7 +27,8 @@ drawer with search.
 - **Phones with Android 17 or newer.** In English and Czech. Free software under GPL-3.0-or-later.
 
 **[More screenshots](fastlane/metadata/android/en-US/images/phoneScreenshots/) ·
-[Download](#download-and-install)** · coming to Google Play as "Cue: React & Act"
+[Download](#download-and-install)** · on Google Play as "Cue: React & Act" in a closed test
+anyone can join
 
 > **Why it exists.** It began with one mute button: silence the phone before a meeting, turn the
 > sound back on afterwards — without two permanent tiles for it and without yet another widget on a
@@ -1222,13 +1223,17 @@ which keeps one connected for its notification dots.
 is no build for them and none is planned. It is made for phones: the home screen is locked to
 portrait and the app requires telephony hardware, so tablets, TVs and Chromebooks are excluded.
 
+**Google Play.** "Cue: React & Act" is in a closed test that anyone can join: first the
+[testers group](https://groups.google.com/g/cue-launcher-testers), then the
+[opt-in](https://play.google.com/apps/testing/app.cue.launcher), both with the Google account of
+the phone, and then install it from Play. Google makes a new app public only after 12 testers have
+stayed in its test for 14 days, so joining helps it get there. The Play copy is signed with the same
+key as the APKs here, so either updates the other.
+
 **GitHub Releases.** Every [release](https://github.com/jaroslav-sazma/cue-launcher/releases) has
 the signed APK attached, together with its SHA-256 checksum. Download the APK on the phone, open
 it and allow the installation when Android asks. Then make Cue: the default home app when it offers
 to, or later in *Settings → Apps → Default apps → Home app*.
-
-**Google Play** — a release there is planned, as "Cue: React & Act". It will be signed with the same
-key as the APKs here, so either will update the other.
 
 **Updates.** A newer APK installs over the old one and keeps all its data. Cue: does not check for
 updates itself — it makes no network connection of its own — so install the next release by hand or
