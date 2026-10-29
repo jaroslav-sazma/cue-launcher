@@ -28,6 +28,10 @@ data class SystemState(
     val calendarEvent: Boolean? = null,
 
     val ha: HaStates? = null,
+
+    val macBridge: MacBridgeState? = null,
+
+    val macLock: MacLockState? = null,
 ) {
 
     fun mergedWith(patch: SystemState): SystemState = SystemState(
@@ -41,8 +45,18 @@ data class SystemState(
         media = patch.media ?: media,
         calendarEvent = patch.calendarEvent ?: calendarEvent,
         ha = patch.ha ?: ha,
+        macBridge = patch.macBridge ?: macBridge,
+        macLock = patch.macLock ?: macLock,
     )
 }
+
+// OFF is the bridge switched off or no Mac paired, where the Mac never counts as nearby.
+enum class MacBridgeState { OFF, AWAY, NEARBY }
+
+// UNREPORTED is everything but a present Mac's own word: the bridge off, the Mac away, or no
+// lock-state from it yet. The Mac counts as locked only on LOCKED and as unlocked only on UNLOCKED;
+// UNREPORTED is unknown to both.
+enum class MacLockState { LOCKED, UNLOCKED, UNREPORTED }
 
 // Entity id to its state, trimmed and in lower case. An entity that is missing — Home Assistant not
 // connected or out of reach, the entity unavailable or not read yet — has no state to compare.
@@ -80,7 +94,7 @@ data class WifiState(
     val bssid: String? = null,
 )
 
-enum class StateAspect { CLOCK, POWER, AUDIO, BLUETOOTH, WIFI, RINGER, CALENDAR, MEDIA, HA }
+enum class StateAspect { CLOCK, POWER, AUDIO, BLUETOOTH, WIFI, RINGER, CALENDAR, MEDIA, HA, MAC }
 
 fun Condition.StateCondition.aspect(): StateAspect = when (this) {
     is Condition.TimeWindow -> StateAspect.CLOCK
@@ -92,6 +106,8 @@ fun Condition.StateCondition.aspect(): StateAspect = when (this) {
     is Condition.CalendarEvent -> StateAspect.CALENDAR
     is Condition.MediaPlaying -> StateAspect.MEDIA
     is Condition.HaState -> StateAspect.HA
+    is Condition.MacNearby -> StateAspect.MAC
+    is Condition.MacLocked -> StateAspect.MAC
 }
 
 fun stateAspectsOf(scenarios: List<Scenario>): Set<StateAspect> =

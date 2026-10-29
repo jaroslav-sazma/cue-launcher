@@ -4,6 +4,8 @@ import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.engine.ConditionOutcome
+import app.cue.launcher.engine.MacBridgeState
+import app.cue.launcher.engine.MacLockState
 import app.cue.launcher.engine.SystemState
 import app.cue.launcher.engine.stateConditionOutcome
 
@@ -47,6 +49,16 @@ enum class NowKey {
     CALENDAR_UNKNOWN,
     HA_STATE,
     HA_UNKNOWN,
+    MAC_NEARBY,
+    MAC_AWAY,
+    MAC_BRIDGE_OFF,
+    MAC_UNKNOWN,
+    MAC_LOCKED,
+    MAC_UNLOCKED,
+    MAC_LOCK_UNREPORTED,
+    MAC_LOCK_AWAY,
+    MAC_LOCK_BRIDGE_OFF,
+    MAC_LOCK_UNKNOWN,
 
     AWAITS_EVENT,
 }
@@ -66,6 +78,7 @@ private fun verdictOf(outcome: ConditionOutcome): LiveVerdict = when (outcome) {
     ConditionOutcome.UNKNOWN -> LiveVerdict.UNKNOWN
 }
 
+@Suppress("CyclomaticComplexMethod")
 private fun measuredNow(condition: Condition.StateCondition, state: SystemState): NowKey =
     when (condition) {
         is Condition.TimeWindow -> if (state.clock == null) NowKey.TIME_UNKNOWN else NowKey.TIME
@@ -83,6 +96,22 @@ private fun measuredNow(condition: Condition.StateCondition, state: SystemState)
         is Condition.RingerMode -> ringerNow(condition, state)
         is Condition.HaState ->
             if (state.ha?.stateOf(condition.entity) == null) NowKey.HA_UNKNOWN else NowKey.HA_STATE
+
+        is Condition.MacNearby -> when (state.macBridge) {
+            MacBridgeState.NEARBY -> NowKey.MAC_NEARBY
+            MacBridgeState.AWAY -> NowKey.MAC_AWAY
+            MacBridgeState.OFF -> NowKey.MAC_BRIDGE_OFF
+            null -> NowKey.MAC_UNKNOWN
+        }
+
+        is Condition.MacLocked -> when {
+            state.macBridge == null || state.macLock == null -> NowKey.MAC_LOCK_UNKNOWN
+            state.macBridge == MacBridgeState.OFF -> NowKey.MAC_LOCK_BRIDGE_OFF
+            state.macBridge == MacBridgeState.AWAY -> NowKey.MAC_LOCK_AWAY
+            state.macLock == MacLockState.LOCKED -> NowKey.MAC_LOCKED
+            state.macLock == MacLockState.UNLOCKED -> NowKey.MAC_UNLOCKED
+            else -> NowKey.MAC_LOCK_UNREPORTED
+        }
     }
 
 private fun measuredArgument(condition: Condition.StateCondition, state: SystemState): String? =

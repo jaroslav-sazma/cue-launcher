@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "mac-nearby-focus",
+  "name": "Mac nearby → focus",
+  "enabled": true,
+  "priority": 400,
+  "size": "1x1",
+  "conditions": [
+    { "type": "mac_nearby" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Focus", "icon": "mdi:laptop", "action": { "kind": "system", "action": "dnd_on" } }
+    ]
+  }
+}

@@ -108,11 +108,37 @@ fi
 observers=$(adb shell dumpsys content | grep "pid=$pid " | grep -v 'settings/global/animator_duration_scale' || true)
 if [ -z "$observers" ]; then report "content observers" "ok    none"; else problem "content observers" "$(echo "$observers" | awk '{ print $1 }' | tr '\n' ' ')"; fi
 
+# The bridge's USER_PRESENT receiver exists only while a clip from the Mac waits for a locked phone,
+# which this run, unlocked throughout, never has: it fails here like any other. The window the
+# system's binding of BridgeCompanionService opens follows the adapter state for its GATT link, so
+# exactly one registration with that one action passes while the binding is there. The Bluetooth
+# condition registers it too, but together with the ACL actions, which still fail, and so does a
+# second registration of the adapter state alone. One line per registration, its actions sorted.
 receivers=$(adb shell dumpsys activity broadcasts \
     | awk '/Registered Receivers:/,/Receiver Resolver Table:/' \
-    | awk -v pid=" $pid " 'index($0, "ReceiverList{") && index($0, pid) { on = 1; next } /ReceiverList\{/ { on = 0 } on && /Action:/ { print $2 }' \
-    | sort -u)
-if [ -z "$receivers" ]; then report "registered receivers" "ok    none"; else problem "registered receivers" "$(echo "$receivers" | tr '\n' ' ')"; fi
+    | awk -v pid=" $pid " '
+        function flush(   line, a) {
+            if (on && n) {
+                line = ""
+                for (a in seen) line = line (line == "" ? "" : " ") a
+                print line
+            }
+            on = 0; n = 0; split("", seen)
+        }
+        /ReceiverList\{/ { flush(); if (index($0, pid)) on = 1; next }
+        on && /Action:/ && !($2 in seen) { seen[$2] = 1; n++ }
+        END { flush() }' \
+    | while read -r line; do echo "$line" | tr ' ' '\n' | sort | paste -sd ' ' -; done)
+registrations=$(printf '%s' "$receivers" | grep -c . || true)
+window_open=$(echo "$services" | grep 'ConnectionRecord{' | grep -c 'BridgeCompanionService' || true)
+ADAPTER_STATE='"?android\.bluetooth\.adapter\.action\.STATE_CHANGED"?'
+if [ "$registrations" = 0 ]; then
+    report "registered receivers" "ok    none"
+elif [ "$window_open" -gt 0 ] && [ "$registrations" = 1 ] && echo "$receivers" | grep -qxE "$ADAPTER_STATE"; then
+    report "registered receivers" "ok    bluetooth state (bridge window)"
+else
+    problem "registered receivers" "$(echo "$receivers" | awk '{ printf "[%s] ", $0 }')"
+fi
 
 bindings=$(echo "$services" | grep 'ConnectionRecord{' | grep -vc 'CueNotificationListener' || true)
 if [ "$bindings" = 0 ]; then report "other service bindings" "ok    none"; else problem "other service bindings" "$bindings"; fi

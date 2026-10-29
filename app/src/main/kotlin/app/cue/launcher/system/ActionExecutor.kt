@@ -28,6 +28,7 @@ import app.cue.launcher.engine.WallClock
 import app.cue.launcher.engine.executionOrder
 import app.cue.launcher.engine.latestSavedPlace
 import app.cue.launcher.engine.placeUri
+import app.cue.launcher.system.bridge.BridgeLockMac
 import app.cue.launcher.system.ha.HaGateway
 import app.cue.launcher.system.media.MediaPlayers
 import app.cue.launcher.system.notifications.NotificationReplySender
@@ -61,6 +62,9 @@ class ActionExecutor(
     private val conditionMonitor: ConditionMonitor,
     private val activations: ActivationStore,
     private val clock: WallClock,
+
+    // Lazy, like the bridge's other parts: a phone that never taps Lock Mac never builds the link.
+    private val lockMac: Lazy<BridgeLockMac>,
 ) {
 
     private val service: LauncherApps = application.getSystemService(LauncherApps::class.java)
@@ -103,6 +107,7 @@ class ActionExecutor(
             is ActionRoute.HaService -> haService(route.call)
             ActionRoute.RememberPlace -> rememberPlace()
             ActionRoute.ShowPlace -> showPlace(sourceBounds)
+            ActionRoute.LockMac -> lockMacOutcome(lockMac.value.lock())
             ActionRoute.Malformed -> {
                 Log.w(TAG, "No handler for a malformed ${action::class.simpleName} action")
                 ActionOutcome.FAILED

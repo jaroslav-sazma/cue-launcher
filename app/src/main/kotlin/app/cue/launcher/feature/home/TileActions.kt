@@ -212,4 +212,7 @@ private fun ActionOutcome.messageRes(): Int? = when (this) {
     ActionOutcome.NO_PLACE -> R.string.action_place_none
     ActionOutcome.GOOGLE_TV_MISSING -> R.string.action_google_tv_missing
     ActionOutcome.WORK_PAUSED -> R.string.action_work_paused
+    ActionOutcome.MAC_NOT_PAIRED -> R.string.action_mac_not_paired
+    ActionOutcome.MAC_LOCAL_NETWORK -> R.string.action_mac_local_network
+    ActionOutcome.MAC_UNREACHABLE -> R.string.action_mac_unreachable
 }

@@ -43,6 +43,7 @@ class ConditionMonitorTest {
             activations = activations,
             clock = wall,
             haStates = HaStateSource.NONE,
+            macLock = MacLockSource.NONE,
         )
         localClock.elapsedMillis = { testScheduler.currentTime }
         return ConditionMonitor(
@@ -132,6 +133,50 @@ class ConditionMonitorTest {
         system.emit(SystemState(audioOutput = false))
         runCurrent()
         assertTrue(runningIds().isEmpty())
+    }
+
+    @Test
+    fun `Mac not locked rises only while the Mac is there and unlocked`() = runTest {
+        val monitor = monitor()
+        scenarios.emit(scenario("lock-mac", conditions = listOf(Condition.MacLocked(negate = true))))
+        system.emit(SystemState(macBridge = MacBridgeState.AWAY, macLock = MacLockState.UNREPORTED))
+        backgroundScope.launch { monitor.runForeground() }
+        runCurrent()
+        assertTrue(runningIds().isEmpty(), "a Mac that is away")
+
+        system.emit(SystemState(macBridge = MacBridgeState.NEARBY, macLock = MacLockState.UNLOCKED))
+        runCurrent()
+        assertEquals(listOf("lock-mac"), runningIds())
+
+        system.emit(SystemState(macBridge = MacBridgeState.OFF, macLock = MacLockState.UNREPORTED))
+        runCurrent()
+        assertTrue(runningIds().isEmpty(), "the bridge turned off")
+    }
+
+    @Test
+    fun `an event tile gated by Mac locked outlives the Mac leaving and still ends as an event`() = runTest {
+        val monitor = monitor()
+        scenarios.emit(
+            scenario(
+                "doorbell",
+                conditions = listOf(Condition.HaEvent(code = "doorbell", durationSec = 60), Condition.MacLocked()),
+            ),
+        )
+        system.emit(SystemState(macBridge = MacBridgeState.NEARBY, macLock = MacLockState.LOCKED))
+        monitor.onHaEvent(HaEvent(code = "doorbell"))
+        assertEquals(listOf(60_000L), activations.rows().map(Activation::expiresAt))
+
+        system.emit(SystemState(macBridge = MacBridgeState.AWAY, macLock = MacLockState.UNREPORTED))
+        backgroundScope.launch { monitor.runForeground() }
+        runCurrent()
+        assertEquals(listOf(60_000L), activations.rows().map(Activation::expiresAt), "the Mac left")
+
+        system.emit(SystemState(macBridge = MacBridgeState.OFF, macLock = MacLockState.UNREPORTED))
+        runCurrent()
+        assertEquals(listOf(60_000L), activations.rows().map(Activation::expiresAt), "the bridge turned off")
+
+        monitor.onHaEvent(HaEvent(code = "doorbell", op = HaEventOp.END))
+        assertTrue(runningIds().isEmpty(), "the end event")
     }
 
     @Test

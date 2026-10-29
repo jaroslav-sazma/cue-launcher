@@ -34,7 +34,7 @@ fun actionChoiceOf(action: TapAction): ActionChoice = when (action) {
     is TapAction.DeepLink -> ActionChoice.URI
 }
 
-enum class SystemActionSection { SOUND, DEVICE, PLACE, PANELS }
+enum class SystemActionSection { SOUND, DEVICE, PLACE, MAC, PANELS }
 
 data class SystemActionGroup(val section: SystemActionSection, val actions: List<SystemActionType>)
 
@@ -48,12 +48,17 @@ val SYSTEM_ACTION_CATALOG: List<SystemActionType> = listOf(
     SystemActionType.TV_REMOTE,
     SystemActionType.REMEMBER_PLACE,
     SystemActionType.SHOW_PLACE,
+    SystemActionType.MAC_LOCK,
     SystemActionType.PANEL_VOLUME,
     SystemActionType.PANEL_INTERNET,
     SystemActionType.PANEL_WIFI,
     SystemActionType.PANEL_NFC,
     SystemActionType.OPEN_SETTINGS,
 )
+
+// What the sheet leaves out while no Mac is paired; a stored one still runs and says why it cannot.
+fun unpairedSystemActions(bridgePaired: Boolean): Set<SystemActionType> =
+    if (bridgePaired) emptySet() else setOf(SystemActionType.MAC_LOCK)
 
 fun systemActionSection(action: SystemActionType): SystemActionSection = when (action) {
     SystemActionType.RINGER_SILENT,
@@ -70,6 +75,8 @@ fun systemActionSection(action: SystemActionType): SystemActionSection = when (a
     SystemActionType.REMEMBER_PLACE,
     SystemActionType.SHOW_PLACE,
     -> SystemActionSection.PLACE
+
+    SystemActionType.MAC_LOCK -> SystemActionSection.MAC
 
     SystemActionType.PANEL_VOLUME,
     SystemActionType.PANEL_INTERNET,

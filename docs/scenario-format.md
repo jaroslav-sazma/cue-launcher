@@ -1,8 +1,8 @@
 # The scenario format
 
-Cue: keeps every scenario, every backup and every example in this repository in one JSON format,
-`schemaVersion 1`. This file is its reference: the fields, the values they take and the checks an
-import runs. What scenarios do and how to build them in the app is in the
+Cue: React & Act keeps every scenario, every backup and every example in this repository in one JSON
+format, `schemaVersion 1`. This file is its reference: the fields, the values they take and the
+checks an import runs. What scenarios do and how to build them in the app is in the
 [README](../README.md#scenarios); this is for writing or reading a file by hand, for tools that
 produce one, and for checking what a shared file will do.
 
@@ -75,6 +75,8 @@ scenarios inside is not part of the contract.
 { "type": "ringer_mode",    "mode": "silent|vibrate|normal|dnd", "negate": false }
 { "type": "calendar_event", "negate": false }
 { "type": "ha_state",       "entity": "media_player.living_room_tv", "states": ["playing", "paused"], "negate": false }
+{ "type": "mac_nearby",     "negate": false }
+{ "type": "mac_locked",     "negate": false }
 
 { "type": "time_instant",   "at": "17:00", "days": [1,2,3,4,5], "durationSec": 60 }
 { "type": "alarm",          "durationSec": 3600 }
@@ -96,17 +98,17 @@ scenarios inside is not part of the contract.
 | Builder | JSON `type` |
 |---|---|
 | Time window · Bluetooth connected · Wi-Fi · Charging · Headphones or speaker | `time_window` · `bt_connected` · `wifi` · `charging` · `audio_output` |
-| Something is playing · Ringer mode / do not disturb · Calendar event · Home Assistant — state | `media_playing` · `ringer_mode` · `calendar_event` · `ha_state` |
+| Something is playing · Ringer mode / do not disturb · Calendar event · Home Assistant — state · Mac nearby · Mac locked | `media_playing` · `ringer_mode` · `calendar_event` · `ha_state` · `mac_nearby` · `mac_locked` |
 | A moment in time (at a set time / at the alarm) · Bluetooth disconnected · Notification from an app | `time_instant` / `alarm` · `bt_disconnected` · `notification` |
 | Home Assistant — event · Notification ended · A place is remembered | `ha_event` · `notification_ended` · `place_saved` |
 
 `days` is ISO (Monday = 1). Times are `HH:mm`. `durationSec` and `until` belong **only** to the
 seven instant types; `durationSec` must be positive and defaults to 60 unless the condition has an
-`until`. `negate` belongs **only** to the nine state types and defaults to `false`. On
-`notification_ended`, `ongoing` (default `false`) and `minLastedSec` (default none) are optional and
-left out of the file when they are not set. On `ha_state`, `entity` is an entity id and `states`
-holds at least one state; both are tidied on import — the entity id and the states trimmed and
-lower-cased, empty and repeated states dropped.
+`until`. `negate` belongs **only** to the eleven state types and defaults to `false`. On
+`notification_ended`, `ongoing` (default `false`) and `minLastedSec` (default none) are optional
+and left out of the file when they are not set. On `ha_state`, `entity` is an entity id and
+`states` holds at least one state; both are tidied on import — the entity id and the states trimmed
+and lower-cased, empty and repeated states dropped.
 
 `until` is optional and ends the tile by an event instead of the countdown: the tile stays until
 that event arrives. In the builder it is the *event* choice under *How long it stays visible*, whose
@@ -126,13 +128,27 @@ With `until` the 60-second default no longer applies, so without `durationSec` t
 ends the tile — apart from closing it with a long-press → **Close** or a state condition failing
 under `"match": "all"`. On a `notification` condition, `until` of any type makes the notification
 only the start: dismissing it leaves the tile, which waits for its end, whereas the tile of a
-`notification` condition without `until` also ends when the notification that fired it is
-dismissed. A `durationSec` given alongside is a safety cap: whichever comes first, the event or the
-end of the countdown, ends the tile. A `time_instant` end is fixed as a moment when the tile
-appears, so a later time-zone change does not move it. A `notification` end that is posted and
-dismissed again while Cue:'s notification listener is not connected is missed; the tile then stays
+`notification` condition without `until` also ends when the notification that fired it is dismissed.
+A `durationSec` given alongside is a safety cap: whichever comes first, the event or the end of the
+countdown, ends the tile. A `time_instant` end is fixed as a moment when the tile appears, so a
+later time-zone change does not move it. A `notification` end that is posted and dismissed again
+while the notification listener of Cue: React & Act is not connected is missed; the tile then stays
 until it is closed or the cap runs out, which is what a `durationSec` alongside is for. An older
-version of Cue: ignores `until` like any unknown field and ends the tile by the countdown.
+version of Cue: React & Act ignores `until` like any unknown field and ends the tile by the
+countdown.
+
+`mac_nearby` has no fields of its own. It holds only while the Mac bridge is turned on, a Mac is
+paired and that Mac is present: found close by over Bluetooth, and still counted for about a minute
+after it leaves. Otherwise it is false — with the bridge off or no Mac paired too, false and not
+unknown, so a negated `mac_nearby` holds there. A file that carries it imports the same whether the
+bridge is set up on the phone or not.
+
+`mac_locked` has no fields of its own either. It holds only while the Mac bridge is turned on, a Mac
+is paired, that Mac is present the way `mac_nearby` counts it, and the Mac has reported its screen
+locked; negated, only while that Mac is present and has reported it unlocked. With the bridge off,
+no Mac paired, the Mac away or its screen not reported yet, the condition is unknown — unlike
+`mac_nearby` — and satisfies neither form, like a condition whose permission is missing. A file that
+carries it imports the same whether the bridge is set up on the phone or not.
 
 ## Content
 
@@ -161,7 +177,7 @@ shows the glyph alone.
 { "kind": "deeplink",   "uri": "intent://devices/controller#Intent;scheme=googlehome;package=com.google.android.apps.chromecast.app;end" }
 { "kind": "capability", "package": "…", "capability": "…" }
 { "kind": "activity",   "package": "…", "component": "…" }
-{ "kind": "system",     "action": "ringer_silent|ringer_vibrate|ringer_normal|dnd_on|dnd_off|flashlight|tv_remote|remember_place|show_place|panel_volume|panel_internet|panel_wifi|panel_nfc|open_settings" }
+{ "kind": "system",     "action": "ringer_silent|ringer_vibrate|ringer_normal|dnd_on|dnd_off|flashlight|tv_remote|remember_place|show_place|mac_lock|panel_volume|panel_internet|panel_wifi|panel_nfc|open_settings" }
 { "kind": "ha",         "service": "light.turn_off", "entity": "light.living_room", "data": {}, "confirm": false }
 { "kind": "ha",         "service": "lock.open", "entity": "lock.front_door", "confirm": true, "stateEntity": "binary_sensor.front_door_contact" }
 ```
@@ -170,6 +186,12 @@ shows the glyph alone.
 app can do*, `activity` an *App screen*, and `deeplink` both *Links into the app* and a custom link.
 `entity`, `data`, `confirm` (default `false`) and `stateEntity` are optional on an `ha` action;
 `stateEntity` is *Icon state from* and is written only when set.
+
+The `system` action `mac_lock` locks the screen of the Mac paired through the Mac bridge. Like
+`mac_locked` it imports and stays valid whether the bridge is set up or not; without a paired Mac a
+tap only says so. An item whose only action is `mac_lock` follows the Mac's lock state on a tile and
+does nothing unless the Mac is present and reports its screen unlocked. An item with more actions
+ignores the lock state and always runs them all, `mac_lock` after every other one.
 
 `profile` is optional on `app`, `shortcut` and `capability`, the only kinds Android lets a launcher
 start in another profile. Its one value is `"work"`: the action starts the app in the work profile,

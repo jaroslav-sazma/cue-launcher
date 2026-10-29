@@ -53,6 +53,17 @@ class SystemActionRulesTest {
     }
 
     @Test
+    fun `locking the Mac runs after everything else, do not disturb included`() {
+        val lock = TapAction.SystemAction(SystemActionType.MAC_LOCK)
+        val dndOn = TapAction.SystemAction(SystemActionType.DND_ON)
+        val dndOff = TapAction.SystemAction(SystemActionType.DND_OFF)
+        val app = TapAction.App(packageName = "com.example")
+
+        assertEquals(listOf(dndOff, app, lock), executionOrder(listOf(lock, dndOff, app)))
+        assertEquals(listOf(app, dndOn, lock), executionOrder(listOf(lock, dndOn, app)))
+    }
+
+    @Test
     fun `the search also covers the last item of the template`() {
         val scenario = template(
             layout = TemplateLayout.FOUR_ICONS,

@@ -96,6 +96,61 @@ class ListenerHoldTest {
     }
 
     @Test
+    fun `the bridge binds the listener only while it holds it and is not kept on disk`() {
+        val hold = ListenerHold(store)
+        hold.bridge()
+
+        assertTrue(hold.wanted)
+        assertFalse(ListenerHold(store).wanted)
+        assertTrue(hold.unbridge())
+        assertFalse(hold.wanted)
+    }
+
+    @Test
+    fun `the bridge letting go leaves a binding something else needs`() {
+        val hold = ListenerHold(store)
+        hold.enter()
+        hold.need()
+        hold.bridge()
+
+        assertFalse(hold.unbridge())
+        assertTrue(hold.wanted)
+    }
+
+    @Test
+    fun `while the bridge holds it neither the need nor a sample going away releases the listener`() {
+        val hold = ListenerHold(store)
+        hold.enter()
+        hold.need()
+        hold.sample()
+        hold.bridge()
+
+        assertFalse(hold.unneed())
+        assertFalse(hold.leave())
+        assertTrue(hold.wanted)
+        assertTrue(hold.unbridge())
+    }
+
+    // The session link and the companion window hold it each on their own.
+    @Test
+    fun `the listener stays bound until the last of two bridge holders lets go`() {
+        val hold = ListenerHold(store)
+        hold.bridge()
+        hold.bridge()
+
+        assertFalse(hold.unbridge())
+        assertTrue(hold.wanted)
+        assertTrue(hold.unbridge())
+        assertFalse(hold.wanted)
+        assertFalse(hold.unbridge())
+    }
+
+    @Test
+    fun `letting go of a bridge that never held does nothing`() {
+        assertFalse(ListenerHold(store).unbridge())
+    }
+
+    @Test
     fun `a process that follows one which needed the posts replays from its death`() {
         store.value = true
         val hold = ListenerHold(store)

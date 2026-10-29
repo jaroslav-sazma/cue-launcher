@@ -3,6 +3,7 @@ package app.cue.launcher.data.settings
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.Serializer
 import app.cue.launcher.data.aichat.AiChatShare
+import app.cue.launcher.data.bridge.BridgeSettings
 import app.cue.launcher.data.ha.HaSettings
 import app.cue.launcher.data.scenario.AccentSource
 import app.cue.launcher.data.scenario.GesturesConfig
@@ -52,6 +53,8 @@ data class LauncherSettings(
     // A brief went to the AI chat and its answer has not been opened in the builder yet. Only a send
     // sets it; the switch going off clears it with the rest.
     val aiChatPending: Boolean = false,
+
+    val bridge: BridgeSettings = BridgeSettings(),
 )
 
 @Serializable

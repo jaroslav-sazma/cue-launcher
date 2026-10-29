@@ -1,5 +1,6 @@
 package app.cue.launcher.feature.scenarios.builder
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.data.scenario.withNegate
 import app.cue.launcher.designsystem.Tokens
+import app.cue.launcher.engine.MacBridgeState
 import app.cue.launcher.engine.SystemState
 import app.cue.launcher.feature.scenarios.DaysPhrase
 import app.cue.launcher.feature.scenarios.JitRequirement
@@ -37,6 +39,8 @@ import app.cue.launcher.designsystem.TonalRow
 import app.cue.launcher.designsystem.RowText
 import app.cue.launcher.designsystem.SectionLabel
 import app.cue.launcher.designsystem.Note
+import app.cue.launcher.designsystem.Message
+import app.cue.launcher.designsystem.MediumOutlinedButton
 
 @Suppress("CyclomaticComplexMethod")
 @Composable
@@ -50,6 +54,7 @@ internal fun ConditionFormBody(
     onResolve: (JitRequirement) -> Unit = {},
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
     haRead: HaEntityRead? = null,
+    onConfigureBridge: (() -> Unit)? = null,
 ) {
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -79,6 +84,20 @@ internal fun ConditionFormBody(
             is Condition.HaState -> HaStateForm(condition, ha, haRead, onChange)
             is Condition.NotificationEnded -> NotificationEndedForm(condition, onPickApp, onChange)
             is Condition.PlaceSaved -> Note(text = stringResource(R.string.builder_place_saved_note))
+            is Condition.MacNearby -> MacForm(
+                state = state,
+                onConfigure = onConfigureBridge,
+                bridgeOff = R.string.builder_mac_nearby_bridge_off,
+                note = R.string.builder_mac_nearby_note,
+            )
+
+            is Condition.MacLocked -> MacForm(
+                state = state,
+                onConfigure = onConfigureBridge,
+                bridgeOff = R.string.builder_mac_locked_bridge_off,
+                note = R.string.builder_mac_locked_note,
+            )
+
             else -> Unit
         }
     }
@@ -231,6 +250,28 @@ private fun BluetoothDeviceRow(device: ConnectedBtDevice, mac: String?, onChange
         selected = mac.equals(device.address, ignoreCase = true),
         onSelect = { onChange(device.address) },
     )
+}
+
+@Composable
+private fun MacForm(
+    state: SystemState,
+    onConfigure: (() -> Unit)?,
+    @StringRes bridgeOff: Int,
+    @StringRes note: Int,
+) {
+    if (state.macBridge == MacBridgeState.OFF) {
+        Message(text = stringResource(bridgeOff))
+        if (onConfigure != null) {
+            MediumOutlinedButton(
+                label = stringResource(R.string.builder_mac_nearby_configure),
+                onClick = onConfigure,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Tokens.Settings.screenPadding),
+            )
+        }
+    }
+    Note(text = stringResource(note))
 }
 
 @Composable

@@ -36,9 +36,12 @@ internal fun SystemActionSheetContent(
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
     onBack: (() -> Unit)? = null,
+    bridgePaired: Boolean = false,
 ) {
     val context = LocalContext.current
-    val unavailable = remember(context) { unavailableSystemActions(context) }
+    val unavailable = remember(context, bridgePaired) {
+        unavailableSystemActions(context) + unpairedSystemActions(bridgePaired)
+    }
     var selected by remember(initial) { mutableStateOf(initial?.takeUnless { it in unavailable }) }
     val dndGranted = remember(permissions.tick) { notificationPolicyAccessGranted(context) }
     val needsDnd = selected?.let(::systemActionNeedsDndAccess) == true && !dndGranted

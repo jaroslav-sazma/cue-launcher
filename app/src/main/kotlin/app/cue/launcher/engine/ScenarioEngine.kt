@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import java.time.Instant
 
@@ -24,6 +25,7 @@ class ScenarioEngine(
     private val activations: ActivationStore,
     private val clock: WallClock,
     private val haStates: HaStateSource,
+    private val macLock: MacLockSource,
 ) {
 
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -34,13 +36,20 @@ class ScenarioEngine(
                 val now = clock.nowMillis()
                 val refs = haStateRefs(input.scenarios, input.activations, now)
                 val glyphRefs = haGlyphRefs(input.scenarios, input.activations, now)
+                val locked = if (macLockShown(input.scenarios, input.activations, now)) {
+                    macLock.observeLocked()
+                } else {
+                    flowOf(null)
+                }
                 combine(
                     haStates.observeStates(refs),
                     haStates.observeAttributes(glyphRefs),
                     haStates.observeIcons(glyphRefs.mapTo(mutableSetOf()) { it.substringBefore('.') }),
-                ) { states, attributes, icons ->
+                    locked,
+                ) { states, attributes, icons, macLocked ->
                     val context = HaIconContext(attributes, icons)
                     sizeClassQueues(input.scenarios, input.activations, clock.nowMillis(), states, context)
+                        .withMacLocked(macLocked)
                 }
             }
             .distinctUntilChanged()

@@ -124,8 +124,9 @@ internal fun DynamicFolderContent(
                     actions = actions,
                     level = GlassLevel.THICK,
                     glyphTint = templateIconTint(item, entry.payload.semantic, entry.accentedEntities),
-                    stateGlyphs = templateStateGlyphs(item, entry.haGlyphs, LocalMdiGlyphs.current),
+                    stateGlyphs = templateStateGlyphs(item, entry.haGlyphs, LocalMdiGlyphs.current, entry.macLocked),
                     contentDescription = item.label,
+                    macLocked = entry.macLocked,
                 )
             }
             FolderCellLabel(text = item?.label ?: entry.scenario.name)

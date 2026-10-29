@@ -1,6 +1,7 @@
 package app.cue.launcher.designsystem
 
 import androidx.compose.foundation.ScrollState
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -155,6 +156,7 @@ fun MediumFilledButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     Button(
         onClick = onClick,
@@ -162,6 +164,7 @@ fun MediumFilledButton(
         enabled = enabled,
         shapes = ButtonDefaults.shapesFor(ButtonDefaults.MediumContainerHeight),
         contentPadding = ButtonDefaults.contentPaddingFor(ButtonDefaults.MediumContainerHeight),
+        interactionSource = interactionSource,
     ) {
         Text(text = label, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
     }
@@ -174,6 +177,7 @@ fun MediumOutlinedButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
+    interactionSource: MutableInteractionSource? = null,
 ) {
     OutlinedButton(
         onClick = onClick,
@@ -181,6 +185,7 @@ fun MediumOutlinedButton(
         enabled = enabled,
         shapes = ButtonDefaults.shapesFor(ButtonDefaults.MediumContainerHeight),
         contentPadding = ButtonDefaults.contentPaddingFor(ButtonDefaults.MediumContainerHeight),
+        interactionSource = interactionSource,
     ) {
         Text(text = label, style = ButtonDefaults.textStyleFor(ButtonDefaults.MediumContainerHeight))
     }

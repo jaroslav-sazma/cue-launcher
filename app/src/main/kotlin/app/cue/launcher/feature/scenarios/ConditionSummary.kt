@@ -76,6 +76,10 @@ enum class PhraseKey {
 
     // "In none of several states", as with the apps.
     HA_STATE_NONE,
+    MAC_NEARBY,
+    MAC_NEARBY_NEGATED,
+    MAC_LOCKED,
+    MAC_LOCKED_NEGATED,
     TIME_INSTANT,
     ALARM,
     BT_DISCONNECTED_ANY,
@@ -154,6 +158,12 @@ private fun triggerPhrase(condition: Condition): ConditionPhrase = when (conditi
         argument = condition.entity,
         states = condition.states,
     )
+
+    is Condition.MacNearby ->
+        ConditionPhrase(pick(condition.negate, PhraseKey.MAC_NEARBY, PhraseKey.MAC_NEARBY_NEGATED))
+
+    is Condition.MacLocked ->
+        ConditionPhrase(pick(condition.negate, PhraseKey.MAC_LOCKED, PhraseKey.MAC_LOCKED_NEGATED))
 
     is Condition.RingerMode -> ConditionPhrase(
         when (condition.mode) {

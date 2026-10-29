@@ -18,15 +18,28 @@ internal fun DraftNotes(
     needs: HaNeeds,
     placeholders: Set<String>,
     widgetUnbound: Boolean,
+    bridgeNeeded: Boolean,
     onConnectHa: () -> Unit,
+    onConfigureBridge: () -> Unit,
 ) {
-    if (!needs.any && placeholders.isEmpty() && !widgetUnbound) return
+    val anyNote = needs.any || placeholders.isNotEmpty() || widgetUnbound || bridgeNeeded
+    if (!anyNote) return
     SectionLabel(title = stringResource(R.string.ai_chat_notes_title))
     if (needs.connection) {
         Message(text = stringResource(R.string.ai_chat_ha_connect_text))
         MediumOutlinedButton(
             label = stringResource(R.string.ai_chat_ha_connect),
             onClick = onConnectHa,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = Tokens.Settings.screenPadding),
+        )
+    }
+    if (bridgeNeeded) {
+        Message(text = stringResource(R.string.ai_chat_bridge_text))
+        MediumOutlinedButton(
+            label = stringResource(R.string.builder_mac_nearby_configure),
+            onClick = onConfigureBridge,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Tokens.Settings.screenPadding),

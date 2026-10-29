@@ -1,25 +1,25 @@
-# Cue:
+# Cue: React & Act
 
 [![CI](https://github.com/jaroslav-sazma/cue-launcher/actions/workflows/ci.yml/badge.svg)](https://github.com/jaroslav-sazma/cue-launcher/actions/workflows/ci.yml)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue)](LICENSE)
 
 ![Cue: React & Act — your rules, your triggers. A dynamic dashboard that reacts to your context.](fastlane/metadata/android/en-US/images/featureGraphic.jpg)
 
-Cue: is an Android launcher that shows what you need right now, and you are the one who decides what
-"right now" means. Every tile at the top of the home screen is a small scenario of your own: a few
-conditions, and the tile that should appear while they hold. A meeting in your calendar starts and a
-button to silence the phone is there; once the meeting ends, a button to turn the sound back on
-takes its place. You come home and connect to your Wi-Fi, and a button to unlock the front door
-appears, because Cue: can optionally talk to your own Home Assistant. Nothing is guessed or learned
-behind your back: if a tile is on the screen, one of your rules put it there, and when the rule
-stops holding, the tile goes away.
+Cue: React & Act is an Android launcher that shows what you need right now, and you are the one who
+decides what "right now" means. Every tile at the top of the home screen is a small scenario of your
+own: a few conditions, and the tile that should appear while they hold. A meeting in your calendar
+starts and a button to silence the phone is there; once the meeting ends, a button to turn the sound
+back on takes its place. You come home and connect to your Wi-Fi, and a button to unlock the front
+door appears, because Cue: React & Act can optionally talk to your own Home Assistant. Nothing is
+guessed or learned behind your back: if a tile is on the screen, one of your rules put it there, and
+when the rule stops holding, the tile goes away.
 
 Around those tiles is a calm launcher that stays the way you set it up: apps and widgets the
 launcher never rearranges, a dock, a scrollable widget page with a dock of its own, and an app
 drawer with search.
 
 - **Private by design.** No account, no ads, no telemetry. Everything happens on the phone; the only
-  network traffic goes to your own Home Assistant, if you set one up.
+  network traffic goes to your own Home Assistant and your own Mac, if you set them up.
 - **Asks only when it needs to.** A permission is requested when you set up the thing that needs it,
   and saying no turns off just that one thing.
 - **One file for everything.** Your setup, scenarios included, exports to a single file — a backup,
@@ -41,13 +41,14 @@ anyone can join
 >
 > **Why it is free.** I don't want anything back from it — no money and no data about you. That is
 > why there are no ads, no paid version and no telemetry, and why nothing runs in the background
-> unless something you switched on needs it. The GPL keeps it that way: anyone may build on Cue:,
-> but what they hand out has to stay open as well, under a name of its own. So if anyone ever asks
-> you to pay for Cue: or a copy of it, you can have the same thing here for free.
+> unless something you switched on needs it. The GPL keeps it that way: anyone may build on
+> Cue: React & Act, but what they hand out has to stay open as well, under a name of its own. So if
+> anyone ever asks you to pay for Cue: React & Act or a copy of it, you can have the same thing here
+> for free.
 
 ## Contents
 
-**Using Cue:**
+**Using Cue: React & Act**
 
 - [How it works](#how-it-works)
 - [Finding your way around](#finding-your-way-around)
@@ -57,6 +58,7 @@ anyone can join
 - [Launcher settings](#launcher-settings)
 - [Scenarios](#scenarios)
 - [Home Assistant](#home-assistant)
+- [Mac bridge](#mac-bridge)
 - [Example scenarios](#example-scenarios)
 - [Creating scenarios in an AI chat](#creating-scenarios-in-an-ai-chat)
 
@@ -109,8 +111,8 @@ tile.
 
 ## Finding your way around
 
-Cue: has four places: the **home screen**, the **widget page** to its left, the **app drawer** and
-the **launcher settings**.
+Cue: React & Act has four places: the **home screen**, the **widget page** to its left, the **app
+drawer** and the **launcher settings**.
 
 ```
                             ┌──────────────────────────────┐
@@ -138,9 +140,9 @@ the **launcher settings**.
 | Long-press an empty spot | *Home screen options*: add an app, a widget or a folder, change the wallpaper, open the **Launcher settings** |
 | Long-press an icon, a tile or a widget | its own menu |
 
-On the first start Cue: offers to become the default home app, or to be just tried out first. It
-does not start empty: the dock holds your phone, messages, camera and browser apps, the large tile
-shows the clock and the widget page the calendar — all of it yours to change.
+On the first start Cue: React & Act offers to become the default home app, or to be just tried out
+first. It does not start empty: the dock holds your phone, messages, camera and browser apps, the
+large tile shows the clock and the widget page the calendar — all of it yours to change.
 
 ---
 
@@ -240,9 +242,9 @@ Enter to launch the top result, the one marked with ↵.
   call or message (asks for contacts access); an **Ask AI** row that hands the query to your
   assistant app only when you tap it; and a **Search the web** row when nothing matches.
 
-Cue:'s own entry in the drawer opens the launcher settings while Cue: is the default home app.
-Anywhere else — another launcher, the store, while you are only trying Cue: out — it opens the Cue:
-home screen.
+The launcher's own entry in the drawer, **Cue:**, opens the launcher settings while Cue: React & Act
+is the default home app. Anywhere else — another launcher, the store, while you are only trying it
+out — it opens the home screen of Cue: React & Act.
 
 ---
 
@@ -251,8 +253,9 @@ home screen.
 Long-press an empty spot on the home screen → **Launcher settings**. There are three tabs:
 
 - **Scenarios** — your scenarios and the **+** button for a new one (see [Scenarios](#scenarios)).
-  Its **⋮** menu holds *Import*, **Home Assistant** (see [Home Assistant](#home-assistant)) and
-  *About*, with the version, the licences and *Report a bug*.
+  Its **⋮** menu holds *Import*, **Home Assistant** (see [Home Assistant](#home-assistant)), **Mac
+  bridge** (see [Mac bridge](#mac-bridge)) and *About*, with the version, the licences and *Report a
+  bug*.
 - **Appearance & features** — how the launcher looks and behaves, below.
 - **Backups** — exporting and restoring (see [Backups and sharing](#backups-and-sharing)).
 
@@ -269,12 +272,12 @@ Long-press an empty spot on the home screen → **Launcher settings**. There are
 | **Lock the layout** | icons, folders and widgets can no longer be moved, added or removed. |
 | **Create scenarios in an AI chat** | experimental, off by default — see [Creating scenarios in an AI chat](#creating-scenarios-in-an-ai-chat). |
 
-There is no font setting on purpose: Cue: draws its text in the phone's own typeface — on a Pixel
-that is Google Sans Flex, with the bolder text rounded the way the system rounds it, elsewhere the
-system font — and follows the system font size; above 120 % the icon labels step aside rather than
-crowd the grid. Cue: speaks English and Czech. It takes whichever of the two comes first in the
-phone's list of languages, and English when neither is there; to use the other one for Cue: alone,
-pick it in *Settings → System → Languages → App languages*.
+There is no font setting on purpose: Cue: React & Act draws its text in the phone's own typeface —
+on a Pixel that is Google Sans Flex, with the bolder text rounded the way the system rounds it,
+elsewhere the system font — and follows the system font size; above 120 % the icon labels step aside
+rather than crowd the grid. Cue: React & Act speaks English and Czech. It takes whichever of the two
+comes first in the phone's list of languages, and English when neither is there; to use the other
+one for Cue: React & Act alone, pick it in *Settings → System → Languages → App languages*.
 
 ### Widget settings
 
@@ -332,8 +335,8 @@ A condition is one of two kinds:
   it instead — see [Until an event](#until-an-event).
 
 Every state condition opens with a **Holds when** switch that turns it around: *charging* or *not
-charging*, *Wi-Fi Home* or *away from Wi-Fi Home*. Turning a condition around does not help one Cue:
-cannot read, though: without the permission it needs, it stays unknown either way.
+charging*, *Wi-Fi Home* or *away from Wi-Fi Home*. Turning a condition around does not help one
+Cue: React & Act cannot read, though: without the permission it needs, it stays unknown either way.
 
 **Several conditions.** From the second condition on, a switch above the list says how they combine:
 
@@ -359,7 +362,9 @@ Adding a second event to a lone event switches the scenario to *any of them* by 
 | **Something is playing** | any app plays, or one of the apps you tick. A pause shorter than a minute does not count as stopping | YouTube Music plays → the media widget | notification access |
 | **Ringer mode / do not disturb** | the phone is silent, on vibrate, ringing, or in Do Not Disturb | silent → "Turn the sound on" | — |
 | **Calendar event** | any calendar event is in progress | a meeting → "Silence" | calendar |
-| **Home Assistant — state** | an entity is in one of the states you pick | the TV is `playing` or `paused` → its remote | Home Assistant connected to Cue: |
+| **Home Assistant — state** | an entity is in one of the states you pick | the TV is `playing` or `paused` → its remote | Home Assistant connected to Cue: React & Act |
+| **Mac nearby** | the Mac you paired is close to the phone | the Mac on your desk → "Silence" | the Mac bridge turned on and paired with your Mac |
+| **Mac locked** | the Mac you paired is close to the phone and its screen is locked. While the Mac is away it is neither locked nor unlocked | you locked the Mac at your desk → your messages app | the Mac bridge turned on and paired with your Mac; offered only once it is |
 
 #### Happens at a single moment
 
@@ -384,7 +389,8 @@ A few of them need a word more:
   come back, and it goes away when you dismiss the notification — unless the tile waits for an end
   of its own ([Until an event](#until-an-event)). Android hides one-time codes from apps it does not
   trust: since Android 15, a notification in which the system detects a one-time password reaches
-  Cue: with its content redacted, so a value in it cannot be read and its tile does not appear.
+  Cue: React & Act with its content redacted, so a value in it cannot be read and its tile does not
+  appear.
 - **Notification ended** counts the app taking its notification down or you swiping it away; the
   system tidying up — an uninstall, a snooze, a channel switched off — does not. *Shown for at
   least* leaves out a notification that goes away sooner: Google Maps flashes one for a moment as a
@@ -403,6 +409,23 @@ A few of them need a word more:
   event fires a scenario that also depends on it. While Home Assistant cannot be reached, does not
   answer in time or reports the entity `unavailable` or `unknown`, the condition is unknown and the
   tile stays hidden, turned around or not — see [A state as a condition](#9-a-state-as-a-condition).
+- **Mac nearby** holds while the Mac you paired through the [Mac bridge](#mac-bridge) is close to
+  the phone: the phone finds it over Bluetooth, and once the Mac leaves it still counts for about a
+  minute, so a short gap does not end the tile. Turning the phone's Bluetooth off counts the same
+  way: after about a minute the Mac is away, and once Bluetooth is back on the bridge picks up again
+  by itself. With the phone locked and asleep the change can come a few minutes later, since the
+  phone does not wake up just to notice it. With the Mac bridge off or no Mac paired the condition
+  never holds — and turned around, as *Mac not nearby*, it always does. The builder says so and
+  offers **Set up the Mac bridge**.
+- **Mac locked** holds while the Mac counts as nearby, as above, and has told the phone its screen
+  is locked; turned around, as *Mac not locked*, it holds while the Mac is nearby and has told the
+  phone its screen is unlocked. A Mac that is away, or has not said anything about its screen yet,
+  counts as neither, and the same goes while the Mac bridge is off or no Mac is paired:
+  Cue: React & Act cannot tell, as with a missing permission, and the tile stays hidden, turned
+  around or not — though a tile an event has already brought up is not taken down just because the
+  Mac left: it ends the way an event's tile always does. The builder lists the condition only while
+  the Mac bridge is on and a Mac is paired; a scenario that already has it keeps it all the same,
+  and with the bridge off the builder says so and offers **Set up the Mac bridge**.
 
 **An event's tile ends** when its time runs out, when you close it (long-press → Close), when the
 event it waits for arrives, when the notification that brought it is dismissed — unless it waits
@@ -489,13 +512,13 @@ buttons opens the player. While that player has nothing loaded, all three button
 only opens the app: no launcher can start playback in another app, so the first play happens there.
 It needs notification access to see what is playing.
 
-**App widgets** are bound once, through the standard Android dialog; from then on Cue: shows and
-hides the widget by your conditions. While they do not hold, the widget does not exist at all, so it
-costs no memory and no battery. Whenever a widget comes into view, Cue: asks its app for fresh
-content — at most once every 30 seconds and never while you are not looking — but what arrives is up
-to the app: one that answers shows current data at once, one that ignores the request shows whatever
-it last sent. There is no widget maker: the templates stay minimal, and anything richer is someone
-else's widget hosted here.
+**App widgets** are bound once, through the standard Android dialog; from then on Cue: React & Act
+shows and hides the widget by your conditions. While they do not hold, the widget does not exist at
+all, so it costs no memory and no battery. Whenever a widget comes into view, Cue: React & Act asks
+its app for fresh content — at most once every 30 seconds and never while you are not looking — but
+what arrives is up to the app: one that answers shows current data at once, one that ignores the
+request shows whatever it last sent. There is no widget maker: the templates stay minimal, and
+anything richer is someone else's widget hosted here.
 
 #### Values inside the text
 
@@ -525,12 +548,12 @@ calendar widget (through their *Widget settings*), and the right-to-left swipe.
 | **Home Assistant action** | a service call on your instance, optionally only after a fingerprint — see [Actions and states](#8-actions-and-states) | `light.turn_off` on `light.living_room` |
 | **Custom link (URI)** | opens any address an app understands | `google.navigation:q=Prague`, `spotify:search` |
 
-App shortcuts, shortcuts you pick in the app and what the app can do need Cue: to be **the default
-home app**: Android lets only the current launcher read them. Until it is, those sections are left
-out and the sheet says why; links and app screens work regardless. *Shortcuts you pick in the app*
-open the app first, you choose the target there — a calendar, a settings page, a route — and the
-launcher keeps what comes back. One the scenario format cannot hold is turned down with a note
-rather than saved half-way.
+App shortcuts, shortcuts you pick in the app and what the app can do need Cue: React & Act to be
+**the default home app**: Android lets only the current launcher read them. Until it is, those
+sections are left out and the sheet says why; links and app screens work regardless. *Shortcuts you
+pick in the app* open the app first, you choose the target there — a calendar, a settings page, a
+route — and the launcher keeps what comes back. One the scenario format cannot hold is turned down
+with a note rather than saved half-way.
 
 Apps of a **work profile** are offered too, with the briefcase they carry in the drawer, and the
 action remembers the profile it was picked in: a swipe set to the work Outlook opens the work
@@ -556,18 +579,19 @@ that web address opens instead.
 | **Sound** | *Silent mode*, *Vibrate*, *Turn the sound on*, *Turn Do Not Disturb on*, *Turn Do Not Disturb off* | need the special *Do Not Disturb access*. Android ties the ringer to Do Not Disturb: silent mode turns it on, vibrate and sound turn it off |
 | **Device** | *Flashlight*, *TV remote* | the flashlight is a toggle. *TV remote* opens the remote of the Google TV app, like that app's tile in Quick Settings: pick a TV, then control it. Without the Google TV app it is not offered, and a tile that carries it only says the app is missing |
 | **Place** | *Remember the place*, *Show the remembered place* | *Remember the place* reads where the phone is at the tap — once, on screen, never in the background — for the scenarios that wait for *A place is remembered*; if none waits, nothing is saved and it says so. It needs location, asked at the first tap; approximate is enough. *Show the remembered place* opens it in the maps app |
+| **Mac** | *Lock the Mac* | locks the screen of the Mac you paired through the [Mac bridge](#mac-bridge), and is offered only while one is paired. A button that only locks the Mac follows it: a laptop while the Mac is nearby and unlocked, a greyed-out lock once it is locked, and a greyed-out crossed laptop while the Mac is away or has not reported its screen yet — greyed out, a tap does nothing. A button that does more than that is never greyed out and runs all its actions. A tap that cannot reach the Mac says why |
 | **Panels** | *Volume panel*, *Internet panel*, *Wi-Fi panel*, *NFC panel*, *System settings* | the system's own panels and settings |
 
 **What "Do Not Disturb (Cue:)" is.** Since Android 15 no app can switch the system's Do Not Disturb
 itself: Android creates a mode of the app's own instead, listed in *Settings → Notifications →
-Modes* as *Do Not Disturb (Cue:)*. Cue: keeps it only while it is on — switching it off in any way
-deletes it, and the next *Turn Do Not Disturb on* creates it again as a copy of your ordinary *Do
-Not Disturb* settings. So set who may get through in the ordinary *Do Not Disturb*; changes to *Do
-Not Disturb (Cue:)* last only until it is off. *Turn Do Not Disturb off* lifts only that mode: a Do
-Not Disturb you switched on by hand, a bedtime schedule or the one *Silent mode* brought along stays
-on. *Vibrate* and *Turn the sound on*, on the other hand, end every Do Not Disturb, as Android does
-for any app — though one that another app or a schedule started is only paused until the next
-restart.
+Modes* as *Do Not Disturb (Cue:)*. Cue: React & Act keeps it only while it is on — switching it off
+in any way deletes it, and the next *Turn Do Not Disturb on* creates it again as a copy of your
+ordinary *Do Not Disturb* settings. So set who may get through in the ordinary *Do Not Disturb*;
+changes to *Do Not Disturb (Cue:)* last only until it is off. *Turn Do Not Disturb off* lifts only
+that mode: a Do Not Disturb you switched on by hand, a bedtime schedule or the one *Silent mode*
+brought along stays on. *Vibrate* and *Turn the sound on*, on the other hand, end every Do Not
+Disturb, as Android does for any app — though one that another app or a schedule started is only
+paused until the next restart.
 
 Android does not let any app switch Wi-Fi or Bluetooth directly (open the panel instead) or press
 another app's Quick Settings tile (use a link to that app's screen).
@@ -585,8 +609,9 @@ becomes one tap, although Android splits it into two switches:
 ```
 
 All of them run even when one fails, only the first failure is reported, and the first action
-decides the icon. The one exception to the order is *Turn Do Not Disturb on*: it always runs last,
-because a ringer change after it would end Do Not Disturb again.
+decides the icon. Two actions break the order. *Turn Do Not Disturb on* runs after the others,
+because a ringer change after it would end Do Not Disturb again. *Lock the Mac* runs last of all: a
+Mac out of reach can take a few seconds to give up on, and that holds up nothing else on the button.
 
 ### Priority and position
 
@@ -631,13 +656,13 @@ glyphs under the same names Home Assistant uses, so `mdi:gate` is what you would
 A **Home Assistant action without an icon of its own follows its entity**, the way Home Assistant's
 dashboards do: a lock shows `mdi:lock` while locked and `mdi:lock-open-variant` while unlocked, a
 cover of the class *gate* shows `mdi:gate` while closed and `mdi:gate-open` while open. An icon you
-set on the entity in Home Assistant is used as it is, whatever the state, and so is a glyph the
-Home Assistant event that raised the tile brings. The builder calls such a button *Follows the state
-in Home Assistant*; choose an icon and it stays fixed, *Restore the icon from the action* brings the
-changing one back. The icons come from your instance: Cue: asks for those of the kinds of entity on
-your tiles once, and again after Home Assistant updates. Until then, or when your instance cannot
-be reached that way, the button shows `mdi:home-assistant`. An icon newer than the ones that come
-with the app gives way to the entity's usual one.
+set on the entity in Home Assistant is used as it is, whatever the state, and so is a glyph the Home
+Assistant event that raised the tile brings. The builder calls such a button *Follows the state in
+Home Assistant*; choose an icon and it stays fixed, *Restore the icon from the action* brings the
+changing one back. The icons come from your instance: Cue: React & Act asks for those of the kinds
+of entity on your tiles once, and again after Home Assistant updates. Until then, or when your
+instance cannot be reached that way, the button shows `mdi:home-assistant`. An icon newer than the
+ones that come with the app gives way to the entity's usual one.
 
 All tiles share one design: the same glass, the same shape, single-colour glyphs. An app icon in a
 tile is drawn tinted too, whatever the *Icons* setting says; that setting is for the home screen,
@@ -665,16 +690,16 @@ the message.
 
 ## Home Assistant
 
-Cue: works with your own [Home Assistant](https://www.home-assistant.io/) in two independent
-directions, and either one works alone:
+Cue: React & Act works with your own [Home Assistant](https://www.home-assistant.io/) in two
+independent directions, and either one works alone:
 
-- **Home Assistant tells Cue: that something happened** — the doorbell rang, the washer finished —
-  and a tile appears. This is the *Home Assistant — event* condition. It travels through the Home
-  Assistant companion app you already have, so it needs no address and no sign-in in Cue:, and it
-  works at home and away alike.
-- **Cue: talks to Home Assistant** — a button switches off a light or opens the gate, a tile shows
-  the outside temperature, a scenario waits for the TV to play. For this, Cue: needs your instance's
-  address and a sign-in.
+- **Home Assistant tells Cue: React & Act that something happened** — the doorbell rang, the washer
+  finished — and a tile appears. This is the *Home Assistant — event* condition. It travels through
+  the Home Assistant companion app you already have, so it needs no address and no sign-in in
+  Cue: React & Act, and it works at home and away alike.
+- **Cue: React & Act talks to Home Assistant** — a button switches off a light or opens the gate, a
+  tile shows the outside temperature, a scenario waits for the TV to play. For this,
+  Cue: React & Act needs your instance's address and a sign-in.
 
 | | Channel | Used for | Needs |
 |---|---|---|---|
@@ -710,9 +735,9 @@ and a button right under the fields asks for it.
 | **Address away from home** | `https://your-account.ui.nabu.casa` | **must** be `https://` — Nabu Casa, a reverse proxy, or a Tailscale address |
 | **Home Wi-Fi** | your network names, comma-separated | not needed once an instance is paired through the picker. May also be a BSSID as `BSSID:aa:bb:cc:dd:ee:ff`. Reading the network name needs location permission |
 
-Either address alone is enough. With both, Cue: uses the home address at home and the other one
-elsewhere, and **remembers which one actually worked** on each network, so a Tailscale-only or
-split-DNS setup settles after the first call.
+Either address alone is enough. With both, Cue: React & Act uses the home address at home and the
+other one elsewhere, and **remembers which one actually worked** on each network, so a
+Tailscale-only or split-DNS setup settles after the first call.
 
 "Am I home?" has two answers, and either is enough: the Wi-Fi is one you listed, or the paired
 instance answers on the local network right now. Both only decide whether an `http://` home address
@@ -751,9 +776,9 @@ the clear to whatever answers that name on a foreign network.
 On the same screen, tap **Upload the blueprint to automations**. The launcher saves the blueprint
 straight into Home Assistant with your pairing secret already filled in, and it appears under
 **Settings → Automations & scenes → Blueprints**, titled with the phone's name — *Cue: — event into
-the launcher (Pixel 10 Pro)* — in Czech when Cue: runs in Czech, in English otherwise. Nothing is
-written on the phone and no storage permission is involved. The source is in the repository:
-[`ha/launcher_event.yaml`](ha/launcher_event.yaml) and its Czech twin
+the launcher (Pixel 10 Pro)* — in Czech when Cue: React & Act runs in Czech, in English otherwise.
+Nothing is written on the phone and no storage permission is involved. The source is in the
+repository: [`ha/launcher_event.yaml`](ha/launcher_event.yaml) and its Czech twin
 [`ha/launcher_event.cs.yaml`](ha/launcher_event.cs.yaml), which differs only in the text.
 
 Each phone gets a file of its own, `blueprints/automation/cue/launcher_event_<code>.yaml` — the only
@@ -824,7 +849,8 @@ actions:
 up in the event log as *rejected*. `v:1` is the version of the contract the blueprint was written
 against.
 
-**In Cue:**, two scenarios with the same condition, *Home Assistant — event* `doorbell` for 60 s:
+**In Cue: React & Act**, two scenarios with the same condition, *Home Assistant — event* `doorbell`
+for 60 s:
 
 - a medium tile *"Someone is at the door"* with a Home Assistant action `lock.open` on
   `lock.front_gate`, priority 950;
@@ -961,6 +987,175 @@ The blueprints address the release app only, so events for a debug build are sen
 
 ---
 
+## Mac bridge
+
+The Mac bridge connects the phone with **Cue: Relay & Reply**, a small app in the Mac's menu bar.
+The phone's notifications appear on the Mac, where you can answer and close them, text you copy on
+one side can be pasted on the other, and the phone can lock the Mac, which can also lock itself once
+the phone leaves. The phone and the Mac talk to each other directly — over Bluetooth while they are
+close, and over your own Wi-Fi for the content, or Bluetooth alone where they share no network —
+with no cloud, no account and no server in between, and everything they exchange is end-to-end
+encrypted between your two devices. The Mac app comes from its own repository,
+[cue-bridge](https://github.com/jaroslav-sazma/cue-bridge): its README says how to install it and
+describes everything on the Mac's side. This section covers what you set up and see on the phone.
+
+The bridge is off until you turn it on, and while it is off no part of it runs on the phone. It
+needs a Mac with Bluetooth, and for pairing, the phone and the Mac on the same Wi-Fi network.
+
+Once paired, they no longer have to share a network. Where the two are close enough for Bluetooth
+but cannot see each other over Wi-Fi — an office Wi-Fi that keeps its devices apart, a hotel, the
+phone on mobile data — everything keeps working over Bluetooth alone, Send to Mac included, just
+more slowly: a long text or a notification's details take a moment longer. With the phone on no
+Wi-Fi at all it goes to Bluetooth straight away. On a Wi-Fi that cannot reach the Mac, the first
+connection waits up to about 15 seconds for the Wi-Fi to fail before it switches; after that the
+phone goes straight to Bluetooth for as long as the Mac stays near.
+
+### Pairing
+
+The order matters: a Mac that is not paired yet can be found only while it is waiting for a phone.
+
+1. **On the Mac**, choose **Pair Phone…** in the menu of Cue: Relay & Reply and leave the window
+   open, as the Mac app's [README](https://github.com/jaroslav-sazma/cue-bridge#pairing) describes.
+2. **On the phone**, *Launcher settings → Scenarios → ⋮ → Mac bridge*: switch on **Connect to a
+   Mac**, tap **Find Mac** and pick your Mac in the dialog Android opens.
+3. Allow local network access when the screen asks. The phone then looks for the Mac on the Wi-Fi
+   and connects to it by itself. If several Macs are waiting to pair at the same moment, it lists
+   them by name and you tap yours; if it finds none, it says so — check that **Pair Phone…** is
+   still open and the phone is on the same Wi-Fi, and tap **Search again**.
+4. The phone shows a six-digit code, for example *482 913*. Type it into the window on the Mac and
+   click **Pair**. The moment the Mac accepts it, both sides finish pairing on their own, with
+   nothing more to tap: the phone shows the Mac you paired with, and the Mac shows **Paired**. If
+   the Mac says the code is wrong, check the digits and type them again.
+
+The code is how the Mac knows it is pairing with your phone: it accepts only the code your phone
+shows. After pairing, the phone's Mac bridge settings show the Mac's certificate under **Mac
+certificate**, and the Mac shows its own in its pairing window; the two match. If they ever differ,
+unpair on both sides and pair again. If the phone says **Your Mac is already pairing with another
+device**, something else asked to pair first; cancel on the Mac and start again. An attempt that
+fails, or is cancelled on either side, ends the Mac's waiting — choose **Pair Phone…** again. Once
+paired, keep the Mac app running. When the Mac later gets another address on the network, the phone
+finds it again by its name the next time it cannot reach it, so there is no need to pair again.
+
+The permissions come up just in time, while you pair: **nearby devices**, usually granted right in
+the dialog that finds the Mac, and **local network**. Saying no stops only the bridge, and the
+screen says what is missing. Without local network access the phone cannot pair, and a paired phone
+reaches the Mac over Bluetooth only. Without nearby devices, the bridge works only where the phone
+and the Mac share a Wi-Fi, and a notification closed or answered on the Mac, and text copied there,
+reach the phone only while you are in the launcher. Showing notifications on the Mac also needs
+notification access; the screen offers it while Cue: React & Act does not have it.
+
+**Unpair** removes the pairing from the phone only, so unpair on the Mac as well, as its
+[README](https://github.com/jaroslav-sazma/cue-bridge#pairing) describes. Turning the bridge off
+unpairs too. To use it again, you pair again.
+
+The phone keeps counters that make each of its messages to the Mac unique, and should it lose them,
+it refuses the old pairing rather than risk repeating one: the Mac bridge screen says **Pairing
+unusable — pair again** under **Connection**. Tap **Pair again**, choose **Pair Again…** on the Mac
+and pair as above. The Mac guards its own pairing the same way and says so in its menu.
+
+### Notifications on the Mac
+
+While the Mac is nearby, a notification that arrives on the phone appears in the Mac's Notification
+Center within seconds, under the app's name, even with the phone locked in your pocket. An update
+replaces the Mac's copy instead of adding another. Silent notifications, ongoing ones — a timer, a
+navigation, a download — media players and those of Cue: React & Act stay on the phone.
+
+The Mac shows a notification the way your phone's lock screen would. One the lock screen does not
+show at all stays on the phone. One whose content the lock screen hides — because the phone is set
+to hide sensitive content on the lock screen, or you chose that for the app — arrives on the Mac as
+the lock screen shows it: the short version the app offers for the lock screen, or just the app's
+name over *Content hidden*. You can still answer and close it on the Mac.
+
+**Apps kept off the Mac** on the Mac bridge screen lists your apps. Switch an app on there and its
+notifications never reach the Mac: they do not appear there, and the Mac cannot answer or close
+them. Switch on your banking app, say, and its one-time codes stay on the phone. The list stays
+when you unpair; turning the bridge off clears it.
+
+Close a notification on the phone, or let its app take it down, and it leaves the Mac as well. On
+the Mac you can answer one you could answer on the phone, a message say, close it there and on the
+phone at once, and click it to open its app or website on the Mac. The Mac app's
+[README](https://github.com/jaroslav-sazma/cue-bridge#notifications) describes all of that, and what
+the Mac catches up on when the phone comes back into range.
+
+### Clipboard
+
+Text you copy on the Mac is on the phone's clipboard a moment later, while the two are connected and
+the Mac is unlocked. **Clipboard from the Mac** on the Mac bridge screen turns this off; it is on
+until you change it. While it is off, the Mac stops watching its clipboard and sends nothing at all.
+The phone tells the Mac when it connects — at once while you are in the launcher, otherwise the next
+time the Mac calls it in — and ignores whatever comes until then. The Mac app can stop sending from
+its own side too, and keeps some texts to itself — very long ones, or a password manager's
+confidential ones; its [README](https://github.com/jaroslav-sazma/cue-bridge#clipboard) says which.
+
+While the phone is locked, a copy from the Mac waits and lands on the phone's clipboard when you
+unlock it, but only while it is still fresh and the phone is still near the Mac. The slider under
+the switch sets how fresh: by default a copy made more than 5 minutes ago is dropped, and you can
+pick anything from 1 to 60 minutes. Say you copy an address on the Mac and lock the phone: unlock it
+within five minutes and the address is ready to paste; unlock it after lunch and the phone's
+clipboard is as you left it. A copy still waiting when you take the phone out of the Mac's range is
+dropped about a minute later. The same limit applies to a copy that reaches the phone late for any
+other reason, the phone coming back into range for example.
+
+A long text, one too big for the quiet Bluetooth connection, comes over a connection of its own,
+over Wi-Fi or, where the two share no network, over Bluetooth: the phone fetches it at once when it
+is unlocked, otherwise when you unlock it, again only within the limit.
+
+Text you copy on the phone does not go to the Mac by itself; [Send to Mac](#send-to-mac) sends it.
+
+### Send to Mac
+
+This is how text goes from the phone to the Mac: select it and choose **Send to Mac** in the text
+selection menu, or share it and pick **Send to Mac** in the share sheet. Some apps, browsers among
+them, show only a few entries in their selection menu; the share sheet always has it. The Mac puts
+the text on its clipboard and shows *Press ⌘V to paste it.* Send to Mac goes over the Wi-Fi the
+phone shares with the Mac or, where they share none, over Bluetooth while the Mac is nearby. It
+works whether **Clipboard from the Mac** is on or off, and is offered only while a Mac is paired.
+
+### Locking the Mac
+
+**Lock the Mac** is a [system action](#system-actions) for a tile, offered once a Mac is paired. A
+button that only locks the Mac follows it: a laptop while the Mac is nearby and unlocked, a lock
+once its screen is locked, and a crossed-out laptop while it is away or has not told the phone about
+its screen yet. Only the laptop can be tapped; the other two are greyed out, as there is nothing to
+lock. A tile of text only is that button as a whole and greys out the same way. A button that does
+more — locks the Mac and turns Do Not Disturb off, say — shows none of this: it can always be
+tapped and runs all its actions, and on a Mac that is already locked the lock changes nothing. A tap
+goes over Bluetooth or over the Wi-Fi the two share, and the button turns to the lock as soon as the
+Mac has locked. If the Mac cannot be reached, the phone says why. The phone can only lock the Mac,
+never unlock it: you unlock it on the Mac as usual. Picked for the right-to-left swipe in
+*Gestures*, it locks the Mac with one swipe on the home screen as you get up from the desk.
+
+The Mac can also lock itself a while after you walk away with the phone, with **Lock When Phone
+Leaves** in the Mac app, which its
+[README](https://github.com/jaroslav-sazma/cue-bridge#screen-lock) describes. By the time it does,
+the phone is out of range, so the phone sees the Mac as away rather than locked until you are back.
+Where macOS does not let Cue: Relay & Reply lock the screen, **Lock the Mac** on the phone changes
+nothing.
+
+### The Mac in scenarios
+
+With a Mac paired, the condition **Mac nearby** lets a scenario follow whether the Mac is close: a
+tile for your desk, or *Mac not nearby* for when you walk away from it. **Mac locked** follows
+whether the Mac's screen is locked, which the Mac tells the phone while it is nearby; while the Mac
+is away the phone cannot tell, so neither *Mac locked* nor *Mac not locked* holds. Give a tile with
+**Lock the Mac** the condition *Mac not locked*, and it is there only while the Mac sits unlocked
+beside you, without adding **Mac nearby**. The [table of conditions](#holds-while-the-state-lasts)
+and the notes under it say how they behave.
+
+### Battery
+
+Whether the Mac is in range is watched by Android itself, through its companion-device mechanism, so
+Cue: React & Act never scans for it, and while the Mac is away nothing of the bridge runs beyond
+waiting for the phone's Bluetooth to be switched off or on. While it is near, the phone keeps a
+quiet Bluetooth connection and wakes only for a notification or a message from the Mac, without wake
+locks, so expect no noticeable battery cost; the notification listener stays connected during that
+time, which Android's battery screen counts as [background time](#battery-and-background). The
+connection runs at Bluetooth's slowest pace and speeds up only while it carries a long text or a
+notification's details, and while the Mac's display is asleep the Mac does not call the phone in for
+new notifications.
+
+---
+
 ## Example scenarios
 
 From one condition to small chains. [`fixtures/scenarios/`](fixtures/scenarios/) holds about thirty
@@ -1045,19 +1240,19 @@ pulled out of its text.
 Instead of the builder, a scenario can be talked through with the AI chat app you already use and
 pasted back. It is experimental and off by default: switch on **Create scenarios in an AI chat** in
 *Appearance & features*. **New scenario** then offers two ways in — **Step by step** (the builder)
-and **Create in an AI chat** — and the *Backups* tab shows **Paste scenario JSON** under
-**Import from a file**. Cue: has no model and no AI service of its own: it writes a description for
-the chat, hands it to an app on your phone, and checks what comes back like an imported file.
+and **Create in an AI chat** — and the *Backups* tab shows **Paste scenario JSON** under **Import
+from a file**. Cue: React & Act has no model and no AI service of its own: it writes a description
+for the chat, hands it to an app on your phone, and checks what comes back like an imported file.
 
 1. **Choose what goes along.** **Create in an AI chat** sends nothing yet. It explains how it works
    and lets you tick what the description includes: **Bluetooth devices** (names and addresses of
-   paired devices; offered only while Cue: has the Bluetooth permission), **Home Assistant entities
-   and services** (only once it is set up), and **App shortcuts** — which may carry contacts' names,
-   since shortcuts to contacts and conversations are among them. Your apps with their screens and
-   links, and the widgets they offer, always go along: no scenario can be written without them. What
-   you untick is not read at all, and the chat is told you chose not to share it, so it leaves a
-   placeholder rather than guessing. **Show prompt preview** shows exactly what the chat would get
-   and sends nothing.
+   paired devices; offered only while Cue: React & Act has the Bluetooth permission), **Home
+   Assistant entities and services** (only once it is set up), and **App shortcuts** — which may
+   carry contacts' names, since shortcuts to contacts and conversations are among them. Your apps
+   with their screens and links, and the widgets they offer, always go along: no scenario can be
+   written without them. What you untick is not read at all, and the chat is told you chose not to
+   share it, so it leaves a placeholder rather than guessing. **Show prompt preview** shows exactly
+   what the chat would get and sends nothing.
 2. **Talk it through.** **Open the AI chat** sends a file, `cue-scenario-context.md`, to your
    default assistant app — or to Gemini, when the assistant is the Google app or takes no files. The
    file explains the scenario format and lists what you shared about the phone. The chat asks about
@@ -1072,10 +1267,10 @@ the chat, hands it to an app on your phone, and checks what comes back like an i
    exist here. A scenario that does not pass gets a list of problems and **Copy fix for the chat**,
    a short report to paste into the same chat.
 4. **Check it in the wizard.** A scenario that passes shows a summary with what a tap runs and what
-   is left to do — connect Home Assistant, upload the blueprint for an event, bind a widget, fill in
-   a placeholder. **Check it in the wizard** opens it on the builder's summary, and nothing is saved
-   until you save it there. A scenario with a placeholder or an unbound widget is saved switched
-   off.
+   is left to do — connect Home Assistant, upload the blueprint for an event, set up the Mac bridge
+   for *Mac nearby*, bind a widget, fill in a placeholder. **Check it in the wizard** opens it on
+   the builder's summary, and nothing is saved until you save it there. A scenario with a
+   placeholder or an unbound widget is saved switched off.
 
 One answer holds exactly one scenario; for several tiles, finish one and ask for the next. The
 switch, your choice of what to share and the card stay on the phone and are never part of a backup.
@@ -1104,11 +1299,13 @@ Anything tied to one phone — a widget, a Bluetooth device, a Wi-Fi name — is
 unfilled placeholder is imported **switched off**, with a `!` badge, rather than rejected.
 
 **The Home Assistant addresses, the sign-in or token and the pairing secret are never part of a
-file.** Everything else is exported as it is, and is worth a look before you share a file: scenario
-names, the apps a notification condition listens to and the text it looks for, Home Assistant entity
-ids and service data, links (a `tel:` link carries the number), app shortcut ids (a messaging app's
-shortcut often names a contact), and — in a whole configuration — the home screen layout, folder
-names and the list of hidden apps.
+file, and neither is anything of the Mac bridge:** its pairing stays on the phone it was made on
+and a restore leaves it as it is, so a new phone or a reinstall pairs with the Mac again. A *Mac
+nearby* condition travels with its scenario. Everything else is exported as it is, and is worth a
+look before you share a file: scenario names, the apps a notification condition listens to and the
+text it looks for, Home Assistant entity ids and service data, links (a `tel:` link carries the
+number), app shortcut ids (a messaging app's shortcut often names a contact), and — in a whole
+configuration — the home screen layout, folder names and the list of hidden apps.
 
 A file can come from anywhere, so the launcher takes it only when an app hands it over with access
 granted, never as a `file:` path or from a web page. The preview lists what every tile will **do**:
@@ -1133,14 +1330,14 @@ Setup asks for nothing. Every permission is requested **just in time** — when 
 that needs it — and never before the launcher has said what it reads and what for: next to the
 button that asks, or in a short dialog with **Allow** (or a button to the settings screen it needs)
 and **Not now**. *Not now* leaves that feature off and does not ask again until you reach for it
-again. Nothing leaves the phone except the calls to your own Home Assistant
-([PRIVACY.md](PRIVACY.md) lists what they carry) and what you hand to another app yourself — a
-shared scenario, an exported file, the description for an AI chat.
+again. Nothing leaves the phone except the calls to your own Home Assistant, what the Mac bridge
+sends to your own paired Mac ([PRIVACY.md](PRIVACY.md) lists what both carry) and what you hand to
+another app yourself — a shared scenario, an exported file, the description for an AI chat.
 
 Some access has no dialog at all — notification access, Do Not Disturb access, location services —
-only a screen in the system settings. Wherever Cue: finds such access missing, it offers that
-screen, so you never have to hunt for it. On a phone without such a screen (Android Go leaves some
-out), a message says so and only the feature that needs it stays off.
+only a screen in the system settings. Wherever Cue: React & Act finds such access missing, it offers
+that screen, so you never have to hunt for it. On a phone without such a screen (Android Go leaves
+some out), a message says so and only the feature that needs it stays off.
 
 **Saying no never blocks the launcher.** A denial switches off exactly the feature that depends on
 it; everything else keeps working. You can change your mind in the system settings later, and the
@@ -1149,22 +1346,25 @@ launcher picks it up the next time you return to the home screen.
 | Permission | Asked when | Without it |
 |---|---|---|
 | **Bluetooth** | you set up a *Bluetooth connected* or *Bluetooth disconnected* condition, or a tile that ends when a Bluetooth device disconnects | those conditions cannot be read, so their scenarios never show, and such an end never comes |
+| **Nearby devices** (the same permission as *Bluetooth*) | you find your Mac for the [Mac bridge](#pairing) — usually granted right in the dialog that finds it, otherwise by a button on the same screen | a notification closed or answered on the Mac, and text copied there, reach the phone only while you are in the launcher. Notifications still appear on the Mac, and the rest of the bridge works, but only where the phone and the Mac share a Wi-Fi |
 | **Location** | you pick a specific Wi-Fi network in a condition, fill in *Home Wi-Fi* for Home Assistant, or first tap a tile that remembers a place (approximate is enough for that one) | Android will not reveal the network name, so conditions for a named Wi-Fi never hold; *any Wi-Fi* keeps working. For Home Assistant the launcher falls back to asking whether the paired instance answers on this network; without a paired instance it cannot tell you are home, so an `http://` home address is never used. A tile that remembers a place remembers nothing until it is granted |
 | **Location services** (a system switch, not a permission) | same as above | the network name cannot be read and a place cannot be remembered; such a tile opens the location settings |
 | **Calendar** | you add a *Calendar event* condition or the calendar widget, tap a calendar widget without access, or choose its calendars | the condition cannot be evaluated, and the calendar widget shows *Tap to allow*: a tap asks for the access instead of running its action |
 | **Contacts** | you switch on contact search in the drawer (off by default) | the drawer searches apps only |
-| **Notification access** | you add a *Notification from an app*, *Notification ended* or *Something is playing* condition or a tile that ends when a notification arrives, put the media widget in a tile, tap a media widget without access, or switch on notification count badges | those conditions never fire, a tile waiting for a notification stays until its limit or until you close it, icons carry no badges, and the media widget says it has no access, with its buttons greyed out. A sample notification for pulling a value can still be typed by hand. Home Assistant events are not affected |
+| **Notification access** | you add a *Notification from an app*, *Notification ended* or *Something is playing* condition or a tile that ends when a notification arrives, put the media widget in a tile, tap a media widget without access, switch on notification count badges, or pair a Mac (the Mac bridge screen offers it) | those conditions never fire, a tile waiting for a notification stays until its limit or until you close it, icons carry no badges, and the media widget says it has no access, with its buttons greyed out. A sample notification for pulling a value can still be typed by hand. The Mac shows none of the phone's notifications. Home Assistant events are not affected |
 | **Do Not Disturb access** | you pick *Turn Do Not Disturb on* or *off* in the builder, or tap a tile whose sound action was refused for it | that action explains what is missing and offers the settings screen; the other actions on the same tile still run |
 | **Default home app** (a role, not a permission) | never — you choose it at the first start or in the system settings | Android lets only the current home app read app shortcuts, so those sections of the action sheet stay empty with a note, and long-pressing an icon offers no shortcuts. Everything else works |
-| **Local network** | your Home Assistant address is a local one and you did not pick the instance in *Find my Home Assistant* | since Android 17 a local address cannot be reached without it: everything goes to the away address, and the launcher says why. Picking the instance in the system picker needs no permission. A Nabu Casa or other public address is unaffected |
-| **Internet** | never — granted at install, no dialog | used only to talk to Home Assistant. Without an address and a sign-in, Home Assistant actions and states do not work; events still do, since they do not use it |
+| **Local network** | your Home Assistant address is a local one and you did not pick the instance in *Find my Home Assistant*, or you pair a Mac | since Android 17 a local address cannot be reached without it: everything goes to the away address, and the launcher says why. Picking the instance in the system picker needs no permission. A Nabu Casa or other public address is unaffected. The Mac bridge cannot pair; a paired phone reaches the Mac over Bluetooth only, and the bridge screen says why when that does not work either |
+| **Internet** | never — granted at install, no dialog | used only to talk to Home Assistant and to your paired Mac. Without an address and a sign-in, Home Assistant actions and states do not work; events still do, since they do not use it |
 
 No permission is needed for the launcher itself, the static area, the app search, app widgets, the
 next alarm on the clock, or for the time, alarm, charging, headphones and ringer conditions, nor for
 creating scenarios in an AI chat. Three more are granted at install without a dialog: **biometric
 prompt** (to ask the system for a confirmation and get back only yes or no), **network state** (to
 know which network the phone is on) and **expand status bar** (for the swipe that opens the
-notifications).
+notifications). The Mac bridge adds three of the same kind, which let Android watch for the paired
+Mac and let the launcher work with it in the background while it is near; none of them does
+anything until a Mac is paired.
 
 Creating scenarios in an AI chat needs only two entries in the manifest: one that lets the launcher
 see which apps can be the default assistant, next to the Gemini app the drawer's *Ask AI* row
@@ -1175,10 +1375,10 @@ only to the app a send grants a one-off read of it.
 
 ## Battery and background
 
-While you are not looking at it, Cue: does only what cannot wait. The scenario engine, the
-conditions, the widgets, the calendar and media readers and the Home Assistant connection run only
-while the home screen is on screen; whatever changed in the meantime — an app installed, a state
-that flipped — is caught up the moment you come back.
+While you are not looking at it, Cue: React & Act does only what cannot wait. The scenario engine,
+the conditions, the widgets, the calendar and media readers and the Home Assistant connection run
+only while the home screen is on screen; whatever changed in the meantime — an app installed, a
+state that flipped — is caught up the moment you come back.
 
 What still reaches the launcher in the background are the events a trigger cannot learn about later:
 
@@ -1196,12 +1396,20 @@ Assistant state the scenario depends on is read in that step too — only the en
 giving up after three seconds, without opening a connection that stays. Your location is never
 followed: a place is read once, at the tap, while you are looking.
 
-Android's battery screen can still list **background** time for Cue: in two cases, neither of which
-costs anything by itself: the time the screen is off counts as background use of whatever was on
-screen when it went dark, so locking the phone on the home screen adds to it for any launcher; and
-while the notification listener is connected, Android counts the whole time as a running service,
-though the process sleeps between notifications — just like the launcher that comes with the phone,
-which keeps one connected for its notification dots.
+The [Mac bridge](#mac-bridge), once paired, is the one part that stays longer. While your Mac is in
+range, Android itself keeps the launcher's bridge running: it holds a quiet Bluetooth connection to
+the Mac, passes the phone's notifications to it, and takes closings, replies, copied text and
+whether the Mac's screen is locked from it. Android starts and ends that time as the Mac comes and
+goes. While the Mac is away nothing of the bridge runs, except that, if Android has not ended that
+time yet, the bridge still waits for the phone's Bluetooth to be switched off or on, which costs
+nothing until it happens.
+
+Android's battery screen can still list **background** time for Cue: React & Act in two cases,
+neither of which costs anything by itself: the time the screen is off counts as background use of
+whatever was on screen when it went dark, so locking the phone on the home screen adds to it for any
+launcher; and while the notification listener is connected, Android counts the whole time as a
+running service, though the process sleeps between notifications — just like the launcher that comes
+with the phone, which keeps one connected for its notification dots.
 `adb shell dumpsys batterystats app.cue.launcher` shows where the time actually goes.
 
 ---
@@ -1209,21 +1417,24 @@ which keeps one connected for its notification dots.
 ## Privacy and security
 
 - [PRIVACY.md](PRIVACY.md) is the privacy policy: what the app reads, what it stores on the phone,
-  and the one place it sends anything to — your own Home Assistant.
+  and the only places it sends anything to — your own Home Assistant and your own paired Mac.
 - [SECURITY.md](SECURITY.md) explains how to report a vulnerability privately and the threat model
   the launcher is built against. Please do not report a vulnerability in a public issue.
 - [docs/security-audit.md](docs/security-audit.md) records what a security review covered and the
   state of each area.
+- The Mac app of the [Mac bridge](#mac-bridge) has its own privacy policy and security documents in
+  its repository, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge).
 
 ---
 
 ## Download and install
 
-**Requirements.** A phone with **Android 17 or newer**. Older versions cannot install Cue: — there
-is no build for them and none is planned. It is made for phones: the home screen is locked to
-portrait and the app requires telephony hardware, so tablets, TVs and Chromebooks are excluded.
+**Requirements.** A phone with **Android 17 or newer**. Older versions cannot install
+Cue: React & Act — there is no build for them and none is planned. It is made for phones: the home
+screen is locked to portrait and the app requires telephony hardware, so tablets, TVs and
+Chromebooks are excluded.
 
-**Google Play.** "Cue: React & Act" is in a closed test that anyone can join: first the
+**Google Play.** Cue: React & Act is in a closed test that anyone can join: first the
 [testers group](https://groups.google.com/g/cue-launcher-testers), then the
 [opt-in](https://play.google.com/apps/testing/app.cue.launcher), both with the Google account of
 the phone, and then install it from Play. Google makes a new app public only after 12 testers have
@@ -1231,13 +1442,19 @@ stayed in its test for 14 days, so joining helps it get there. The Play copy is 
 key as the APKs here, so either updates the other.
 
 **GitHub Releases.** Every [release](https://github.com/jaroslav-sazma/cue-launcher/releases) has
-the signed APK attached, together with its SHA-256 checksum. Download the APK on the phone, open
-it and allow the installation when Android asks. Then make Cue: the default home app when it offers
-to, or later in *Settings → Apps → Default apps → Home app*.
+the signed APK attached, together with its SHA-256 checksum. Download the APK on the phone, open it
+and allow the installation when Android asks. Then make Cue: React & Act the default home app when
+it offers to, or later in *Settings → Apps → Default apps → Home app*.
 
-**Updates.** A newer APK installs over the old one and keeps all its data. Cue: does not check for
-updates itself — it makes no network connection of its own — so install the next release by hand or
-let an app such as [Obtainium](https://obtainium.imranr.dev/) watch the GitHub releases for you.
+**Updates.** A newer APK installs over the old one and keeps all its data. Cue: React & Act does not
+check for updates itself — it connects to nothing but your own Home Assistant and Mac — so install
+the next release by hand or let an app such as [Obtainium](https://obtainium.imranr.dev/) watch the
+GitHub releases for you.
+
+**The Mac app.** Cue: Relay & Reply, the Mac's half of the [Mac bridge](#mac-bridge), is published
+in its own repository: get it from its
+[releases](https://github.com/jaroslav-sazma/cue-bridge/releases), and see its
+[README](https://github.com/jaroslav-sazma/cue-bridge#installing) for how to install it.
 
 ### Verifying a download
 
@@ -1275,6 +1492,8 @@ down so it does not have to be worked out again.
   uploaded from the launcher, live entity states.
 - Scenarios worked out in an AI chat and checked by the launcher; export and import of single
   scenarios, sets and whole configurations.
+- The Mac bridge: notifications, clipboard, Send to Mac and locking the Mac, with the Mac app in its
+  own repository, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge).
 
 ### v2
 
@@ -1314,25 +1533,35 @@ security issue. To report a bug from the phone, *Launcher settings → Scenarios
 a bug* opens a new GitHub issue in your browser with the phone model, the Android build and the app
 version already filled in. The app sends nothing itself — those three values travel in the address
 of the page, so GitHub sees them once the page opens, and the issue is only filed when you submit it
-there.
+there. A bug in the Mac app goes to the issues of its own repository,
+[cue-bridge](https://github.com/jaroslav-sazma/cue-bridge/issues), whose README says how to find the
+app's version.
 
-Cue: is designed, directed and tested by its maintainer, with AI coding assistants contributing to
-the code.
+Cue: React & Act is designed, directed and tested by its maintainer, with AI coding assistants
+contributing to the code.
 
 ---
 
 ## License
 
-Cue: is free software: you can redistribute it and/or modify it under the terms of the GNU General
-Public License as published by the Free Software Foundation, either version 3 of the License, or (at
-your option) any later version (SPDX: `GPL-3.0-or-later`). The full text is in [`LICENSE`](LICENSE).
+Cue: React & Act is free software: you can redistribute it and/or modify it under the terms of the
+GNU General Public License as published by the Free Software Foundation, either version 3 of the
+License, or (at your option) any later version (SPDX: `GPL-3.0-or-later`). The full text is in
+[`LICENSE`](LICENSE).
 
 [`NOTICE`](NOTICE) adds two terms that section 7 of the GPL allows: a modified version has to be
 marked as different from the original, for example with its own name and application ID, and **the
-GPL grants no trademark rights to the names "Cue:" and "Cue: React & Act" or to the Cue: icon and
-logo**. `NOTICE` also lists the third-party material the app bundles, such as the Material Design
-Icons font by Pictogrammers; their license texts are in [`LICENSES/`](LICENSES/), and the app shows
-all of them too (*Launcher settings → Scenarios → ⋮ → About → Open-source licenses*).
+GPL grants no trademark rights to the names "Cue:", "Cue: React & Act" and "Cue: Relay & Reply" or
+to the Cue: icon and logo**. `NOTICE` also lists the third-party material the app bundles, such as
+the Material Design Icons font by Pictogrammers; their license texts are in
+[`LICENSES/`](LICENSES/), and the app shows all of them too (*Launcher settings → Scenarios → ⋮ →
+About → Open-source licenses*).
+
+One part is not under the GPL: the Mac bridge's protocol,
+[`docs/bridge-protocol.md`](docs/bridge-protocol.md), and its test vectors in
+[`fixtures/bridge/`](fixtures/bridge/) are dedicated to the public domain under CC0 1.0
+([`LICENSES/CC0-1.0.txt`](LICENSES/CC0-1.0.txt)), so that anyone can write a bridge for another
+computer, Linux or Windows say, under any license they like.
 
 Use it, fork it, build on it; the copyleft is there so it cannot be closed up and resold. If the
 project ever stops moving, the repository is enough for anyone to pick it up.

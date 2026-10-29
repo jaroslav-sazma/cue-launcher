@@ -42,6 +42,8 @@ import app.cue.launcher.feature.scenarios.AppLabels
 import app.cue.launcher.feature.scenarios.LocalAppLabels
 import app.cue.launcher.feature.scenarios.builder.activeNotificationsOf
 import app.cue.launcher.feature.scenarios.builder.LocalActiveNotifications
+import app.cue.launcher.feature.settings.bridge.BridgeServices
+import app.cue.launcher.feature.settings.bridge.LocalBridgeServices
 import app.cue.launcher.feature.settings.ha.HaServices
 import app.cue.launcher.feature.settings.ha.HaSetup
 import app.cue.launcher.feature.widgets.WidgetHosting
@@ -85,6 +87,8 @@ class MainActivity : ComponentActivity() {
 
     private lateinit var ha: HaServices
 
+    private val bridgeServices: () -> BridgeServices = { graph.bridgeServices }
+
     private val homeRoleRequest = registerForActivityResult(StartActivityForResult()) {
 
     }
@@ -126,6 +130,7 @@ class MainActivity : ComponentActivity() {
                     LocalAppLabels provides remember { AppLabels(launcherApps::labelOf) },
                     LocalActiveNotifications provides remember { activeNotificationsOf(graph.notificationListener) },
                     LocalAiChatInventory provides graph.aiChatInventory,
+                    LocalBridgeServices provides bridgeServices,
                     LocalMediaFeed provides rememberMediaFeed(
                         players = graph.mediaPlayers,
                         settings = settingsRepository,

@@ -62,6 +62,7 @@ internal fun systemActionSectionTitle(section: SystemActionSection): String = st
         SystemActionSection.DEVICE -> R.string.action_system_device
         SystemActionSection.PANELS -> R.string.action_system_panels
         SystemActionSection.PLACE -> R.string.action_system_place
+        SystemActionSection.MAC -> R.string.action_system_mac
     },
 )
 
@@ -83,6 +84,7 @@ internal fun systemActionLabel(action: SystemActionType): String = stringResourc
         SystemActionType.OPEN_SETTINGS -> R.string.action_system_open_settings
         SystemActionType.REMEMBER_PLACE -> R.string.action_system_remember_place
         SystemActionType.SHOW_PLACE -> R.string.action_system_show_place
+        SystemActionType.MAC_LOCK -> R.string.action_system_mac_lock
     },
 )
 
@@ -99,6 +101,7 @@ internal fun systemActionDetail(action: SystemActionType): String? = when (actio
     SystemActionType.TV_REMOTE -> stringResource(R.string.action_system_tv_remote_detail)
     SystemActionType.REMEMBER_PLACE -> stringResource(R.string.action_system_remember_place_detail)
     SystemActionType.SHOW_PLACE -> stringResource(R.string.action_system_show_place_detail)
+    SystemActionType.MAC_LOCK -> stringResource(R.string.action_system_mac_lock_detail)
     else -> null
 }
 

@@ -28,7 +28,7 @@ class ConditionMonitorDismissalTest {
             activations = activations,
             systemState = system,
             localClock = LocalClock { LocalClockReading(ClockState(isoDayOfWeek = 1, minuteOfDay = 0), 0) },
-            engine = ScenarioEngine(scenarios, activations, clock, HaStateSource.NONE),
+            engine = ScenarioEngine(scenarios, activations, clock, HaStateSource.NONE, MacLockSource.NONE),
             haEventLog = FakeHaEventLog(),
             clock = clock,
         )

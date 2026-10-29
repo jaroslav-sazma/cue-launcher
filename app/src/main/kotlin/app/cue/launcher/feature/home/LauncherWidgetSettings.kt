@@ -80,6 +80,7 @@ internal fun LauncherWidgetSettings(
     onOpenPlayers: () -> Unit,
 ) {
     val stored by access.settings.settings.collectAsStateWithLifecycle(initialValue = LauncherSettings())
+    val bridgePaired = stored.bridge.enabled && stored.bridge.pairing != null
 
     Column(verticalArrangement = Arrangement.spacedBy(Tokens.WidgetSettings.rowGap)) {
         when (widget) {
@@ -87,6 +88,7 @@ internal fun LauncherWidgetSettings(
                 access = access,
                 action = stored.gestures.searchbarTap,
                 fallback = stringResource(R.string.widget_settings_searchbar_default),
+                bridgePaired = bridgePaired,
                 onPick = access.settings::setSearchbarTapAction,
             )
 
@@ -95,6 +97,7 @@ internal fun LauncherWidgetSettings(
                     access = access,
                     action = stored.gestures.calendarTap,
                     fallback = stringResource(R.string.widget_settings_calendar_default),
+                    bridgePaired = bridgePaired,
                     onPick = access.settings::setCalendarTapAction,
                 )
                 CalendarsSetting(
@@ -119,6 +122,7 @@ private fun TapActionSetting(
     access: WidgetSettingsAccess,
     action: TapAction?,
     fallback: String,
+    bridgePaired: Boolean,
     onPick: suspend (TapAction?) -> Unit,
 ) {
     val scope = rememberCoroutineScope()
@@ -147,6 +151,7 @@ private fun TapActionSetting(
             onPick = { picked -> scope.launch { onPick(picked) } },
             onDismiss = { picking = false },
             ha = access.ha,
+            bridgePaired = bridgePaired,
         )
     }
 }

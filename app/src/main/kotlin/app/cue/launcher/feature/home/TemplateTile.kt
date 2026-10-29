@@ -33,6 +33,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import app.cue.launcher.R
 import app.cue.launcher.data.scenario.SemanticStyle
@@ -53,6 +54,7 @@ import app.cue.launcher.designsystem.toTextStyle
 import app.cue.launcher.designsystem.labelsVisibleAt
 import app.cue.launcher.engine.haIconEntity
 import app.cue.launcher.engine.progressTrack
+import app.cue.launcher.engine.templateItemEnabled
 import app.cue.launcher.feature.icons.rememberTintedPackageIcon
 import app.cue.launcher.system.LauncherAppsRepository
 import app.cue.launcher.system.toSourceBounds
@@ -67,6 +69,9 @@ fun TemplateTileContent(
     accented: Set<String> = emptySet(),
     haGlyphs: Map<String, List<String>> = emptyMap(),
     onReply: (() -> Unit)? = null,
+
+    // The builder's preview asks no Mac, so there a Lock Mac icon looks ready to lock.
+    macLocked: Boolean? = false,
 ) {
     val colors = LocalCueColors.current
     val accent = colors.ink(payload.semantic, colors.accent)
@@ -77,6 +82,7 @@ fun TemplateTileContent(
     }
 
     val labelled = template.items.any { it.label != null } && iconLabelsFit()
+    val row = TemplateRowState(payload.semantic, accented, haGlyphs, macLocked, labelled)
     Column(
         modifier = modifier.fillMaxSize(),
         verticalArrangement = Arrangement.SpaceBetween,
@@ -85,17 +91,13 @@ fun TemplateTileContent(
 
             TemplateLayout.FOUR_ICONS -> {
                 val rows = template.items.chunked(ICONS_PER_ROW)
-                rows.take(1).forEach { row ->
-                    TemplateActionRow(row, launcherApps, actions, payload.semantic, accented, haGlyphs, labelled)
-                }
+                rows.take(1).forEach { items -> TemplateActionRow(items, launcherApps, actions, row) }
                 progressBar(Modifier)
-                rows.drop(1).forEach { row ->
-                    TemplateActionRow(row, launcherApps, actions, payload.semantic, accented, haGlyphs, labelled)
-                }
+                rows.drop(1).forEach { items -> TemplateActionRow(items, launcherApps, actions, row) }
             }
 
             TemplateLayout.TEXT_ONLY -> {
-                TemplateTexts(template, progressBar)
+                TemplateTexts(template, progressBar, enabled = template.wholeTileEnabled(macLocked))
                 onReply?.let { reply ->
                     TileReplyPill(onClick = reply, modifier = Modifier.padding(top = Tokens.Reply.gapAbovePill))
                 }
@@ -105,9 +107,7 @@ fun TemplateTileContent(
                 // The action row is measured first, so a long text loses its last line instead of
                 // squeezing the chips and their labels.
                 TemplateTexts(template, progressBar, modifier = Modifier.weight(1f, fill = false))
-                TemplateActionRow(
-                    template.items, launcherApps, actions, payload.semantic, accented, haGlyphs, labelled,
-                )
+                TemplateActionRow(template.items, launcherApps, actions, row)
             }
 
             TemplateLayout.ICON_TEXT -> TemplateTexts(template, progressBar)
@@ -120,13 +120,14 @@ private fun TemplateTexts(
     template: TileContent.Template,
     progressBar: @Composable (Modifier) -> Unit,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
 ) {
     val colors = LocalCueColors.current
     Column(modifier = modifier) {
         template.text?.let { title ->
             Text(
                 text = title,
-                color = colors.textPrimary,
+                color = colors.textPrimary.disabledUnless(enabled),
                 style = Tokens.Type.tileTitle.toTextStyle(),
                 maxLines = Tokens.Template.TITLE_LINES,
                 overflow = Tokens.Type.labelOverflow,
@@ -135,7 +136,7 @@ private fun TemplateTexts(
         template.text2?.let { body ->
             Text(
                 text = body,
-                color = colors.textSecondary,
+                color = colors.textSecondary.disabledUnless(enabled),
                 style = Tokens.Type.tileBody.toTextStyle(),
                 maxLines = Tokens.Template.BODY_LINES,
                 overflow = Tokens.Type.labelOverflow,
@@ -150,15 +151,20 @@ private fun TemplateTexts(
     }
 }
 
+private data class TemplateRowState(
+    val semantic: SemanticStyle,
+    val accented: Set<String>,
+    val haGlyphs: Map<String, List<String>>,
+    val macLocked: Boolean?,
+    val labelled: Boolean,
+)
+
 @Composable
 private fun TemplateActionRow(
     items: List<TemplateItem>,
     launcherApps: LauncherAppsRepository,
     actions: TileActions,
-    semantic: SemanticStyle,
-    accented: Set<String>,
-    haGlyphs: Map<String, List<String>>,
-    labelled: Boolean,
+    state: TemplateRowState,
     modifier: Modifier = Modifier,
 ) {
     Row(
@@ -178,10 +184,11 @@ private fun TemplateActionRow(
 
                     // An item without a label keeps nothing back for one: its glyph has the chip to
                     // itself and sits in the middle of it.
-                    caption = item.label?.takeIf { labelled },
-                    glyphTint = templateIconTint(item, semantic, accented),
-                    captionTint = templateInk(semantic),
-                    stateGlyphs = templateStateGlyphs(item, haGlyphs, LocalMdiGlyphs.current),
+                    caption = item.label?.takeIf { state.labelled },
+                    glyphTint = templateIconTint(item, state.semantic, state.accented),
+                    captionTint = templateInk(state.semantic),
+                    stateGlyphs = templateStateGlyphs(item, state.haGlyphs, LocalMdiGlyphs.current, state.macLocked),
+                    macLocked = state.macLocked,
                 )
             }
         }
@@ -243,19 +250,32 @@ fun TemplateItemIcon(
     contentDescription: String? = item.label,
 
     onLongClick: (() -> Unit)? = null,
+
+    // Only an item that locks the Mac reads it; see templateItemEnabled.
+    macLocked: Boolean? = false,
 ) {
+    val enabled = templateItemEnabled(item, macLocked)
+    val glyphInk = glyphTint.disabledUnless(enabled)
+    val captionInk = captionTint.disabledUnless(enabled)
+    val state = macLockStateRes(item, macLocked)?.let { stringResource(it) }
     val iconApp = remember(item) { templateIconApp(item) }
-    val icon = rememberTintedPackageIcon(iconApp, launcherApps, bentoIconTint(glyphTint))
+    val icon = rememberTintedPackageIcon(iconApp, launcherApps, bentoIconTint(glyphInk))
     var bounds by remember(item) { mutableStateOf<Rect?>(null) }
+
+    // A greyed-out icon keeps its long-press, so the tile's menu stays within reach.
     val clickable = modifier
         .size(Tokens.Size.icon)
         .clip(RoundedCornerShape(Tokens.Radius.icon))
         .combinedClickable(
-            onClick = { actions.perform(item.actions, bounds) },
+            enabled = enabled || onLongClick != null,
+            onClick = { if (enabled) actions.perform(item.actions, bounds) },
             onLongClick = onLongClick,
             onLongClickLabel = stringResource(R.string.tile_menu).takeIf { onLongClick != null },
         )
-        .semantics { role = Role.Button }
+        .semantics {
+            role = Role.Button
+            state?.let { stateDescription = it }
+        }
         .onGloballyPositioned { bounds = it.boundsInWindow().toSourceBounds() }
 
     TileSurface(
@@ -268,11 +288,11 @@ fun TemplateItemIcon(
             modifier = Modifier.align(Alignment.Center),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            TemplateGlyph(item, stateGlyphs, icon, glyphTint, contentDescription)
+            TemplateGlyph(item, stateGlyphs, icon, glyphInk, contentDescription)
             caption?.let {
                 Text(
                     text = it,
-                    color = captionTint,
+                    color = captionInk,
                     style = Tokens.Template.labelInChip.toTextStyle(),
                     maxLines = Tokens.Type.LABEL_LINES,
                     overflow = Tokens.Type.labelOverflow,

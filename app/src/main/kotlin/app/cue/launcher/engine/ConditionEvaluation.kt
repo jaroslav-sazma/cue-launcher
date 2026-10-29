@@ -6,6 +6,7 @@ import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.WifiMode
 
+@Suppress("CyclomaticComplexMethod")
 fun stateConditionOutcome(condition: Condition.StateCondition, state: SystemState): ConditionOutcome {
     val measured = when (condition) {
         is Condition.Charging -> outcomeOf(state.charging)
@@ -17,6 +18,10 @@ fun stateConditionOutcome(condition: Condition.StateCondition, state: SystemStat
         is Condition.RingerMode -> ringerOutcome(condition, state)
         is Condition.TimeWindow -> timeWindowOutcome(condition, state.clock)
         is Condition.HaState -> outcomeOf(state.ha?.isIn(condition.entity, condition.states))
+        is Condition.MacNearby -> outcomeOf(state.macBridge?.let { it == MacBridgeState.NEARBY })
+        // Unlike mac_nearby, a Mac that is away or silent is unknown rather than unlocked, so the
+        // negated form never holds for a Mac nobody can see.
+        is Condition.MacLocked -> outcomeOf(state.macLock.reportedLocked())
     }
 
     return if (condition.negate) measured.flipped() else measured

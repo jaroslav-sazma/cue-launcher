@@ -27,7 +27,9 @@ import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.withTimeoutOrNull
 import java.lang.ref.WeakReference
+import java.util.concurrent.CopyOnWriteArrayList
 
+@Suppress("TooManyFunctions") // every way into and out of the one binding, under one lock
 @SingleIn(AppScope::class)
 @Inject
 class NotificationListenerLink(private val application: Application) {
@@ -48,6 +50,8 @@ class NotificationListenerLink(private val application: Application) {
     val badges: StateFlow<Map<BadgeKey, Int>> = counts.asStateFlow()
 
     private val hold by lazy { ListenerHold(SharedNeed(application)) }
+
+    private val mirrorSinks = CopyOnWriteArrayList<NotificationMirrorSink>()
 
     // Every change of the hold is made together with the binder call it calls for, under one lock,
     // so they reach the system in the order they happened. requestRebind on a listener that is
@@ -93,6 +97,45 @@ class NotificationListenerLink(private val application: Application) {
 
     fun bindForSample() = synchronized(lock) {
         if (hold.sample()) refresh()
+    }
+
+    // The one place the Mac bridge needs the listener: for as long as block runs, which is while a
+    // paired Mac is in reach — inside the foreground session, or inside the companion window the
+    // system binds while the Mac is nearby.
+    suspend fun holdForBridge(block: suspend () -> Unit) {
+        synchronized(lock) {
+            hold.bridge()
+            refresh()
+        }
+        try {
+            block()
+        } finally {
+            synchronized(lock) {
+                if (hold.unbridge()) {
+                    counts.value = emptyMap()
+                    requestNotificationListenerUnbind(application)
+                }
+            }
+        }
+    }
+
+    // With the bridge off this stays empty, and checking it is all the listener's callbacks do for it.
+    val mirrors: List<NotificationMirrorSink> get() = mirrorSinks
+
+    suspend fun mirrorInto(sink: NotificationMirrorSink, block: suspend () -> Unit) {
+        mirrorSinks.add(sink)
+        try {
+            block()
+        } finally {
+            mirrorSinks.remove(sink)
+        }
+    }
+
+    // null while no listener is bound or the shade cannot be read, which is not an empty shade.
+    fun <T> readShade(read: (List<StatusBarNotification>, NotificationListenerService.RankingMap?) -> T): T? {
+        val service = listener?.get()
+        val active = service?.activeOrNull()
+        return if (service == null || active == null) null else read(active, service.currentRanking)
     }
 
     // null when nobody wants the binding: the listener is released at once and replays nothing.
@@ -148,6 +191,19 @@ class NotificationListenerLink(private val application: Application) {
         } catch (denied: SecurityException) {
             Log.w(NOTIFICATION_LISTENER_TAG, "The posted notification cannot be read", denied)
             null
+        }
+    }
+
+    // false while no listener is bound. The system ignores a key that is no longer posted and one
+    // the user may not clear; a cancel that lands comes back through onNotificationRemoved.
+    fun cancel(key: String): Boolean {
+        val service = listener?.get() ?: return false
+        return try {
+            service.cancelNotification(key)
+            true
+        } catch (denied: SecurityException) {
+            Log.w(NOTIFICATION_LISTENER_TAG, "The posted notification cannot be cancelled", denied)
+            false
         }
     }
 

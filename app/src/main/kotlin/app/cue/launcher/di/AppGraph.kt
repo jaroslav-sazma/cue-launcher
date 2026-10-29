@@ -8,6 +8,10 @@ import androidx.datastore.dataStoreFile
 import androidx.room.Room
 import app.cue.launcher.data.CueDatabase
 import app.cue.launcher.data.aichat.CachedInventory
+import app.cue.launcher.data.bridge.BridgeKeyCipher
+import app.cue.launcher.data.bridge.BridgeKeySealer
+import app.cue.launcher.data.bridge.BridgeSequenceFile
+import app.cue.launcher.data.bridge.BridgeSequenceSerializer
 import app.cue.launcher.data.drawer.HiddenAppDao
 import app.cue.launcher.data.drawer.HiddenAppRepository
 import app.cue.launcher.data.ha.HaConfigRepository
@@ -38,6 +42,7 @@ import app.cue.launcher.engine.ConditionMonitor
 import app.cue.launcher.engine.HaEventLog
 import app.cue.launcher.engine.HaStateSource
 import app.cue.launcher.engine.LocalClock
+import app.cue.launcher.engine.MacLockSource
 import app.cue.launcher.engine.ScenarioEngine
 import app.cue.launcher.engine.ScenarioSource
 import app.cue.launcher.engine.StateProvider
@@ -64,6 +69,14 @@ import app.cue.launcher.system.TimeConditions
 import app.cue.launcher.system.WifiConditions
 import app.cue.launcher.system.WallpaperLuminance
 import app.cue.launcher.system.aichat.DeviceInventory
+import app.cue.launcher.system.bridge.BridgeConditions
+import app.cue.launcher.system.bridge.BridgeMacLock
+import app.cue.launcher.system.bridge.BridgePresence
+import app.cue.launcher.system.bridge.BridgeSendToMac
+import app.cue.launcher.system.bridge.BridgeWindow
+import app.cue.launcher.system.bridge.ReportedMacLock
+import app.cue.launcher.system.bridge.SelectedPresence
+import app.cue.launcher.feature.settings.bridge.BridgeServices
 import app.cue.launcher.system.ha.HaAuthFlow
 import app.cue.launcher.system.ha.HaBlueprintUploader
 import app.cue.launcher.system.ha.HaConnectionTester
@@ -168,6 +181,15 @@ interface AppGraph {
 
     val aiChatInventory: CachedInventory
 
+    // Resolved only when the bridge screen opens, never on the way to the home screen.
+    val bridgeServices: BridgeServices
+
+    // Resolved only by Send to Mac, which is component-disabled while no Mac is paired.
+    val sendToMac: BridgeSendToMac
+
+    // Resolved only by the companion service, which is component-disabled while no Mac is paired.
+    val bridgeWindow: BridgeWindow
+
     @Provides
     @SingleIn(AppScope::class)
     fun provideProcessScope(): CoroutineScope = CoroutineScope(
@@ -264,10 +286,26 @@ interface AppGraph {
     val HaConditions.bindHaStateProvider: StateProvider
 
     @Binds
+    @IntoSet
+    val BridgeConditions.bindBridgeStateProvider: StateProvider
+
+    @Binds
     val HaEventLogRepository.bindHaEventLog: HaEventLog
 
     @Binds
     val HaStateReader.bindHaStateSource: HaStateSource
+
+    @Binds
+    val SelectedPresence.bindBridgePresence: BridgePresence
+
+    @Binds
+    val BridgeMacLock.bindReportedMacLock: ReportedMacLock
+
+    @Binds
+    val BridgeConditions.bindMacLockSource: MacLockSource
+
+    @Provides
+    fun provideBridgeKeySealer(): BridgeKeySealer = BridgeKeyCipher
 
     @Provides
     @SingleIn(AppScope::class)
@@ -290,6 +328,18 @@ interface AppGraph {
             produceFile = { application.dataStoreFile(SETTINGS_FILE) },
         )
 
+    // An unreadable file reads as no state, which leaves a stored pairing unusable until it is
+    // repeated: the counters are unknown, so nothing may be sealed under its key again.
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideBridgeSequenceStore(application: Application): DataStore<BridgeSequenceFile> =
+        DataStoreFactory.create(
+            serializer = BridgeSequenceSerializer,
+            corruptionHandler = ReplaceFileCorruptionHandler { BridgeSequenceSerializer.defaultValue },
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = { application.dataStoreFile(BRIDGE_SEQUENCE_FILE) },
+        )
+
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(@Provides application: Application): AppGraph
@@ -297,5 +347,7 @@ interface AppGraph {
 }
 
 private const val SETTINGS_FILE = "settings.json"
+
+private const val BRIDGE_SEQUENCE_FILE = "bridge-sequence.json"
 
 private const val PROCESS_SCOPE_TAG = "ProcessScope"

@@ -25,3 +25,6 @@ secrets.properties
 # Baseline profiles generated during the build (mergeIntoMain). The committed profile lives in
 # app/src/release/generated/baselineProfiles/, and that path is deliberately not ignored.
 app/src/main/generated/
+
+# LLVM coverage dumps left by running the Bridge repo's bridgectl from this directory.
+*.profraw

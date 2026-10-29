@@ -161,6 +161,10 @@ private fun phraseResource(key: PhraseKey): Int = when (key) {
     PhraseKey.HA_STATE -> R.string.phrase_ha_state
     PhraseKey.HA_STATE_NEGATED -> R.string.phrase_ha_state_negated
     PhraseKey.HA_STATE_NONE -> R.string.phrase_ha_state_none
+    PhraseKey.MAC_NEARBY -> R.string.phrase_mac_nearby
+    PhraseKey.MAC_NEARBY_NEGATED -> R.string.phrase_mac_nearby_negated
+    PhraseKey.MAC_LOCKED -> R.string.phrase_mac_locked
+    PhraseKey.MAC_LOCKED_NEGATED -> R.string.phrase_mac_locked_negated
     PhraseKey.TIME_INSTANT -> R.string.phrase_time_instant
     PhraseKey.ALARM -> R.string.phrase_alarm
     PhraseKey.BT_DISCONNECTED_ANY -> R.string.phrase_bt_disconnected_any

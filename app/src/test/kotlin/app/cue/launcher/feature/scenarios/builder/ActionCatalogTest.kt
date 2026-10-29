@@ -74,6 +74,7 @@ class ActionCatalogTest {
                 SystemActionSection.SOUND,
                 SystemActionSection.DEVICE,
                 SystemActionSection.PLACE,
+                SystemActionSection.MAC,
                 SystemActionSection.PANELS,
             ),
             sections.map { it.section },
@@ -109,6 +110,16 @@ class ActionCatalogTest {
 
         assertFalse(sections.any { SystemActionType.TV_REMOTE in it.actions })
         assertEquals(SYSTEM_ACTION_CATALOG - SystemActionType.TV_REMOTE, sections.flatMap { it.actions })
+    }
+
+    @Test
+    fun `Lock the Mac is offered only with a Mac paired, in a section of its own`() {
+        val unpaired = systemActionSections(unavailable = unpairedSystemActions(bridgePaired = false))
+        val paired = systemActionSections(unavailable = unpairedSystemActions(bridgePaired = true))
+
+        assertFalse(unpaired.any { it.section == SystemActionSection.MAC })
+        assertEquals(SYSTEM_ACTION_CATALOG - SystemActionType.MAC_LOCK, unpaired.flatMap { it.actions })
+        assertEquals(listOf(SystemActionType.MAC_LOCK), paired.single { it.section == SystemActionSection.MAC }.actions)
     }
 
     @Test

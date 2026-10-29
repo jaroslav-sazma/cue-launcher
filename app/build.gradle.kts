@@ -166,7 +166,7 @@ tasks.withType<io.gitlab.arturbosch.detekt.DetektCreateBaselineTask>().configure
 // declaring them, a change to only the README or the issue form would leave the tests UP-TO-DATE.
 val testedRepositoryFiles = listOf(
     ".github/ISSUE_TEMPLATE", "README.md", "LICENSE", "NOTICE", "LICENSES", "ha", "fixtures/scenarios",
-    "fixtures/baselineprofile",
+    "fixtures/baselineprofile", "fixtures/bridge", "docs/bridge-protocol.md",
 ).map(rootProject::file) + listOf(
     "build.gradle.kts", "schemas", "src/main/AndroidManifest.xml", "src/main/kotlin", "src/main/assets",
     "src/main/res/values/strings.xml", "src/main/res/values-cs/strings.xml",

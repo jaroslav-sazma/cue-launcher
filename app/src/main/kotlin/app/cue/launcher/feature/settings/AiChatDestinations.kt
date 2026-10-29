@@ -75,10 +75,15 @@ internal fun PasteScenarioDestination(
 ) {
     val haConfigured by remember(haConfigs) { haConfigs.config.map { it.isConfigured } }
         .collectAsStateWithLifecycle(initialValue = false)
+    val bridgePaired by remember(settings) {
+        settings.settings.map { it.bridge.enabled && it.bridge.pairing != null }.distinctUntilChanged()
+    }.collectAsStateWithLifecycle(initialValue = false)
     PasteScenarioScreen(
         inventory = LocalAiChatInventory.current,
         haConfigured = haConfigured,
         onConfigureHa = { backStack.add(HomeAssistant) },
+        bridgePaired = bridgePaired,
+        onConfigureBridge = { backStack.add(Bridge) },
         onBack = pop,
         onOpenDraft = { json ->
             backStack.replaceTop(PasteScenario, ScenarioBuilder(scenarioJson = json, step = SUMMARY_STEP))

@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
@@ -195,6 +196,7 @@ private fun HaSaveBar(
                     if (screen.dirty || screen.saving) {
                         Button(
                             onClick = onSave,
+                            shapes = ButtonDefaults.shapes(),
                             modifier = Modifier.weight(1f),
                             enabled = screen.canSave && !screen.saving,
                         ) {
@@ -202,7 +204,11 @@ private fun HaSaveBar(
                         }
                     }
                     if (screen.tokenStored || screen.sessionStored) {
-                        OutlinedButton(onClick = onClearToken, enabled = !screen.saving) {
+                        OutlinedButton(
+                            onClick = onClearToken,
+                            shapes = ButtonDefaults.shapes(),
+                            enabled = !screen.saving,
+                        ) {
                             Text(text = stringResource(R.string.ha_token_clear))
                         }
                     }
@@ -212,6 +218,7 @@ private fun HaSaveBar(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HaLeaveDialog(
     canSave: Boolean,
@@ -225,13 +232,19 @@ private fun HaLeaveDialog(
         text = { Text(text = stringResource(R.string.ha_leave_detail)) },
         confirmButton = {
             if (canSave) {
-                TextButton(onClick = onSave) { Text(text = stringResource(R.string.ha_leave_save)) }
+                TextButton(onClick = onSave, shapes = ButtonDefaults.shapes()) {
+                    Text(text = stringResource(R.string.ha_leave_save))
+                }
             } else {
-                TextButton(onClick = onDismiss) { Text(text = stringResource(R.string.ha_leave_stay)) }
+                TextButton(onClick = onDismiss, shapes = ButtonDefaults.shapes()) {
+                    Text(text = stringResource(R.string.ha_leave_stay))
+                }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDiscard) { Text(text = stringResource(R.string.ha_leave_discard)) }
+            TextButton(onClick = onDiscard, shapes = ButtonDefaults.shapes()) {
+                Text(text = stringResource(R.string.ha_leave_discard))
+            }
         },
     )
 }

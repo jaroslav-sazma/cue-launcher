@@ -44,6 +44,14 @@ internal fun ConditionType.meaning(): String = when (this) {
             "the same scenario arrives. While Home Assistant cannot be reached or the entity is unavailable " +
             "the condition is unknown, and a tile that depends on it stays hidden, negated or not. Needs " +
             "Home Assistant connected to Cue:, which the user can still do after pasting the scenario."
+    ConditionType.MAC_NEARBY ->
+        "Holds while the user's Mac is near the phone, found over Bluetooth through Cue:'s Mac bridge; it stops " +
+            "holding about a minute after the Mac leaves. Needs the Mac bridge turned on and paired with the " +
+            "Cue: app on the Mac; until then it never holds, and negated it always does."
+    ConditionType.MAC_LOCKED ->
+        "Holds while the user's Mac is nearby and reports its screen locked; negated, nearby and reporting it " +
+            "unlocked. Needs the Mac bridge like mac_nearby; bridge off, no Mac paired, the Mac away or no screen " +
+            "report yet means unknown: neither mac_locked nor its negation holds, so negated it implies nearby."
     ConditionType.TIME_INSTANT -> "Fires at `at` on the listed `days`."
     ConditionType.ALARM ->
         "Fires when the phone's alarm clock rings; a snooze that rings again restarts the countdown. A " +
@@ -134,6 +142,10 @@ internal fun SystemActionType.meaning(): String = when (this) {
     SystemActionType.REMEMBER_PLACE ->
         "reads where the phone is, once, at the tap, and fires place_saved; needs the location permission"
     SystemActionType.SHOW_PLACE -> "opens the place a place_saved tile holds in the maps app"
+    SystemActionType.MAC_LOCK ->
+        "locks the screen of the user's Mac through Cue:'s Mac bridge. An item whose only action it is " +
+            "follows the Mac: greyed out, doing nothing, while the Mac is already locked or not nearby; an " +
+            "item with more actions always runs them all. Needs the Mac bridge turned on and paired"
 }
 
 internal fun ExtractKind.meaning(): String = when (this) {

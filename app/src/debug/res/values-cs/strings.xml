@@ -2,4 +2,42 @@
 <resources>
     <!-- Tells the debug build apart from the release one in the home app picker and the drawer. -->
     <string name="app_name">Cue: debug</string>
+
+    <!-- The bridge's fixture notifications, which exist in debug builds only. -->
+    <string name="bridge_fixture_section">Testovací notifikace (ladicí build)</string>
+    <string name="bridge_fixture_note">Pošle testovací notifikace, které most zrcadlí. Další stisk tlačítka jeho notifikaci aktualizuje na místě. Stejné notifikace jde poslat i přes adb; příkazy jsou v CONTRIBUTING.md.</string>
+    <string name="bridge_fixture_denied">Tento build nesmí posílat notifikace, takže žádnou testovací nepošle.</string>
+    <string name="bridge_fixture_plain">Obyčejná</string>
+    <string name="bridge_fixture_updating">Aktualizovaná</string>
+    <string name="bridge_fixture_grouped">Skupina</string>
+    <string name="bridge_fixture_reply">Odpověď</string>
+    <string name="bridge_fixture_progress">Průběh</string>
+    <string name="bridge_fixture_low">Nízká důležitost</string>
+    <string name="bridge_fixture_cancel">Zrušit vše</string>
+    <string name="bridge_fixture_channel_default">Testovací notifikace mostu</string>
+    <string name="bridge_fixture_channel_low">Testovací notifikace mostu, nízká důležitost</string>
+    <string name="bridge_fixture_plain_title">Obyčejná testovací</string>
+    <string name="bridge_fixture_plain_text">Obyčejná notifikace, kterou most zrcadlí.</string>
+    <string name="bridge_fixture_updating_title">Aktualizovaná testovací</string>
+    <string name="bridge_fixture_updating_text">Aktualizováno v %1$s</string>
+    <string name="bridge_fixture_grouped_title">Testovací ve skupině %1$d</string>
+    <string name="bridge_fixture_grouped_text">Položka %1$d z %2$d v jedné skupině.</string>
+    <string name="bridge_fixture_grouped_summary">Souhrn testovací skupiny</string>
+    <string name="bridge_fixture_grouped_summary_text">Souhrn zůstává v telefonu.</string>
+    <string name="bridge_fixture_reply_title">Testovací s odpovědí</string>
+    <string name="bridge_fixture_reply_text">Odpověz na ni tady nebo na Macu.</string>
+    <string name="bridge_fixture_reply_action">Odpovědět</string>
+    <string name="bridge_fixture_reply_received">Odpověď přijata, délka %1$d</string>
+    <string name="bridge_fixture_progress_title">Testovací s průběhem</string>
+    <string name="bridge_fixture_progress_text">Pracuje se na tom…</string>
+    <string name="bridge_fixture_low_title">Testovací s nízkou důležitostí</string>
+    <string name="bridge_fixture_low_text">Tahle zůstává v telefonu.</string>
+    <string name="bridge_fixture_private">Soukromá</string>
+    <string name="bridge_fixture_private_title">Soukromá testovací</string>
+    <string name="bridge_fixture_private_text">Tenhle text zamknutá obrazovka skryje, když skrývá citlivý obsah.</string>
+    <string name="bridge_fixture_private_public_title">Soukromá testovací, veřejná verze</string>
+    <string name="bridge_fixture_private_public_text">Tohle zamknutá obrazovka ukáže místo ní.</string>
+    <string name="bridge_fixture_secret">Tajná</string>
+    <string name="bridge_fixture_secret_title">Tajná testovací</string>
+    <string name="bridge_fixture_secret_text">Tahle zůstává v telefonu.</string>
 </resources>

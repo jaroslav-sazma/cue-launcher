@@ -28,6 +28,7 @@ fun ActionPickerSheet(
     onPick: (TapAction) -> Unit,
     onDismiss: () -> Unit,
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
+    bridgePaired: Boolean = false,
 ) {
     var level by remember { mutableStateOf<ActionPickerLevel>(ActionPickerLevel.Choice) }
     val permissions = rememberRequirementResolver { }
@@ -47,6 +48,7 @@ fun ActionPickerSheet(
             permissions = permissions,
             initial = initial,
             ha = ha,
+            bridgePaired = bridgePaired,
             onConfirm = confirm,
             onDismiss = onDismiss,
             modifier = content,
@@ -63,6 +65,7 @@ private fun ActionPickerContent(
     permissions: ConditionPermissions,
     initial: TapAction?,
     ha: HaAccess,
+    bridgePaired: Boolean,
     onConfirm: (TapAction) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
@@ -102,6 +105,7 @@ private fun ActionPickerContent(
         ActionPickerLevel.System -> SystemActionSheetContent(
             initial = (initial as? TapAction.SystemAction)?.action,
             permissions = permissions,
+            bridgePaired = bridgePaired,
             onConfirm = { action -> onConfirm(TapAction.SystemAction(action)) },
             onClose = onDismiss,
             onBack = { onLevel(ActionPickerLevel.Choice) },

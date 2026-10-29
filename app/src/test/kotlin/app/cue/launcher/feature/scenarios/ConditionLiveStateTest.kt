@@ -6,6 +6,8 @@ import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.engine.BluetoothState
 import app.cue.launcher.engine.ClockState
 import app.cue.launcher.engine.HaStates
+import app.cue.launcher.engine.MacBridgeState
+import app.cue.launcher.engine.MacLockState
 import app.cue.launcher.engine.MediaActivity
 import app.cue.launcher.engine.SystemState
 import app.cue.launcher.engine.WifiState
@@ -129,6 +131,73 @@ class ConditionLiveStateTest {
         assertEquals(
             NowKey.NOT_CHARGING,
             liveReading(Condition.Charging(), SystemState(charging = false)).now,
+        )
+    }
+
+    @Test
+    fun `the Mac reading tells a bridge that is off from a Mac that is away`() {
+        val reading = { mac: MacBridgeState? -> liveReading(Condition.MacNearby(), SystemState(macBridge = mac)) }
+
+        assertEquals(LiveReading(LiveVerdict.HOLDS, NowKey.MAC_NEARBY), reading(MacBridgeState.NEARBY))
+        assertEquals(LiveReading(LiveVerdict.FAILS, NowKey.MAC_AWAY), reading(MacBridgeState.AWAY))
+        assertEquals(LiveReading(LiveVerdict.FAILS, NowKey.MAC_BRIDGE_OFF), reading(MacBridgeState.OFF))
+        assertEquals(LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_UNKNOWN), reading(null))
+    }
+
+    @Test
+    fun `the Mac lock reading tells a locked screen from an absent or silent Mac`() {
+        val reading = { mac: MacBridgeState?, lock: MacLockState? ->
+            liveReading(Condition.MacLocked(), SystemState(macBridge = mac, macLock = lock))
+        }
+
+        assertEquals(
+            LiveReading(LiveVerdict.HOLDS, NowKey.MAC_LOCKED),
+            reading(MacBridgeState.NEARBY, MacLockState.LOCKED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.FAILS, NowKey.MAC_UNLOCKED),
+            reading(MacBridgeState.NEARBY, MacLockState.UNLOCKED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_UNREPORTED),
+            reading(MacBridgeState.NEARBY, MacLockState.UNREPORTED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_AWAY),
+            reading(MacBridgeState.AWAY, MacLockState.UNREPORTED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_BRIDGE_OFF),
+            reading(MacBridgeState.OFF, MacLockState.UNREPORTED),
+        )
+        assertEquals(LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_UNKNOWN), reading(null, null))
+    }
+
+    @Test
+    fun `Mac not locked cannot tell an absent or silent Mac either`() {
+        val reading = { mac: MacBridgeState, lock: MacLockState ->
+            liveReading(Condition.MacLocked(negate = true), SystemState(macBridge = mac, macLock = lock))
+        }
+
+        assertEquals(
+            LiveReading(LiveVerdict.HOLDS, NowKey.MAC_UNLOCKED),
+            reading(MacBridgeState.NEARBY, MacLockState.UNLOCKED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.FAILS, NowKey.MAC_LOCKED),
+            reading(MacBridgeState.NEARBY, MacLockState.LOCKED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_UNREPORTED),
+            reading(MacBridgeState.NEARBY, MacLockState.UNREPORTED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_AWAY),
+            reading(MacBridgeState.AWAY, MacLockState.UNREPORTED),
+        )
+        assertEquals(
+            LiveReading(LiveVerdict.UNKNOWN, NowKey.MAC_LOCK_BRIDGE_OFF),
+            reading(MacBridgeState.OFF, MacLockState.UNREPORTED),
         )
     }
 

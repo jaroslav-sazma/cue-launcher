@@ -18,10 +18,17 @@ fun usesDndAccess(scenarios: List<Scenario>): Boolean = scenarios.any { scenario
 }
 
 // A ringer that rings or vibrates ends Do Not Disturb, so a dnd_on written before it in the same
-// tap would be undone by it; it always goes last, the rest keeps its written order. dnd_off stays
-// put: moved behind ringer_silent, it would end the Do Not Disturb that one is meant to bring.
-fun executionOrder(actions: List<TapAction>): List<TapAction> =
-    actions.sortedBy { it is TapAction.SystemAction && it.action == SystemActionType.DND_ON }
+// tap would be undone by it; it goes after everything on the phone, the rest keeps its written
+// order. dnd_off stays put: moved behind ringer_silent, it would end the Do Not Disturb that one is
+// meant to bring. mac_lock comes very last, as it can wait seconds for a Mac out of reach and would
+// otherwise hold up the actions behind it.
+fun executionOrder(actions: List<TapAction>): List<TapAction> = actions.sortedBy { action ->
+    when ((action as? TapAction.SystemAction)?.action) {
+        SystemActionType.DND_ON -> 1
+        SystemActionType.MAC_LOCK -> 2
+        else -> 0
+    }
+}
 
 private val DND_ACTIONS = setOf(
     SystemActionType.RINGER_SILENT,

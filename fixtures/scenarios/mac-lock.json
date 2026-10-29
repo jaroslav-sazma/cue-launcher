@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "mac-lock",
+  "name": "Mac unlocked → lock it",
+  "enabled": true,
+  "priority": 400,
+  "size": "1x1",
+  "conditions": [
+    { "type": "mac_nearby" },
+    { "type": "mac_locked", "negate": true }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Lock Mac", "icon": null, "action": { "kind": "system", "action": "mac_lock" } }
+    ]
+  }
+}

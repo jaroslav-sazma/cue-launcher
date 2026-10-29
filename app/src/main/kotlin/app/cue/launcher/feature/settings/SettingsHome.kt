@@ -46,6 +46,8 @@ import app.cue.launcher.feature.scenarios.builder.HaAccess
 import app.cue.launcher.feature.scenarios.builder.HaServiceInventory
 import app.cue.launcher.feature.scenarios.builder.ScenarioBuilderScreen
 import app.cue.launcher.feature.scenarios.edit.ScenarioEditScreen
+import app.cue.launcher.feature.settings.bridge.BridgeAppsScreen
+import app.cue.launcher.feature.settings.bridge.BridgeScreen
 import app.cue.launcher.feature.settings.ha.HaServices
 import app.cue.launcher.feature.settings.ha.haActionTester
 import app.cue.launcher.feature.settings.ha.HomeAssistantScreen
@@ -76,6 +78,12 @@ data class ScenarioEditor(val id: String, val notice: String? = null) : NavKey
 
 @Serializable
 data object HomeAssistant : NavKey
+
+@Serializable
+data object Bridge : NavKey
+
+@Serializable
+data object BridgeApps : NavKey
 
 @Serializable
 data object HiddenApps : NavKey
@@ -177,6 +185,7 @@ private fun SettingsDestinations(
 ) {
     val pop: () -> Unit = { backStack.removeAt(backStack.lastIndex) }
     val haAccess = rememberHaAccess(backStack, ha)
+    val openBridge: () -> Unit = remember(backStack) { { backStack.add(Bridge) } }
     val scope = rememberCoroutineScope()
     NavDisplay(
         backStack = backStack,
@@ -187,10 +196,10 @@ private fun SettingsDestinations(
                 ScenariosDestination(deps, backStack, selectTab, listNotice) { onListNotice(null) }
             }
             entry<ScenarioBuilder> { BuilderDestination(it, deps, haAccess, backStack, selectTab, onListNotice) }
-            entry<ScenarioEditor> { key ->
-                EditorDestination(key, deps, haAccess, pop, onListNotice)
-            }
+            entry<ScenarioEditor> { key -> EditorDestination(key, deps, haAccess, openBridge, pop, onListNotice) }
             entry<HomeAssistant> { HaDestination(deps.scenarios, ha, pop) }
+            entry<Bridge> { BridgeScreen(onClose = pop, onOpenApps = { backStack.add(BridgeApps) }) }
+            entry<BridgeApps> { BridgeAppsScreen(launcherApps = deps.launcherApps, onBack = pop) }
             entry<OpenSourceLicenses> {
                 LicensesScreen(onOpen = { backStack.add(LicenseTextKey(it.name)) }, onBack = pop)
             }
@@ -329,6 +338,7 @@ private fun ScenariosDestination(
         launcherApps = deps.launcherApps,
         onOpenBackups = { selectTab(BackupsTab) },
         onHomeAssistant = { backStack.add(HomeAssistant) },
+        onBridge = { backStack.add(Bridge) },
         onOpenLicenses = { backStack.add(OpenSourceLicenses) },
         onNewScenario = { backStack.add(ScenarioBuilder()) },
         onEditScenario = { backStack.add(ScenarioEditor(it.id)) },
@@ -356,6 +366,7 @@ private fun BuilderDestination(
         appActions = deps.appActions,
         widgets = deps.widgets,
         ha = haAccess,
+        onConfigureBridge = { backStack.add(Bridge) },
         initial = initial,
         initialStep = key.step,
         onClose = pop,
@@ -372,6 +383,7 @@ private fun EditorDestination(
     key: ScenarioEditor,
     deps: SettingsDeps,
     haAccess: HaAccess,
+    onConfigureBridge: () -> Unit,
     pop: () -> Unit,
     onListNotice: (ScenarioNotice?) -> Unit,
 ) {
@@ -385,6 +397,7 @@ private fun EditorDestination(
         appActions = deps.appActions,
         widgets = deps.widgets,
         ha = haAccess,
+        onConfigureBridge = onConfigureBridge,
         onClose = pop,
         onNotice = onListNotice,
     )

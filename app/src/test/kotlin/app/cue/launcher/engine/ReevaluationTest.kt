@@ -201,6 +201,29 @@ class ReevaluationTest {
     }
 
     @Test
+    fun `a running event gated by the Mac lock survives the lock going unreported, either way round`() {
+        for (negate in listOf(false, true)) {
+            val scenario = scenario(
+                "pulz",
+                conditions = listOf(Condition.HaEvent(code = "zvonek"), Condition.MacLocked(negate = negate)),
+            )
+            val unreported = SystemState(macBridge = MacBridgeState.AWAY, macLock = MacLockState.UNREPORTED)
+            val opposite = SystemState(
+                macBridge = MacBridgeState.NEARBY,
+                macLock = if (negate) MacLockState.LOCKED else MacLockState.UNLOCKED,
+            )
+
+            assertTrue(reevaluationPlan(listOf(scenario), expiring("pulz"), unreported).isEmpty, "negate=$negate")
+            assertTrue(reevaluationPlan(listOf(scenario), waiting("pulz"), unreported).isEmpty, "negate=$negate")
+            assertEquals(
+                listOf("pulz"),
+                reevaluationPlan(listOf(scenario), expiring("pulz"), opposite).deactivate,
+                "negate=$negate",
+            )
+        }
+    }
+
+    @Test
     fun `a disabled scenario ends its activation`() {
         val scenario = scenario("stav", conditions = listOf(Condition.Charging())).copy(enabled = false)
 

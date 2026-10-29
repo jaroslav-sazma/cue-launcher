@@ -176,6 +176,10 @@ object Tokens {
 
         const val TITLE_LINES = 2
         const val BODY_LINES = 2
+
+        // An icon whose action has nothing to act on — Lock Mac with the Mac locked or away — greys
+        // out like a media button the player does not offer.
+        const val DISABLED_CONTENT_OPACITY = CustomWidget.Media.DISABLED_CONTENT_OPACITY
     }
 
     object Progress {

@@ -21,6 +21,7 @@ internal enum class LicenseNotice(val asset: String, @StringRes val title: Int, 
     APACHE("Apache-2.0.txt", R.string.licenses_apache_title, R.string.licenses_apache_covers),
     MIT("MIT.txt", R.string.licenses_mit_title, R.string.licenses_mit_covers),
     MPL("MPL-2.0.txt", R.string.licenses_mpl_title, R.string.licenses_mpl_covers),
+    CC0("CC0-1.0.txt", R.string.licenses_cc0_title, R.string.licenses_cc0_covers),
 }
 
 internal const val LICENSE_ASSET_DIR = "licenses"
