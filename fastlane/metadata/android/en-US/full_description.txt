@@ -11,9 +11,12 @@ In the settings you can shape how the launcher looks and behaves. Icons can stay
 
 Your setup, scenarios included, exports to a single file, so you can back it up or share a scenario with someone else.
 
+THE MAC BRIDGE
+Pair Cue: React & Act with Cue: Relay & Reply, its free companion app for the Mac, and the notifications you choose appear on the Mac, where a reply or a dismissal flows back to the phone. Send selected text or your clipboard to the Mac, fetch the Mac's clipboard, and use the new scenario pieces: the conditions "Mac nearby" and "Mac locked", and the action "Lock the Mac". The two devices talk directly to each other, end-to-end encrypted — no server in between.
+
 PRIVATE BY DESIGN
-No account, no ads, no telemetry. Everything happens on your phone; the only network traffic goes to your own Home Assistant, if you set one up. Permissions are asked for only when you set up something that needs them, and saying no turns off just that one thing.
+No account, no ads, no telemetry. Everything happens on your phone; the only network traffic goes to your own Home Assistant, if you set one up, and to your own Mac, if you pair one. Permissions are asked for only when you set up something that needs them, and saying no turns off just that one thing.
 
 Requires Android 17 or newer, phones only. Free software under GPL-3.0-or-later.
 
-Cue: React & Act is not affiliated with Home Assistant, Nabu Casa or Google.
+Cue: React & Act is not affiliated with Home Assistant, Nabu Casa, Google or Apple.
