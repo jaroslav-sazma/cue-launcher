@@ -15,6 +15,9 @@ data class QueueEntry(
 
     // Best first: the ones after it only stand in for a name the bundled font lacks.
     val haGlyphs: Map<String, List<String>> = emptyMap(),
+
+    // Read only while a visible tile carries the Lock Mac action; null otherwise and while unknown.
+    val macLocked: Boolean? = null,
 ) {
 
     val isFallback: Boolean get() = activation == null
@@ -48,6 +51,16 @@ data class BentoQueues(private val queues: Map<TileSize, SizeClassQueue>) {
     val medium: SizeClassQueue get() = get(TileSize.GRID_2X2)
 
     val small: SizeClassQueue get() = get(TileSize.GRID_1X1)
+
+    fun withMacLocked(macLocked: Boolean?): BentoQueues = if (macLocked == null) {
+        this
+    } else {
+        BentoQueues(
+            BENTO_SIZES.associateWith { size ->
+                get(size).let { queue -> queue.copy(entries = queue.entries.map { it.copy(macLocked = macLocked) }) }
+            },
+        )
+    }
 
     companion object {
         val EMPTY = BentoQueues(BENTO_SIZES.associateWith { SizeClassQueue(it) })

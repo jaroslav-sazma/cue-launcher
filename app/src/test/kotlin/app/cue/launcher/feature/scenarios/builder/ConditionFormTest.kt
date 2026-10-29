@@ -118,6 +118,8 @@ class ConditionFormTest {
             Condition.MediaPlaying(),
             Condition.CalendarEvent(),
             Condition.BtConnected(),
+            Condition.MacNearby(),
+            Condition.MacLocked(),
         ).forEach { assertNull(conditionFormError(it), it.toString()) }
     }
 

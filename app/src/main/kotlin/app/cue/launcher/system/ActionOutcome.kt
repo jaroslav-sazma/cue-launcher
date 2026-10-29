@@ -1,6 +1,7 @@
 package app.cue.launcher.system
 
 import app.cue.launcher.data.ha.HaProbe
+import app.cue.launcher.system.bridge.LockMacOutcome
 
 enum class ActionOutcome {
 
@@ -46,6 +47,20 @@ enum class ActionOutcome {
     GOOGLE_TV_MISSING,
 
     WORK_PAUSED,
+
+    MAC_NOT_PAIRED,
+
+    MAC_LOCAL_NETWORK,
+
+    MAC_UNREACHABLE,
+}
+
+// SENT is all the phone can know: the Mac's answering lock-state is what greys the tile out.
+fun lockMacOutcome(outcome: LockMacOutcome): ActionOutcome = when (outcome) {
+    LockMacOutcome.SENT -> ActionOutcome.DONE
+    LockMacOutcome.NOT_PAIRED -> ActionOutcome.MAC_NOT_PAIRED
+    LockMacOutcome.NO_LOCAL_NETWORK -> ActionOutcome.MAC_LOCAL_NETWORK
+    LockMacOutcome.UNREACHABLE -> ActionOutcome.MAC_UNREACHABLE
 }
 
 // Only the Google TV app opens its remote, so a missing target can name the app that is missing.

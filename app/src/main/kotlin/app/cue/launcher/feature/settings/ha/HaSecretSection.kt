@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -103,6 +105,7 @@ internal fun HaSecretRow(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HaSecretButtons(
     onCopy: () -> Unit,
@@ -115,15 +118,15 @@ private fun HaSecretButtons(
         modifier = modifier.padding(horizontal = Tokens.Settings.surfacePadding),
         horizontalArrangement = Arrangement.spacedBy(Tokens.Settings.rowGap),
     ) {
-        OutlinedButton(onClick = onCopy, enabled = copyEnabled) {
+        OutlinedButton(onClick = onCopy, shapes = ButtonDefaults.shapes(), enabled = copyEnabled) {
             Text(text = stringResource(R.string.ha_secret_copy))
         }
         onSave?.let { save ->
-            OutlinedButton(onClick = save) {
+            OutlinedButton(onClick = save, shapes = ButtonDefaults.shapes()) {
                 Text(text = stringResource(R.string.ha_secret_save))
             }
         }
-        TextButton(onClick = onRotate) {
+        TextButton(onClick = onRotate, shapes = ButtonDefaults.shapes()) {
             Text(text = stringResource(R.string.ha_secret_rotate))
         }
     }

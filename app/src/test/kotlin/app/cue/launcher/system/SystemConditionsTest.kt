@@ -145,6 +145,8 @@ class SystemConditionsTest {
         assertEquals(StateAspect.MEDIA, Condition.MediaPlaying().aspect())
         assertEquals(StateAspect.RINGER, Condition.RingerMode(mode = RingerModeState.SILENT).aspect())
         assertEquals(StateAspect.HA, Condition.HaState(entity = "media_player.tv", states = listOf("on")).aspect())
+        assertEquals(StateAspect.MAC, Condition.MacNearby().aspect())
+        assertEquals(StateAspect.MAC, Condition.MacLocked().aspect())
     }
 
     private fun provider(aspect: StateAspect, reading: SystemState) = object : StateProvider {

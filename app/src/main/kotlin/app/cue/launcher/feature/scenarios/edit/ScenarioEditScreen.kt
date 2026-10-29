@@ -79,6 +79,7 @@ internal fun ScenarioEditScreen(
     modifier: Modifier = Modifier,
     notice: String? = null,
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
+    onConfigureBridge: (() -> Unit)? = null,
 ) {
 
     val original by produceState<Scenario?>(initialValue = null, scenarioId, scenarios) {
@@ -98,6 +99,7 @@ internal fun ScenarioEditScreen(
             modifier = modifier,
             notice = notice,
             ha = ha,
+            onConfigureBridge = onConfigureBridge,
         )
     }
 }
@@ -116,6 +118,7 @@ private fun ScenarioEditor(
     modifier: Modifier = Modifier,
     notice: String? = null,
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
+    onConfigureBridge: (() -> Unit)? = null,
 ) {
     val screen = rememberSaveable(saver = BuilderState.Saver) {
         BuilderState(draft = scenarioDraftOf(original), id = original.id)
@@ -142,13 +145,7 @@ private fun ScenarioEditor(
     AutoSave(original = original, edited = edited, scenarios = scenarios)
     BackHandler(enabled = tileOpen) { tileOpen = false }
 
-    val actions = rememberEditActions(
-        scenario = edited,
-        scenarios = scenarios,
-        onNotice = onNotice,
-        flash = flash,
-        onClose = onClose,
-    )
+    val actions = rememberEditActions(edited, scenarios, onNotice, flash, onClose)
 
     EditorLayout(
         screen = screen,
@@ -179,6 +176,7 @@ private fun ScenarioEditor(
         appActions = appActions,
         widgets = widgets,
         ha = ha,
+        onConfigureBridge = onConfigureBridge,
     )
 }
 

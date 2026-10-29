@@ -1,9 +1,11 @@
 # Security audit
 
-**Subject:** Cue: (`app.cue.launcher`) 1.0.0 · **Date:** 2026-10-11 · **Method:** source review of
-the whole `app/` module, the merged release manifest, the Home Assistant blueprints, the build and
-CI configuration, the resolved release dependencies and the repository history, with the
-conclusions pinned down by unit tests and the import preview checked on an emulator.
+**Subject:** Cue: React & Act (`app.cue.launcher`) 1.0.0 · **Date:** 2026-10-11 · **Method:** source
+review of the whole `app/` module, the merged release manifest, the Home Assistant blueprints, the
+build and CI configuration, the resolved release dependencies and the repository history, with the
+conclusions pinned down by unit tests and the import preview checked on an emulator. The Mac bridge
+(section 12), which came after 1.0.0, was reviewed within the reviews of its development phases,
+2026-10-12 to 2026-10-14, by the same method, against `docs/bridge-protocol.md`.
 
 **Result: no open findings.** Every area below is described as it stands today; the residual risks
 that remain are listed explicitly at the end, as are the things this review did not cover.
@@ -25,6 +27,8 @@ Every component in the merged manifest was traced from the entry point to the ef
 | `NextAlarmReceiver` | nothing | not exported; only the system broadcasts `NEXT_ALARM_CLOCK_CHANGED`; the broadcast is only a wake-up — the alarm time is read back from `AlarmManager`, never from the intent; disabled while no enabled scenario starts or ends on an alarm and no running tile waits for one to end it |
 | `AiChatFileProvider` (`FileProvider`) | nothing | not exported; opens only for the app a send grants a one-off read of the one cached AI chat description, see section 11 |
 | `ZenModeStatusReceiver` | nothing | not exported; the system sends `AUTOMATIC_ZEN_RULE_STATUS_CHANGED` only to the package that owns the mode; it only removes the launcher's own Do Not Disturb mode once that is off |
+| `BridgeCompanionService` (exported service) | nothing | guarded by `BIND_COMPANION_DEVICE_SERVICE`, which only the system holds; declared disabled and enabled only while the Mac bridge is on and paired (section 12) |
+| `ProcessTextActivity` (exported, `PROCESS_TEXT` and `SEND` on `text/plain`) | while a Mac is paired, send a text to the user's own Mac clipboard | declared disabled and enabled only while the Mac bridge is on and paired; the text is read through the typed getter alone, an unreadable extras bundle is dropped, the text is capped at 100 KB, and the Mac announces it (section 12) |
 
 `HaEventReceiver` has to stay exported — the Home Assistant companion app is a separate process and
 would not reach an unexported one. A signature-level permission cannot work either, since the
@@ -268,7 +272,8 @@ DataStore file and, once a scenario was created in an AI chat, one file in the c
 Android 12 or newer that attribute does not stop a device-to-device transfer, so
 `android:dataExtractionRules` excludes every storage domain, credential- and device-protected alike,
 from both cloud backup and device transfer. Nothing — the sealed credential, the pairing secret, the
-event log, stored notification text, the launch history, the home networks — moves to another phone.
+event log, stored notification text, the launch history, the home networks, the Mac bridge's pairing
+— moves to another phone.
 
 What is stored, and for how long:
 
@@ -281,6 +286,8 @@ What is stored, and for how long:
 | pairing codes seen | code and time | only codes a scenario waits for |
 | launch history | per app: last launch, launches from search | one row per app; removed with the app; clearable |
 | settings | Home Assistant addresses, sealed credential, plaintext pairing secret, home networks, instance id; widget and appearance settings; whether creating scenarios in an AI chat is switched on | until changed |
+| settings, Mac bridge | the switch, the clipboard choices (whether clips from the Mac are taken, and their age limit) and the package names of the apps kept off the Mac; while paired the Mac's name, address and pinned fingerprint, the companion-device association and `K_ble` sealed with an AES-GCM Keystore key; beside them, in a file of their own, the sequence state — the bound of the outgoing numbers reserved and the incoming replay window — tagged with a hash of the `K_ble` it counts for | the pairing until the bridge is turned off or unpaired, which deletes it together with the Keystore keys |
+| Android Keystore | the bridge's TLS identity, an EC P-256 key generated inside it, and the AES key that seals `K_ble` | as the row above |
 | AI chat description, in the app's cache | the scenario format and the inventory described in section 11 | one file, overwritten by the next send |
 
 Contacts, calendar entries, media metadata and covers, notification badge state, the reply text,
@@ -289,6 +296,11 @@ names, the inventory read for an AI chat and the scenario text pasted back are h
 and so are the title and text of the posted notifications from apps a scenario listens to, while the
 notification listener is bound; other apps' notifications are not kept, once the scenarios are
 loaded shortly after the listener binds.
+
+The Mac bridge's mirror state, icons, clipboard texts and replies, and the Mac's last reported lock
+state, are held in memory only. A clip from the Mac that arrives while the phone is locked is kept,
+the newest one alone, until the user unlocks the phone or the companion service's window closes,
+and is dropped at the unlock if it has outgrown the user's age limit.
 
 Exports of scenarios and configuration carry no credential, address or secret, Bluetooth MAC
 addresses and Wi-Fi names in them are replaced by placeholders, and so is any widget id. What they
@@ -304,8 +316,11 @@ a Home Assistant address, an entity id or service name, notification or reply te
 calendar entry, an SSID, a MAC address, a link, a shortcut id or a cover URI. Exceptions that may
 quote such a value are logged by class name only. What is logged is structural: which app or
 component an action targeted, and that a broadcast was rejected (at most at the rate rejected rows
-are recorded, without the code it claimed). Values pulled from notifications are never logged.
-Reading it requires `READ_LOGS` or `adb`, which no ordinary app has.
+are recorded, without the code it claimed). Values pulled from notifications are never logged. The
+Mac bridge logs its protocol events under `CueBridge` at debug level, stripped from release, with
+message types, key hashes and fingerprint prefixes only, never notification, reply or clipboard
+text, a commitment or a key; its warnings name an exception's class only. Reading it requires
+`READ_LOGS` or `adb`, which no ordinary app has.
 
 ### 7. Permissions
 
@@ -322,8 +337,13 @@ settings screen for special access) alone leads to the system prompt or screen, 
 That dialog is `ask` in `rememberRequirementResolver`, while its direct `resolve` is kept for
 buttons with the rationale already beside them. A denial disables only the feature that needed it.
 The install-time ones are `INTERNET`, `ACCESS_NETWORK_STATE`, `EXPAND_STATUS_BAR` and
-`USE_BIOMETRIC`. `RECEIVE_BOOT_COMPLETED` is declared only with `tools:node="remove"`, so no library
-can make the launcher start at boot; none asks for it today.
+`USE_BIOMETRIC`, and for the Mac bridge `REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE`,
+`REQUEST_COMPANION_RUN_IN_BACKGROUND` and `REQUEST_COMPANION_USE_DATA_IN_BACKGROUND`, which act
+only for an association the user created in the system's own dialog; the system, not the launcher,
+scans for the paired Mac. The bridge's runtime permissions are `BLUETOOTH_CONNECT` (*nearby
+devices*, usually granted inside that dialog) and `ACCESS_LOCAL_NETWORK`, both requested while
+pairing. `RECEIVE_BOOT_COMPLETED` is declared only with `tools:node="remove"`, so no library can
+make the launcher start at boot; none asks for it today.
 
 ### 8. Dangerous API classes
 
@@ -332,10 +352,14 @@ code loading, `Runtime.exec` or `ProcessBuilder`, world-readable file modes, ext
 SQL (`@RawQuery`/`SimpleSQLiteQuery`/`rawQuery`/`execSQL`), `sendBroadcast`, and any `PendingIntent`
 created by the app. The one content provider of the app's own is the AI chat's `FileProvider`, not
 exported (section 11). Every `registerReceiver` passes an explicit export flag, except the read of
-the sticky battery broadcast, which needs none. Of those, only the one in `BluetoothConditions` is
-exported, for the reason `BluetoothDisconnectReceiver` is (section 1); its actions are all
-protected. Reflection is used once, on a fixed system class and method, to open the notification
-shade.
+the sticky battery broadcast, which needs none. Of those, only three are exported: the one in
+`BluetoothConditions`, for the reason `BluetoothDisconnectReceiver` is (section 1); the Mac bridge
+window's adapter-state receiver, because Bluetooth broadcasts may come from the Bluetooth module's
+own uid, which an unexported receiver would shut out; and the Mac bridge's `USER_PRESENT` receiver,
+because SystemUI sends that broadcast under its own uid. Their actions are all protected, so no app
+can fake them; the adapter-state receiver only reads the state the broadcast names, and the unlock
+receiver only makes the launcher read the keyguard state itself. Reflection is used once, on a fixed
+system class and method, to open the notification shade.
 
 ### 9. Local denial of service
 
@@ -468,6 +492,159 @@ hands it to another app, and later reads back what the user pastes.
   name the offending identifier, and the correction text for the chat is put on the clipboard only
   when the user taps *Copy fix for the chat*. None of this writes a log line.
 
+### 12. Mac bridge
+
+The bridge connects the phone to the user's own Mac, which runs Cue: Relay & Reply, a menu-bar app
+from a separate repository; `docs/bridge-protocol.md` is the normative description of everything
+below, and both sides test against the vectors in `fixtures/bridge/`, of which the Bridge repository
+keeps a copy that its tests hold byte for byte to this one.
+
+- **Off switch.** The bridge is off by default. `BridgeCompanionService` and `ProcessTextActivity`
+  are declared `android:enabled="false"` and switched on by `BridgeComponentGate` only while the
+  stored state says on and paired, which also repairs whatever a process death left behind. A
+  disabled service is never bound, so with the bridge off no part of it runs, and the scenario
+  condition reads only the stored switch, without constructing the presence. Turning the bridge off
+  or unpairing deletes the pairing, the sealed key, the TLS identity and the sequence state, and
+  removes the companion-device association. The wipe runs in the application's scope and cannot be
+  cancelled, so leaving the screen does not cut it short; each step runs even if one before it
+  fails, and a new search, pairing or switching the bridge back on waits until it is done, so
+  nothing of the old pairing is picked up by the next one.
+- **Background execution.** The system binds `BridgeCompanionService` while the paired Mac's
+  Bluetooth advertisement is in range; the launcher never scans and holds no wake lock and no
+  foreground service. Everything the bridge does without the home screen — the GATT link and the
+  L2CAP route read over it, the presence debounce, the short content sessions on either carrier, a
+  clip from the Mac held for the unlock and the `USER_PRESENT` receiver registered only while one is
+  held, and the receiver of the Bluetooth adapter's state that drops and restarts the GATT link with
+  the radio — lives in the service's window and ends with it, and while the debounced presence says
+  absent nothing but that adapter-state receiver remains even if the system keeps the service bound.
+  The notification listener is held for the bridge only during that window.
+- **Presence.** The bridge screen's *In range* and the *Mac nearby* condition rest on the system's
+  companion-device presence, which follows the Mac's Bluetooth advertisement: it is not
+  authenticated, and a device that advertises the bridge's service under the Mac's address is in
+  range as far as they are concerned. *In range, connected over Bluetooth* is authenticated: the
+  phone counts its GATT connection as one to the Mac only once a frame from the Mac has opened under
+  `K_ble` over it, and only until that connection ends, and only that state makes it ignore the
+  system's reports of the Mac leaving. A bare connection to the Mac's address counts as the
+  advertisement does, so a device answering under that address cannot hold the Mac present past the
+  60-second debounce. The phone writes a `ping` after every subscription and at every session start,
+  and the Mac answers its confirmation at once, with a summon or a `ping` of its own.
+- **Pairing.** The Mac's user starts pairing mode for 120 seconds, during which the Mac accepts any
+  client certificate and adds `pair=1` to its Bonjour record. The phone browses for that flag for at
+  most 10 seconds, releasing the browse and every resolve when it ends, and connects over TLS
+  accepting any server certificate, whose fingerprint it records: nothing found on the network is
+  trusted. The phone sends a SHA-256 commitment to a fresh ephemeral X25519 key; only then does the
+  Mac create its own fresh key and send it, and only then does the phone reveal its key, which the
+  Mac checks against the commitment in constant time. Both sides derive, with HKDF-SHA256 over a
+  transcript of both observed fingerprints and both ephemeral keys, the six-digit code, the frame
+  key `K_ble` and a confirmation key. The phone shows the code and the Mac's user types it in, and
+  the Mac compares it in constant time; a wrong entry may be retried until the 120-second
+  confirmation timer runs out. Because neither side can pick its key after seeing the other's, a
+  party in between makes the two codes agree with a chance of one in 10⁶ per ceremony, and each
+  ceremony ends pairing mode until the user starts it again; a second `pair-request` meanwhile is
+  answered `busy`. Each side's `pair-confirm` carries an HMAC proof under the confirmation key,
+  checked in constant time: the phone sends its own right after the reveal, the Mac its own once it
+  has accepted the typed code. Each side checks the other side's proof, so neither commits to a peer
+  that derived another secret: the phone completes on the Mac's proof, the Mac once it also holds
+  the accepted code. An all-zero shared secret, a malformed key or commitment, a reveal that does
+  not match, a message out of order or a timeout aborts it, and either way the ephemeral private
+  keys are released and the secrets derived from them are zeroed.
+- **Sessions over the network.** TLS 1.3 only, mutually authenticated, without SNI, session
+  resumption or 0-RTT, so both certificates are checked on every connection. Each side accepts
+  exactly the peer's leaf certificate it pinned at pairing, compared by SHA-256 over its DER
+  encoding; chains, expiry and host names play no part. The phone's key is an EC P-256 key generated
+  inside the Android Keystore. No identity travels before the handshake completes, and the Bonjour
+  record carries only the protocol version and, in pairing mode, the pairing flag. When the saved
+  address stops answering, the phone resolves the Mac's Bonjour name and keeps the address it gets
+  only after the pinned handshake succeeded there, so a spoofed record costs one failed attempt and
+  never redirects the pairing. The Mac keeps at most eight network connections in their handshake
+  and at most three from one address; a new one is never refused but closes the oldest, first among
+  its own address's, so one device on the network cannot hold the slots, and a flood from many
+  addresses only delays the phone's connection.
+- **Sessions over Bluetooth.** Where TCP does not reach the Mac, the phone opens the LE credit-based
+  L2CAP channel whose PSM the paired Mac publishes in a GATT characteristic, as the central, without
+  bonding and without link-layer security. Each side sends a fresh X25519 public key, and
+  HKDF-SHA256 derives one record key per direction from the shared secret, salted with `K_ble` and
+  both public keys. Possession of `K_ble` is the authentication — a party in between can swap the
+  public keys but can neither seal nor open a record — and the ephemeral keys give forward secrecy:
+  once the record keys exist, the private key is released and the shared secret and the material
+  derived from it are zeroed. Records are ChaCha20-Poly1305 with a per-direction counter as the
+  nonce, under keys new to every connection; a length out of range, a record that does not open and
+  a stream that ends inside one close the channel. An all-zero shared secret aborts the handshake,
+  and a peer silent for 15 seconds in it is dropped. A device in radio range can hold the Mac's two
+  slots for channels still in their handshake, each until its 15-second timeouts run out: a denial
+  of service only, bounded by that cap, which the network's connections do not share, and nothing on
+  those channels is readable. The session on top is the same as over TLS, and pairing never runs
+  here. Neither the PSM nor the carrier that last worked is stored; the channel is opened only
+  inside the scopes that hold a session — a visit, the home screen's session, one *Send to Mac* —
+  and closed with them.
+- **Bluetooth frames.** Signals are sealed with ChaCha20-Poly1305 under `K_ble`, with the frame type
+  as associated data and a nonce made of the direction and the sequence number, so a frame can never
+  be accepted by its own sender. A sender takes its sequence numbers from blocks of 64 whose bound
+  is persisted before the first of them leaves, so a crash skips numbers but never uses one twice
+  under a key. The receiver keeps a 64-entry sliding window — the highest number accepted and which
+  of the 63 below it were — persisted with every accepted frame, so frames the two carriers deliver
+  out of order are both taken while each number is accepted at most once, and anything further back
+  is dropped. `BridgeReplayGuard` is the single place that checks and records it, for GATT and the
+  session alike on either carrier, so a frame is accepted at most once however it arrives. The
+  sequence state lives in a file of its own, so a frame never rewrites the settings the launcher
+  collects, and it is tagged with a hash of the `K_ble` it counts for: a key whose state is missing,
+  unreadable or another key's — a commit cut short, a corrupted file — opens no pairing, so nothing
+  is sealed or accepted under it until the next pairing, and its counters never start from zero
+  again. The GATT characteristics require no link-layer security, which they do not need: a foreign
+  central can connect and subscribe, but its writes fail the AEAD, and the Mac counts a subscriber
+  as the phone only once a frame that subscriber wrote itself has been accepted — on `doorbell`, or
+  as a record on an L2CAP channel it opened — never because of a session or another central's frame.
+  An unconfirmed subscriber is notified nothing but the sealed `sync-request` that summons the
+  phone, and only while no session is up and no subscriber is confirmed; closings, replies, clips,
+  the clip announcement and the Mac's lock state go to confirmed subscribers alone. A subscriber
+  whose MTU is below 185 is left out of every audience, so a central with the smallest MTU cannot
+  hold back the frames the phone receives.
+- **What crosses.** To the Mac: the notifications the mirror filter lets through (no ongoing, group
+  summary, promoted, media, non-clearable, low-importance or own notifications, none of an app the
+  user keeps off the Mac, and none the lock screen does not show — secret by the app's or the user's
+  choice for its channel) with app label, icon, title, text, time and revision; their removal; the
+  answer to each reply; text the user sends with *Send to Mac*; a `lock` when the user taps *Lock
+  the Mac*; and, in every session's `hello`, whether the user takes clips from the Mac. A
+  notification whose content the lock screen redacts — the user's choice for its channel says
+  private, or the app's does while the lock screen hides sensitive content — crosses as the lock
+  screen shows it: its public version, or the app's name over a generic "content hidden". The
+  phone's clipboard is never read by the bridge. From the Mac: closings of mirrored notifications,
+  which cancel exactly the matching notification and only the post the user closed — one meant for a
+  post the phone has replaced since is ignored; replies, which fill that notification's own
+  `RemoteInput` and send its action without any background-activity-launch allowance; clipboard
+  text; and whether the Mac's screen is locked. Every closing and reply, a `reply-text` naming its
+  full key included, is resolved through the ledger of what the mirror actually sent — the
+  session's, or, without a session, the companion window's, which holds what the filter lets through
+  — so the Mac reaches no notification it was not shown, and one never mirrored is answered exactly
+  like one that is gone, which keeps the rest of the shade from being probed. The Mac sends a clip
+  only while the phone's last `hello` took clips and its own user's **Send Clipboard to Phone** is
+  on — until a pairing's first session it sends none, and with either switch off it does not read
+  its pasteboard at all — and never one marked concealed, transient or auto-generated, which it
+  skips without reading the text. The phone applies a clip with the sensitive flag when the clip
+  carries it, only while the user takes clips from the Mac, only once the keyguard is down — one
+  arriving behind it waits for the unlock — and only while its age, as the Mac reports it plus the
+  time it waited on the phone, is within the user's limit of 1 to 60 minutes. The Mac reports the
+  age of a clip that waited for a way to the phone on both paths, in the Bluetooth frame as in the
+  session message, so a copy that sat on the Mac does not land as fresh. Clipboard text is capped at
+  100 KB in both directions.
+- **Remote lock.** Locking its screen is the one thing the phone can make the Mac do, and there is
+  deliberately no way to unlock it from the phone. The phone sends a `lock` only when the user runs
+  *Lock the Mac*, with a tap, a swipe or wherever else they put it; a scenario, imported or not,
+  never runs it by itself, and a button whose only action it is greys out unless the Mac is present
+  and reports its screen unlocked. The `lock` goes over GATT, the session or a short-lived
+  connection of its own, and the Mac answers with its lock state. The phone applies a `lock-state`
+  only once it has opened under `K_ble` with a sequence number above that of the last one applied
+  under the same key, only while the bridge is on, the Mac it names is the paired one and that Mac
+  is present; it forgets the state when the presence ends and when the pairing is wiped, and until
+  one arrives the state is unknown and neither *Mac locked* nor *Mac not locked* holds. How the Mac
+  locks, and its own **Lock When Phone Leaves**, which locks it once the phone's confirmed Bluetooth
+  link has been gone for the chosen delay, are described in the Bridge repository's
+  [`docs/security.md`](https://github.com/jaroslav-sazma/cue-bridge/blob/main/docs/security.md).
+- **Permissions.** As in section 7: three install-time companion-device permissions and the runtime
+  `BLUETOOTH_CONNECT` and `ACCESS_LOCAL_NETWORK`, requested while pairing; a denial stops only the
+  part of the bridge that needs it, and the screen says which. Without `ACCESS_LOCAL_NETWORK` a
+  paired phone's sessions run over the L2CAP channel alone.
+
 ## Residual risks
 
 These are known, accepted and unfixed, because fixing them would cost more than the risk they carry.
@@ -528,6 +705,46 @@ These are known, accepted and unfixed, because fixing them would cost more than 
   with its credential can send one, which is the Home Assistant case above.
 - **An explicit `HOME` intent brings the launcher to the front.** Any app can start it; it does what
   pressing Home does, and background-start limits keep that from being used to interrupt the user.
+- **An app in the foreground can put text on the paired Mac's clipboard.** `ProcessTextActivity` has
+  to be exported for other apps' selection menus and the share sheet, so while a Mac is paired any
+  app the user has in front can start it with a text of its choosing, which then replaces the Mac's
+  clipboard. Background-start limits keep an app out of sight from doing it, and the Mac shows a
+  notice for every such text.
+- **The paired Mac is trusted as the user's own device.** Whoever controls it reads the mirrored
+  notifications, can close notifications on the phone, reply through the phone's apps and set the
+  phone's clipboard. That is the feature; the code typed into the Mac is what keeps any other device
+  out of the Mac's side of the pairing, and the certificate shown on both sides is how the user
+  compares the phone's pin with the Mac.
+- **The phone completes on the Mac's proof.** The code is typed into the Mac and compared there. The
+  phone's completion does not depend on the code: it pins the certificate of the peer on the pairing
+  connection whose `pair-confirm` proof verifies. The code binds the Mac's side, and the certificate
+  prefix shown on both sides — in the phone's bridge settings and in the Mac's pairing window — is
+  how the two pins are compared.
+- **The Mac's Bluetooth advertisement is recognisable.** It carries the bridge's fixed service UUID,
+  so a scanner nearby can tell that a Mac running the bridge is in range, though not whose; macOS
+  rotates the Bluetooth address. The Bonjour record carries the Mac's host name, which macOS already
+  announces on the local network, and while pairing mode is on it tells the network that the Mac is
+  waiting for a phone.
+- **Mac nearby follows an unauthenticated advertisement.** A device in radio range that advertises
+  the bridge's service under the paired Mac's Bluetooth address makes the phone see the Mac as in
+  range, and with it the *Mac nearby* condition and the last lock state the Mac itself reported,
+  until the advertisement stops and the debounce runs out. It reaches nothing of the bridge: it
+  cannot complete a session or report a lock state, is never shown as connected over Bluetooth, and
+  the frames the phone writes to it are sealed.
+- **A captured `lock` can lock the Mac once.** A device posing as the paired Mac that way receives
+  the sealed `lock` the phone writes to the doorbell. It can neither read nor change the frame, but
+  the frame carries a sequence number the real Mac has not seen yet, so relaying it to that Mac
+  locks its screen once; every further copy is dropped as a replay.
+- **Frames far out of order are dropped.** The receiver's window spans 64 sequence numbers, so a
+  frame that arrives after 64 newer ones from the same sender is dropped as a replay. A missed
+  signal costs only a delay, since every connection begins with a full state-sync.
+- **A lost sequence state costs a pairing.** If the phone's sequence file becomes unreadable, or the
+  sealed key can no longer be opened, the stored pairing stops working until the user pairs again;
+  the bridge screen says *Pairing unusable — pair again* and offers the new pairing.
+- **The lock screen's sensitive-content switch is a hidden setting.** Whether the lock screen hides
+  sensitive content is read from a secure setting Android lets apps read but does not document.
+  Should a release refuse it, an app's own private notifications cross in full, while the user's
+  per-channel choices and secret notifications still hold; the refusal is logged.
 
 ## What this review did not cover
 
@@ -542,8 +759,15 @@ These are known, accepted and unfixed, because fixing them would cost more than 
   APK and what Play delivers were not, and builds are not yet verified to be reproducible.
 - **Nothing on the Home Assistant side.** The blueprint was reviewed as the launcher's contract.
   Hardening an HA instance is out of scope.
-- **No cryptographic review.** The construction used is a standard one (AES-GCM with a Keystore key,
-  the platform's TLS stack); it received no independent cryptanalysis.
+- **No cryptographic review.** The constructions used are standard ones (AES-GCM with a Keystore
+  key, the platform's TLS stack, and for the Mac bridge X25519, HKDF-SHA256, HMAC-SHA256 and
+  ChaCha20-Poly1305 checked against known-answer vectors); they received no independent
+  cryptanalysis.
+- **The macOS app.** What the Mac side of the bridge stores, how it is signed and bound to its Mac,
+  and its own residual risks are described in the Bridge repository's
+  [`docs/security.md`](https://github.com/jaroslav-sazma/cue-bridge/blob/main/docs/security.md), the
+  menu-bar app's own; here the Mac appears only as the peer the protocol describes. Its Bluetooth
+  link and the gestures on the Mac were tested on real hardware, not reviewed further here.
 
 ## Tests that hold this in place
 
@@ -664,5 +888,79 @@ The properties above are not left to a future reader's memory:
   evaluator the runtime uses, and the title line never becomes the text a rule looks for.
 - `NotificationRoutingTest` — a notification is reported as a match only when a scenario listens to
   it.
+- `CompanionManifestTest`, `ProcessTextManifestTest` — both bridge components are declared disabled
+  and switched together by the gate, only the system can bind the companion service, nothing scans,
+  and *Send to Mac* takes plain text alone.
+- `BridgeConfigRepositoryTest`, `BridgeSequencesTest` — the bridge is off and stores nothing by
+  default, `K_ble` is kept only sealed, nothing is stored while the bridge is off, a pairing opens
+  only with the sequence state of its own key, a commit cut short leaves the previous pairing
+  unusable rather than counting from zero, frames never rewrite the settings, outgoing numbers are
+  reserved 64 at a time with the bound on disk before the first of them leaves, a restart continues
+  above that bound, nothing is handed out past the last usable number, the incoming window lets each
+  number in once, an unreadable sequence file is treated as corrupt, turning off or unpairing
+  wipes the pairing, the key and the sequence state, a pairing that no longer opens is reported
+  unusable, and the apps kept off the Mac outlive an unpair but not turning off.
+- `TeardownQueueTest` — a wipe whose screen is left and whose job is cancelled midway still runs
+  every step, a failing step does not stop the ones after it, and what waits for a wipe starts only
+  once it is over.
+- `BridgeConditionsTest` — with the bridge off or unpaired neither the presence nor the lock state
+  is constructed, a Mac away counts as neither locked nor unlocked, and a tile reads the same lock
+  state as the condition, the presence included.
+- `MacLockCacheTest`, `MacLockRulesTest`, `BridgeMacLockTest` — the Mac's lock state is unknown
+  until the first `lock-state`, one sealed before the last applied changes nothing, a new key starts
+  the order over, the state is kept only while the paired Mac is present and never for a pairing
+  that is gone, a `lock-state` whose settings were read before an unpair stays forgotten, and a
+  button that only locks the Mac can be tapped only while the Mac is known to be unlocked.
+- `BridgeLockMacTest` — a `lock` goes over GATT first, the session next and a connection of its own
+  last, and on that connection the `lock-state` the Mac sends behind the `bye` is still read.
+- `PinnedServerTrustTest` — only the pinned leaf certificate is trusted on a session connection, a
+  pairing connection takes any leaf, an empty chain is refused, and the phone never trusts a client.
+- `PhonePairingCeremonyTest`, `PairingVectorsTest` — the phone sends its commitment before it sees
+  the Mac's key and reveals its key only after a usable one, holds up its side of the shared vector
+  ceremonies, a low-order or malformed Mac key aborts before the reveal, the phone's proof follows
+  its reveal, a confirmation without a valid proof, a message out of order and a timeout all abort,
+  the Mac's verified proof commits, `busy` and the other reasons reach the user, and both sides
+  derive the vectors' commitment, keys and code.
+- `BridgeBrowserTest` — only a Mac advertising both this protocol version and the pairing flag is a
+  target; none, one and several found lead to the hint, the pairing and the pick.
+- `CryptoVectorsTest`, `BleFrameVectorsTest`, `BridgeMessageVectorsTest` — the primitives match
+  their RFC vectors and refuse a tampered tag or a small-order key, the frames and the messages
+  match the shared vectors, a rejected frame fails for its stated reason, the replay window decides
+  every shared case as expected, and the sequence number stops at its limit.
+- `L2capChannelTest`, `L2capVectorsTest` — the channel keys, records and transcripts match the
+  shared vectors, a low-order key aborts the handshake, a record from another pairing fails
+  authentication, an oversized or truncated record is fatal, and a silent Mac is given up on with
+  the channel closed.
+- `BridgeCarriersTest`, `L2capDialTest`, `SendToMacCarriersTest` — TCP goes first unless Bluetooth
+  carried the last connection, the memory goes with the window, no route means no Bluetooth
+  attempt, a pin mismatch outranks other failures, a dial cancelled mid-handshake or mid-connect
+  closes its socket, and *Send to Mac* reports the Mac unreachable only when neither carrier took
+  the text.
+- `BridgeReplayGuardTest`, `GattSenderTest` — a frame arriving over GATT and over the session at
+  once is accepted exactly once, one overtaken on the other path is still accepted once, a frame
+  that fails the AEAD records nothing, a frame for a key without its own sequence state is dropped,
+  and concurrent sends leave in sequence order.
+- `PresenceMachineTest`, `GattPingsTest` — a bare GATT connection never counts as a link to the Mac
+  nor holds it present past the debounce, only a frame from the Mac that opened over a connection
+  that is up links it, the link ends with that connection, and the phone pings after every
+  subscription and at every session start.
+- `MirrorFilterVectorsTest`, `MirrorReadTest`, `ClipboardHoldTest` — the mirror filter decides as
+  the shared table says, excluded apps and secret notifications included, the lock screen's view is
+  resolved as the lock screen resolves it, a redacted notification goes as its public version or as
+  the app's name over the hidden text, and clipboard text respects the size cap in UTF-8 bytes,
+  keeps its sensitivity while it waits behind the keyguard, is replaced by a newer clip, and is
+  dropped once its age outgrows the limit.
+- `SessionLoopbackTest`, `GattWriteTimeoutTest` — one session runs end to end in-process over
+  in-memory carriers: a closing cancels the notification the set listed and is never sent back, a
+  closing for a replaced post is ignored and comes again at the new revision, a reply is answered
+  with `reply-ok` or `reply-error`, a reply to a key never mirrored reaches nothing and is answered
+  exactly like one to a key that is gone, a clip that waited keeps its age, and a visit stays open
+  while a frame trickles in byte by byte; a GATT write the stack never answers gives up after five
+  seconds.
+- `MirrorCommandsTest` — a closing or a reply, a `reply-text` included, acts only on a key the
+  ledger holds, before the first set nothing does, and in the companion window a notification the
+  filter keeps back can be neither answered nor closed.
+- `BridgeSpecParityTest` — the protocol version, message and frame types, labels, reasons and UUIDs
+  in the spec match the code.
 
 Run them with `./gradlew test detekt`; CI runs them together with the release build and lint.

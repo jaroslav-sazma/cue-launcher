@@ -22,6 +22,8 @@ internal fun conditionTypeLabel(type: ConditionType): String = stringResource(
         ConditionType.RINGER_MODE -> R.string.condition_ringer_mode
         ConditionType.CALENDAR_EVENT -> R.string.condition_calendar_event
         ConditionType.HA_STATE -> R.string.condition_ha_state
+        ConditionType.MAC_NEARBY -> R.string.condition_mac_nearby
+        ConditionType.MAC_LOCKED -> R.string.condition_mac_locked
         ConditionType.TIME_INSTANT, ConditionType.ALARM -> R.string.condition_time_instant
         ConditionType.BT_DISCONNECTED -> R.string.condition_bt_disconnected
         ConditionType.NOTIFICATION -> R.string.condition_notification
@@ -44,6 +46,8 @@ internal fun conditionTypeExamples(type: ConditionType): String = stringResource
         ConditionType.RINGER_MODE -> R.string.condition_example_ringer_mode
         ConditionType.CALENDAR_EVENT -> R.string.condition_example_calendar_event
         ConditionType.HA_STATE -> R.string.condition_example_ha_state
+        ConditionType.MAC_NEARBY -> R.string.condition_example_mac_nearby
+        ConditionType.MAC_LOCKED -> R.string.condition_example_mac_locked
         ConditionType.TIME_INSTANT, ConditionType.ALARM -> R.string.condition_example_time_instant
         ConditionType.BT_DISCONNECTED -> R.string.condition_example_bt_disconnected
         ConditionType.NOTIFICATION -> R.string.condition_example_notification
@@ -54,13 +58,14 @@ internal fun conditionTypeExamples(type: ConditionType): String = stringResource
 )
 
 @Composable
-internal fun rememberCatalogEntries(): List<CatalogEntry> = CONDITION_CATALOG.map { type ->
-    CatalogEntry(
-        type = type,
-        label = conditionTypeLabel(type),
-        examples = conditionTypeExamples(type),
-    )
-}
+internal fun rememberCatalogEntries(bridgePaired: Boolean): List<CatalogEntry> =
+    conditionCatalog(bridgePaired).map { type ->
+        CatalogEntry(
+            type = type,
+            label = conditionTypeLabel(type),
+            examples = conditionTypeExamples(type),
+        )
+    }
 
 @Composable
 internal fun catalogSectionTitle(section: ConditionSection): String = stringResource(
@@ -173,5 +178,15 @@ private fun nowResource(key: NowKey): Int = when (key) {
     NowKey.CALENDAR_UNKNOWN -> R.string.now_calendar_unknown
     NowKey.HA_STATE -> R.string.now_ha_state
     NowKey.HA_UNKNOWN -> R.string.now_ha_unknown
+    NowKey.MAC_NEARBY -> R.string.now_mac_nearby
+    NowKey.MAC_AWAY -> R.string.now_mac_away
+    NowKey.MAC_BRIDGE_OFF -> R.string.now_mac_bridge_off
+    NowKey.MAC_UNKNOWN -> R.string.now_mac_unknown
+    NowKey.MAC_LOCKED -> R.string.now_mac_locked
+    NowKey.MAC_UNLOCKED -> R.string.now_mac_unlocked
+    NowKey.MAC_LOCK_UNREPORTED -> R.string.now_mac_lock_unreported
+    NowKey.MAC_LOCK_AWAY -> R.string.now_mac_lock_away
+    NowKey.MAC_LOCK_BRIDGE_OFF -> R.string.now_mac_lock_bridge_off
+    NowKey.MAC_LOCK_UNKNOWN -> R.string.now_mac_lock_unknown
     NowKey.AWAITS_EVENT -> R.string.now_awaits_event
 }

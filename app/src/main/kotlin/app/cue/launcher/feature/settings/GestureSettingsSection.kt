@@ -56,6 +56,7 @@ internal fun GestureSettingsSection(
             onPick = { picked -> scope.launch { settings.setSwipeLeftAction(picked) } },
             onDismiss = { picking = false },
             ha = ha,
+            bridgePaired = stored.bridge.enabled && stored.bridge.pairing != null,
         )
     }
 }

@@ -42,6 +42,7 @@ internal fun ConditionSheetContent(
     onPickApp: ((Condition, AppTarget) -> Unit)? = null,
     diagnosis: Boolean = false,
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
+    onConfigureBridge: (() -> Unit)? = null,
 ) {
     var condition by remember(initial) { mutableStateOf(initial) }
     val haRead = rememberHaEntityRead(ha, condition)
@@ -56,13 +57,7 @@ internal fun ConditionSheetContent(
     val error = conditionFormError(condition) ?: ending?.let(::endingError)
 
     SheetFrame(
-        header = {
-            SheetHeader(
-                title = conditionTypeLabel(conditionTypeOf(condition)),
-                onClose = onClose,
-                onBack = onBack,
-            )
-        },
+        header = { SheetHeader(conditionTypeLabel(conditionTypeOf(condition)), onClose, onBack = onBack) },
         modifier = modifier,
         gap = Tokens.Builder.sheetGap,
         footer = {
@@ -83,6 +78,7 @@ internal fun ConditionSheetContent(
             onResolve = permissions.resolve,
             ha = ha,
             haRead = haRead,
+            onConfigureBridge = onConfigureBridge,
         )
         ending?.let { current ->
             DurationSection(

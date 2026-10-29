@@ -1,7 +1,7 @@
-# Contributing to Cue:
+# Contributing to Cue: React & Act
 
-Thank you for looking into it. This file is for anyone who wants to build Cue:, change it or help
-with a release; what the launcher does and how to use it is in the [README](README.md).
+Thank you for looking into it. This file is for anyone who wants to build Cue: React & Act, change
+it or help with a release; what the launcher does and how to use it is in the [README](README.md).
 
 ## Contents
 
@@ -11,6 +11,7 @@ with a release; what the launcher does and how to use it is in the [README](READ
 - [Translations](#translations)
 - [Documentation](#documentation)
 - [Tests and checks](#tests-and-checks)
+- [The Mac bridge and its macOS app](#the-mac-bridge-and-its-macos-app)
 - [When the build changes](#when-the-build-changes)
 - [Release build](#release-build)
 - [Baseline profile](#baseline-profile)
@@ -23,9 +24,9 @@ with a release; what the launcher does and how to use it is in the [README](READ
 
 A **bug** goes into a GitHub issue. The quickest way there is *long-press the home screen → Launcher
 settings → Scenarios → ⋮ → About → Report a bug*: it opens the form in the browser with the phone,
-the Android build and the Cue: version already filled in. By hand, the Android build is under
-*Settings → About phone → Android version → Build number* and the version is in the same About
-sheet. Then describe the steps that lead to it and what you expected instead. If a scenario is
+the Android build and the version of Cue: React & Act already filled in. By hand, the Android build
+is under *Settings → About phone → Android version → Build number* and the version is in the same
+About sheet. Then describe the steps that lead to it and what you expected instead. If a scenario is
 involved, attach it — *Launcher settings → Backups* exports it, and the README section
 [Placeholders and portability](README.md#placeholders-and-portability) says what such a file carries
 before you share it. For a crash, a log helps: with the phone connected to a computer and the
@@ -38,8 +39,8 @@ report it privately and what the launcher defends against.
 
 ## Building
 
-Cue: is one Gradle module of Kotlin and Jetpack Compose (Material 3 Expressive), built for
-Android 17 and newer (minSdk and targetSdk 37).
+Cue: React & Act is one Gradle module of Kotlin and Jetpack Compose (Material 3 Expressive), built
+for Android 17 and newer (minSdk and targetSdk 37).
 
 ```bash
 ./gradlew assembleDebug      # APK in app/build/outputs/apk/debug/
@@ -74,21 +75,30 @@ runs all day on someone's phone.
   the alpha Compose BOM on purpose, so a new piece of UI reaches for the expressive component first
   — `ToggleButton` with the connected button-group shapes rather than `SegmentedButton`,
   `FloatingToolbar` rather than a hand-made bar, the expressive motion schemes rather than raw
-  springs. Opting into `@ExperimentalMaterial3ExpressiveApi` is expected. The launcher surface
-  itself — home screen, tiles, widget panel, drawer — is the exception: it follows the project's own
-  glass design and its tokens, and Material components do not belong there.
+  springs, and a button passes `shapes = ButtonDefaults.shapes()` so it morphs when pressed. Opting
+  into `@ExperimentalMaterial3ExpressiveApi` is expected. The launcher surface itself — home screen,
+  tiles, widget panel, drawer — is the exception: it follows the project's own glass design and its
+  tokens, and Material components do not belong there.
 - **Permissions just in time.** Nothing is requested up front. A permission is asked for at the
   moment a feature needs it, after the launcher has said what it reads and why, and a denial never
-  blocks the app — only that feature stops, and it says why.
+  blocks the app — only that feature stops, and it says why. In the settings screens that prompt is
+  `SettingsGrantRequest`: the note on what the access is for, the message after a refusal and the
+  one button that asks.
 - **Nothing runs behind the home screen that could wait for it.** Whatever follows the system —
   callbacks, observers, receivers, timers, polling — lives in `ForegroundSession.run()` or behind
   `collectAsStateWithLifecycle` / `LifecycleStartEffect`, and what changed meanwhile is caught up
   when the home screen comes back. A `LaunchedEffect` never collects a flow that registers with the
-  system, because a composition outlives `onStop`. The only background entry points are the
-  manifest receivers and, while a scenario or the badges need it, the notification listener; each
-  event is handled in one short step. The README section
-  [Battery and background](README.md#battery-and-background) describes the result as a user sees
-  it, and `scripts/background-audit.sh` checks it on an emulator.
+  system, because a composition outlives `onStop`. The only background entry points are the manifest
+  receivers and, while a scenario, the badges or the bridge's mirroring need it, the notification
+  listener, each event handled in one short step, and the Mac bridge's companion service, bound by
+  the system for the paired Mac's presence while the bridge is on. For as long as the system keeps
+  that service bound — which it may do while the Mac is away too — it holds one receiver, of the
+  Bluetooth adapter's state, because the stack reports no disconnect for the GATT link when the
+  phone's Bluetooth turns off. All its other work lives in a window that opens on the Mac's
+  appearance and closes on the debounced absence, and ends with it — the unlock receiver too,
+  registered only while a clip from the Mac waits for a locked phone. The README section
+  [Battery and background](README.md#battery-and-background) describes the result as a user sees it,
+  and `scripts/background-audit.sh` checks it on an emulator.
 - **The scenario format is a public contract.** `schemaVersion 1` is frozen: adding an optional
   field or an enum value is fine and keeps the version; removing or renaming anything needs the
   maintainer's agreement and a `schemaVersion` bump. Exported files people keep and share depend on
@@ -124,9 +134,9 @@ so it can be planned.
 
 `README.md` is the user documentation, ordered from the general to the specific: what the launcher
 is, its screens and settings, scenarios with the catalogs of conditions, tile content and actions,
-the Home Assistant setup and examples, then permissions, battery, download and the roadmap. It is
-written for someone using the phone — plain words, the labels the app shows, a short example where
-a description alone would not do — and leaves out how the code works.
+the Home Assistant setup, the Mac bridge and examples, then permissions, battery, download and the
+roadmap. It is written for someone using the phone — plain words, the labels the app shows, a short
+example where a description alone would not do — and leaves out how the code works.
 [`docs/scenario-format.md`](docs/scenario-format.md) is the reference of the scenario JSON: every
 field, the notification value rules and the import checks. This file is the contributor
 documentation. **Every change ends with a review of the README and this file**: a behaviour a user
@@ -142,7 +152,9 @@ change whenever a control or a data flow they name changes.
 Prose in every `.md` file is hard-wrapped at 100 characters, counted in characters rather than
 bytes. Tables, fenced blocks and diagrams stay on one line however long they get, a wrap never
 lands inside a `code span` or a link, and editing a sentence means re-wrapping its whole paragraph.
-Examples in the documentation are in English.
+Examples in the documentation are in English. Prose names the launcher "Cue: React & Act" and the
+Mac app "Cue: Relay & Reply" in full, so the two are told apart at a glance; a bare "Cue:" only
+quotes what a screen shows, such as the label under the icon or *Do Not Disturb (Cue:)*.
 
 ---
 
@@ -157,12 +169,16 @@ scripts/background-audit.sh           # on an emulator: nothing may run behind t
 ```
 
 Unit tests are JUnit (Jupiter) and run on the JVM; the fixtures in `fixtures/scenarios/` double as
-round-trip tests of the scenario format, and some tests read the README, the blueprints and the bug
-report form to keep them in step with the code. Gradle does not see such reads, so the files are
-listed as inputs of the test task in `app/build.gradle.kts` (`testedRepositoryFiles`); a test that
-reads another one adds it there, or a change to only that file leaves the tests up to date.
-Screenshot tests (`./gradlew validateDebugScreenshotTest`) render the settings screens through
-layoutlib.
+round-trip tests of the scenario format, and some tests read the README, the blueprints, the bug
+report form and the Mac bridge protocol to keep them in step with the code. The bridge vectors in
+`fixtures/bridge/` are shared: the Kotlin codec is tested against them here, and the macOS app's
+tests in its own repository read an identical copy of them. Two of them belong to one side only:
+`filters.json` is the phone's mirror-filter decision table, which `MirrorFilterVectorsTest` runs the
+filter against, and `state-sync.json` holds the Mac's state-sync diff cases. Gradle does not see
+such reads, so the files are listed as inputs of the test task in `app/build.gradle.kts`
+(`testedRepositoryFiles`); a test that reads another one adds it there, or a change to only that
+file leaves the tests up to date. Screenshot tests (`./gradlew validateDebugScreenshotTest`) render
+the settings screens through layoutlib.
 
 `scripts/background-audit.sh [seconds] [--with-listener]` sends a debug build of the launcher behind
 Settings on a connected emulator and reposts a notification every two seconds, the way a progress
@@ -170,10 +186,33 @@ notification is updated. It then fails if the process holds a content observer, 
 receiver, a binding to another app's service or one of its own other than the notification listener,
 keeps the listener bound although the need it stored says nothing wants it, is in another state than
 the one the listener calls for — a bound service while it is bound, otherwise the home state or a
-cached one — or spent more than 0.3 s of CPU a minute. `--with-listener` grants notification access
-for the run; the listener binds only while badges are on, a scenario watches notifications or a
-running tile waits for one to end it. The reposted notification stays in the shade under the tag
-`cue-audit`, as the shell cannot cancel it.
+cached one — or spent more than 0.3 s of CPU a minute. The one receiver it lets through is the Mac
+bridge's single registration for the Bluetooth adapter's state and nothing else, and only while the
+system binds the companion service. `--with-listener` grants notification access for the run; the
+listener binds only while badges are on, a scenario watches notifications or a running tile waits
+for one to end it. The reposted notification stays in the shade under the tag `cue-audit`, as the
+shell cannot cancel it.
+
+Debug builds carry a generator of fixture notifications for the Mac bridge, so the mirror can be
+exercised on the emulator without other apps. The debug section of the Mac bridge screen has a
+button for each fixture, and the same fixtures can be posted over adb. The fixtures are `plain`;
+`updating`, the same id posted again with a new time, so it updates in place; `grouped`, three
+children and a group summary; `reply`, with an inline reply whose receiver logs only the length of
+the text to `CueBridge`; `progress`, a ProgressStyle that asks to be promoted to a Live Update;
+`low`, on a channel of low importance; `private`, with a public version, which the Mac gets instead
+while the lock screen hides sensitive content; and `secret`, which the lock screen never shows.
+`cancel` removes them all. The mirror filter exempts the fixtures' channels from the own-package
+rule in debug builds only, so the summary, the progress, the low-importance and the secret fixture
+show what the filter skips. The buttons ask for the notification permission on the first press; the
+adb path posts nothing until it is granted and says so in the log. Its receiver is declared in the
+debug manifest only and requires `android.permission.DUMP`, which the shell holds and no app a user
+installs can:
+
+```bash
+adb -e shell am broadcast -a app.cue.launcher.debug.BRIDGE_FIXTURE --es fixture plain -n app.cue.launcher.debug/app.cue.launcher.debug.bridge.BridgeFixtureReceiver
+adb -e shell dumpsys notification --noredact | grep 'NotificationRecord(.*pkg=app.cue.launcher.debug'
+adb -e logcat -s CueBridge
+```
 
 ### What CI checks
 
@@ -212,6 +251,61 @@ read-only, except for the dependency job, which needs to write the graph.
 
 ---
 
+## The Mac bridge and its macOS app
+
+The Mac bridge has two halves. The phone's half is in this repository, in three packages under
+`app/src/main/kotlin/app/cue/launcher/`: `system/bridge/` (the companion service and its window, the
+Bluetooth link, the two session carriers — TLS over the network and the L2CAP channel over
+Bluetooth, tried in the order `BridgeCarriers` keeps — the protocol codec and pairing, the clipboard
+and Send to Mac), `data/bridge/` (the stored pairing, the sealed key and the mirror filter) and
+`feature/settings/bridge/` (the screen). The macOS half, the menu-bar app Cue: Relay & Reply, lives
+in a repository of its own, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge).
+
+- **One spec, kept here.** [`docs/bridge-protocol.md`](docs/bridge-protocol.md) is the only
+  normative description of the protocol, at `bridgeProtocolVersion 1`, and `fixtures/bridge/` holds
+  its test vectors: frame and message encodings, the crypto known-answer cases, the pairing
+  commitment, transcript and code with whole ceremonies both sides run, the mirror-filter table and
+  the state-sync diffs. The macOS repository links to the spec and never restates it. Unlike the
+  rest of this repository, the spec and the vectors are dedicated to the public domain under
+  CC0-1.0 (`NOTICE`, `LICENSES/CC0-1.0.txt`), so that peers on other platforms can be written
+  under any license; a contribution to either is made under the same dedication.
+- **Both sides test against the same vectors.** Here the Kotlin codec, the crypto, the pairing and
+  the filter are tested against `fixtures/bridge/`, and `BridgeSpecParityTest` keeps the spec's
+  version, types, labels, reasons and UUIDs in step with the code. The macOS repository keeps an
+  identical copy of the JSON vectors, not the directory's README, so a clone of it tests on its own,
+  and its tests read that copy. Vectors change here only; the macOS repository's
+  `tools/sync-vectors.sh` then copies them over, and its parity test fails on any JSON file that
+  differs by a single byte while a checkout of this repository sits beside it. Each side also
+  asserts that its own protocol version equals the spec's header, so a version drift fails a test
+  rather than a demo.
+- **Each side runs a session in-process.** `SessionLoopbackTest` drives the phone's real
+  conversation, framing, frame codec and mirror commands over in-memory carriers against a scripted
+  Mac — closings, revisions, replies and their answers, clip ages, the visit's idle timer — and the
+  macOS repository's loopback tests do the same for the Mac's half against a scripted phone. A
+  change to how a session behaves comes with a case on the side it changes.
+- **A protocol change lands as a pair of commits**, one in each repository, carrying the same
+  `bridgeProtocolVersion`: this one updates the spec, the vectors and the Kotlin code, the other
+  the Swift code and the synced copy of the vectors. The spec's *Change policy* decides the
+  version: an additive change — a new optional field, message, frame type or reason — keeps it,
+  anything else bumps it, and both sides refuse a peer on another version. Neither commit lands
+  until both sides' contract tests pass against the same vectors.
+- **Off means off.** The bridge is off by default. `BridgeCompanionService` and
+  `ProcessTextActivity` are declared disabled and switched on only while the bridge is on and paired
+  (`BridgeComponentGate`); with it off nothing of the bridge is constructed, which
+  `scripts/background-audit.sh` checks along with the rest.
+
+The emulator has no Bluetooth and does not see the Mac's Bonjour, so debug builds can pair without
+either: **Pair without Bluetooth** on the pairing screen takes the address of the Mac the emulator
+runs on (`10.0.2.2`) and the port the Mac listens on — the Debug pairing window and
+`bridgectl status` show it — and the debug section of the Mac bridge screen keeps that endpoint
+afterwards. Signals then travel inside the TLS session instead of over Bluetooth. Everything except
+the Bluetooth link and the L2CAP channel over it, the companion-device presence, the gestures on the
+Mac and battery use can be exercised that way; those need a real phone next to a real Mac. The phone
+logs protocol events at debug level under the tag `CueBridge`, with message types and key hashes
+only, never content.
+
+---
+
 ## When the build changes
 
 What has to follow a change to the build, and when:
@@ -228,7 +322,8 @@ What has to follow a change to the build, and when:
 | A GitHub Action, new or updated | Pinned to a full commit hash with the version as a comment. Renovate keeps existing pins current. |
 | Startup or the first interactions | Regenerate the baseline profile, see below. |
 | The Home Assistant blueprint | Both `ha/launcher_event.yaml` and `ha/launcher_event.cs.yaml`, the receiver and `HA_EVENT_ACTION` stay in agreement; `HaEventContractTest` fails otherwise. |
-| The signing key | Never into the repository; `keystore.properties` points at it, and it is backed up in two independent places. It cannot be replaced: once Cue: is on Play, Play keeps signing with its enrolled copy, but a lost key means no APK on GitHub can ever update an installed copy again, and a new key would also change the certificate under [Verifying a download](README.md#verifying-a-download). |
+| The Mac bridge protocol — `docs/bridge-protocol.md` or `fixtures/bridge/` | The paired commit in the macOS app's repository with the same `bridgeProtocolVersion`, bumped unless the change is additive, carrying the vectors copied over by its `tools/sync-vectors.sh` — its parity test fails until they match — see [The Mac bridge and its macOS app](#the-mac-bridge-and-its-macos-app). `SECURITY.md` and the audit change with anything in the pairing or the cryptography. |
+| The signing key | Never into the repository; `keystore.properties` points at it, and it is backed up in two independent places. It cannot be replaced: once Cue: React & Act is on Play, Play keeps signing with its enrolled copy, but a lost key means no APK on GitHub can ever update an installed copy again, and a new key would also change the certificate under [Verifying a download](README.md#verifying-a-download). |
 
 ---
 
@@ -275,8 +370,9 @@ to the build you are running.
    `./gradlew test detekt lintRelease bundleRelease assembleRelease`.
 3. Install the release APK on a device and go through what a debug build cannot show: becoming the
    home app, a Home Assistant call, an import.
-4. Once Cue: is on Play, upload `app/build/outputs/bundle/release/app-release.aab` there. The bundle
-   carries its own R8 mapping, so Play deobfuscates crash reports without a separate upload.
+4. Once Cue: React & Act is on Play, upload `app/build/outputs/bundle/release/app-release.aab`
+   there. The bundle carries its own R8 mapping, so Play deobfuscates crash reports without a
+   separate upload.
 5. Check that the APK carries the certificate published under
    [Verifying a download](README.md#verifying-a-download)
    (`apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk`), tag the commit
@@ -313,11 +409,11 @@ appearance, the gestures and the drawer settings with their hidden apps, so the 
 an `app.cue.launcher` signed with the same debug key as the test APK. An import only ever adds
 scenarios alongside, so it runs only while neither the folder *Tools* nor the tile *Wind down* is on
 the home screen; finding one without the other fails the run with a request to uninstall
-`app.cue.launcher`, and so does an import that does not end on the seeded home screen. Cue: is
-started through the HOME intent, never the LAUNCHER one. Besides the cold start, the journeys cover
-the widget panel, the folder, paging the 2×2 stack, the dynamic folder, the drawer's vault, a query
-typed letter by letter with a typo in it and launched with Enter, and coming back from another app
-the way the home button does.
+`app.cue.launcher`, and so does an import that does not end on the seeded home screen.
+Cue: React & Act is started through the HOME intent, never the LAUNCHER one. Besides the cold start,
+the journeys cover the widget panel, the folder, paging the 2×2 stack, the dynamic folder, the
+drawer's vault, a query typed letter by letter with a typo in it and launched with Enter, and coming
+back from another app the way the home button does.
 
 The connected test task removes the APKs it installed once the run is over, so every run starts from
 a fresh install of the measured `app.cue.launcher` and seeds it again; the debug build keeps its own
@@ -367,9 +463,11 @@ adb uninstall app.cue.launcher && adb uninstall app.cue.launcher.baselineprofile
 | `README.md` | the user documentation |
 | `CONTRIBUTING.md` | this file: the contributor documentation |
 | `docs/scenario-format.md` | the reference of the scenario JSON, `schemaVersion 1` |
-| `LICENSE`, `NOTICE`, `LICENSES/` | the GPL text; the license notice with its section 7 terms and the third-party material; the license texts that material needs. All three are packaged into the APK by the `licenseAssets` task and shown in the app |
+| `docs/bridge-protocol.md` | the normative protocol between the launcher and the macOS bridge app, `bridgeProtocolVersion 1`; `BridgeSpecParityTest` keeps its version, message and frame types, derivation labels, close and abort reasons, GATT UUIDs and MTU floor and vector catalog in step with the code; CC0-1.0, not GPL |
+| `LICENSE`, `NOTICE`, `LICENSES/` | the GPL text; the license notice with its section 7 terms, the CC0 dedication of the bridge spec and vectors, and the third-party material; the license texts that material and the dedication need. All three are packaged into the APK by the `licenseAssets` task and shown in the app |
 | `art/icon/`, `fastlane/metadata/android/` | the icon master files; the store listing texts, screenshots and graphics. They are GPL files like the rest, but the GPL grants no trademark rights to the name and icon, see `NOTICE` |
 | `fixtures/scenarios/` | example scenarios in the JSON contract; also used by round-trip tests |
+| `fixtures/bridge/` | the bridge protocol's test vectors, CC0-1.0 like the spec; the canonical copy, whose JSON files the macOS app's repository mirrors with its `tools/sync-vectors.sh` and checks byte for byte |
 | `fixtures/baselineprofile/` | the whole configuration the baseline profile journeys seed the measured app with; packaged into the test APK only, not an example to import |
 | `ha/launcher_event.yaml`, `ha/launcher_event.cs.yaml` | the Home Assistant blueprint in English and Czech, packaged into the APK straight from here |
 | `baselineprofile/` | baseline profile generator |

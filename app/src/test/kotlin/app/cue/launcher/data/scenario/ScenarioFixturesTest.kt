@@ -124,6 +124,25 @@ class ScenarioFixturesTest {
     }
 
     @Test
+    fun `the Mac fixture holds while the Mac is nearby and imports enabled`() {
+        val imported = importedFixture(FixtureFile.MAC_NEARBY).single()
+
+        assertEquals(listOf(Condition.MacNearby()), imported.scenario.conditions)
+        assertTrue(imported.placeholders.isEmpty())
+        assertTrue(imported.asStored().enabled)
+    }
+
+    @Test
+    fun `the Mac lock fixture shows while the Mac is unlocked and locks it`() {
+        val imported = importedFixture(FixtureFile.MAC_LOCK).single()
+        val content = imported.scenario.content as TileContent.Template
+
+        assertEquals(listOf(Condition.MacNearby(), Condition.MacLocked(negate = true)), imported.scenario.conditions)
+        assertEquals(listOf(TapAction.SystemAction(SystemActionType.MAC_LOCK)), content.items.single().actions)
+        assertTrue(imported.asStored().enabled)
+    }
+
+    @Test
     fun `the doorbell fixture carries a duration on the condition`() {
         val scenario = importedFixture(FixtureFile.HA_GATE).single().scenario
 
@@ -263,6 +282,8 @@ class ScenarioFixturesTest {
         const val HA_GATE = "ha-gate-button.json"
         const val HA_STATE_TV = "ha-state-tv.json"
         const val HEADPHONES = "headphones-music.json"
+        const val MAC_LOCK = "mac-lock.json"
+        const val MAC_NEARBY = "mac-nearby-focus.json"
         const val NOTIFICATION_EXTRACT = "notification-extract-code.json"
         const val NOTIFICATION_MESSAGE = "notification-message.json"
         const val NOTIFICATION_PARCEL = "notification-parcel.json"

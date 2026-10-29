@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
@@ -34,6 +36,7 @@ import app.cue.launcher.designsystem.relativeTimeText
 import app.cue.launcher.designsystem.supportingInk
 import app.cue.launcher.designsystem.supportingStyle
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 internal fun HaCodesSection(
     screen: HaScreenState,
@@ -61,6 +64,7 @@ internal fun HaCodesSection(
         }
         OutlinedButton(
             onClick = { screen.logVisible = !screen.logVisible },
+            shapes = ButtonDefaults.shapes(),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = Tokens.Settings.surfacePadding),
@@ -118,6 +122,7 @@ private fun HaCodeRow(code: HaPairingCode, modifier: Modifier = Modifier) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HaLog(entries: List<HaLogEntry>, onClear: () -> Unit, modifier: Modifier = Modifier) {
     Column(
@@ -131,6 +136,7 @@ private fun HaLog(entries: List<HaLogEntry>, onClear: () -> Unit, modifier: Modi
         entries.forEach { entry -> HaLogRow(entry = entry) }
         TextButton(
             onClick = onClear,
+            shapes = ButtonDefaults.shapes(),
             modifier = Modifier.padding(horizontal = Tokens.Settings.surfacePadding),
         ) {
             Text(text = stringResource(R.string.ha_log_clear))

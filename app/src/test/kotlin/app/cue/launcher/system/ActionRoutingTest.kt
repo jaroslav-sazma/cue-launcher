@@ -5,6 +5,7 @@ import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
+import app.cue.launcher.system.bridge.LockMacOutcome
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -200,6 +201,15 @@ class ActionRoutingTest {
         assertEquals(ActionOutcome.GOOGLE_TV_MISSING, tvRemoteOutcome(ActionOutcome.TARGET_MISSING))
         assertEquals(ActionOutcome.DONE, tvRemoteOutcome(ActionOutcome.DONE))
         assertEquals(ActionOutcome.FAILED, tvRemoteOutcome(ActionOutcome.FAILED))
+    }
+
+    @Test
+    fun `Lock Mac says why the Mac was not locked`() {
+        assertEquals(ActionRoute.LockMac, systemActionRoute(SystemActionType.MAC_LOCK))
+        assertEquals(ActionOutcome.DONE, lockMacOutcome(LockMacOutcome.SENT))
+        assertEquals(ActionOutcome.MAC_NOT_PAIRED, lockMacOutcome(LockMacOutcome.NOT_PAIRED))
+        assertEquals(ActionOutcome.MAC_LOCAL_NETWORK, lockMacOutcome(LockMacOutcome.NO_LOCAL_NETWORK))
+        assertEquals(ActionOutcome.MAC_UNREACHABLE, lockMacOutcome(LockMacOutcome.UNREACHABLE))
     }
 
     @Test

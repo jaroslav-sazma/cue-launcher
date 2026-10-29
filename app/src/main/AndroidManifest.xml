@@ -19,6 +19,17 @@
         android:name="android.hardware.bluetooth"
         android:required="false" />
 
+    <!-- The Mac bridge: the system watches for the paired Mac's Bluetooth advertisement and binds
+         BridgeCompanionService while it is in range, so the launcher itself never scans. All three
+         are normal permissions, granted at install; none does anything before a Mac is paired. -->
+    <uses-permission android:name="android.permission.REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_RUN_IN_BACKGROUND" />
+    <uses-permission android:name="android.permission.REQUEST_COMPANION_USE_DATA_IN_BACKGROUND" />
+
+    <uses-feature
+        android:name="android.software.companion_device_setup"
+        android:required="false" />
+
     <!-- Not a runtime permission but a special access granted only in system settings. Without the
          declaration the launcher does not even appear in that settings list. -->
     <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
@@ -47,12 +58,14 @@
 
     <uses-permission android:name="android.permission.READ_CONTACTS" />
 
-    <!-- The only network traffic the launcher makes: calls to the user's own HA instance. -->
+    <!-- The only network traffic the launcher makes: calls to the user's own HA instance and the
+         Mac bridge's connections to the user's own paired Mac. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!-- Since Android 17 INTERNET no longer covers the local network. Requested just in time, and
-         only for a Home Assistant that lives on the home network: an instance the user picked in the
-         system picker is reached without it, and a Nabu Casa address is not local at all. -->
+         only for a Home Assistant that lives on the home network — an instance the user picked in
+         the system picker is reached without it, and a Nabu Casa address is not local at all — and
+         when the user pairs a Mac. -->
     <uses-permission android:name="android.permission.ACCESS_LOCAL_NETWORK" />
 
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
@@ -175,6 +188,31 @@
             </intent-filter>
         </activity>
 
+        <!-- Send to Mac in every app's text selection menu and in the share sheet. exported="true" is
+             required, or another app's selection toolbar could not start it. Disabled here and switched on only while
+             the bridge is on and paired (BridgeComponentGate). Opaque on purpose: behind a
+             translucent window the home screen would only pause, so its bridge session would stay
+             up and the connection opened here would replace it on the Mac. -->
+        <activity
+            android:name=".system.bridge.ProcessTextActivity"
+            android:enabled="false"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:label="@string/bridge_send_to_mac"
+            android:noHistory="true"
+            android:theme="@style/Theme.Cue">
+            <intent-filter>
+                <action android:name="android.intent.action.PROCESS_TEXT" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.SEND" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <data android:mimeType="text/plain" />
+            </intent-filter>
+        </activity>
+
         <!-- EmojiCompat is deliberately not initialized at startup: the initializer cost 5–17 ms on
              the main thread in bindApplication and its thread competed with the home screen start.
              On API >= 36 the system carries a current emoji font, so emoji still render — only
@@ -270,6 +308,19 @@
             <meta-data
                 android:name="android.service.notification.default_autobind_listenerservice"
                 android:value="false" />
+        </service>
+
+        <!-- Bound by the system while the paired Mac is in Bluetooth range. Disabled here and switched
+             on only while the bridge is on and paired (BridgeComponentGate): a disabled service is
+             never bound, so with the bridge off no part of it runs. -->
+        <service
+            android:name=".system.bridge.BridgeCompanionService"
+            android:enabled="false"
+            android:exported="true"
+            android:permission="android.permission.BIND_COMPANION_DEVICE_SERVICE">
+            <intent-filter>
+                <action android:name="android.companion.CompanionDeviceService" />
+            </intent-filter>
         </service>
     </application>
 

@@ -32,6 +32,7 @@ import app.cue.launcher.R
 import app.cue.launcher.data.aichat.CachedInventory
 import app.cue.launcher.data.aichat.CandidateCheck
 import app.cue.launcher.data.aichat.MAX_PASTED_CHARS
+import app.cue.launcher.data.aichat.bridgeNeededBy
 import app.cue.launcher.data.aichat.haNeedsOf
 import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TileContent
@@ -58,6 +59,8 @@ fun PasteScenarioScreen(
     inventory: CachedInventory,
     haConfigured: Boolean,
     onConfigureHa: () -> Unit,
+    bridgePaired: Boolean,
+    onConfigureBridge: () -> Unit,
     onBack: () -> Unit,
     onOpenDraft: (canonicalJson: String) -> Unit,
     modifier: Modifier = Modifier,
@@ -108,7 +111,7 @@ fun PasteScenarioScreen(
             when (val current = state.result) {
                 null -> if (state.checking) Checking()
                 is CandidateCheck.Valid -> ResultSection(resultView) {
-                    ValidDraft(current.scenario, haConfigured, onConfigureHa)
+                    ValidDraft(current.scenario, haConfigured, onConfigureHa, bridgePaired, onConfigureBridge)
                 }
                 is CandidateCheck.Invalid -> ResultSection(resultView) {
                     Problems(current) { copyText(context, aiChatCorrection(current.problems)) }
@@ -153,7 +156,13 @@ private fun ColumnScope.Checking() {
 }
 
 @Composable
-private fun ValidDraft(scenario: Scenario, haConfigured: Boolean, onConfigureHa: () -> Unit) {
+private fun ValidDraft(
+    scenario: Scenario,
+    haConfigured: Boolean,
+    onConfigureHa: () -> Unit,
+    bridgePaired: Boolean,
+    onConfigureBridge: () -> Unit,
+) {
     val widgetKeys = remember(scenario) {
         (scenario.content as? TileContent.AppWidget)?.let { placeholderKeysIn(it.appWidgetId) }.orEmpty().toSet()
     }
@@ -166,7 +175,9 @@ private fun ValidDraft(scenario: Scenario, haConfigured: Boolean, onConfigureHa:
         needs = haNeedsOf(scenario, haConfigured),
         placeholders = placeholders,
         widgetUnbound = widgetKeys.isNotEmpty(),
+        bridgeNeeded = bridgeNeededBy(scenario, bridgePaired),
         onConnectHa = onConfigureHa,
+        onConfigureBridge = onConfigureBridge,
     )
     if (taps.isNotEmpty() || extracts.isNotEmpty()) {
         SectionLabel(title = stringResource(R.string.ai_chat_runs_title))

@@ -8,17 +8,22 @@ import app.cue.launcher.engine.PostedNotification
 
 fun postedNotificationOf(notification: StatusBarNotification): PostedNotification {
     val posted = notification.notification
-    val extras = posted.extras
     return PostedNotification(
         key = notification.key,
         packageName = notification.packageName,
-        title = extras.text(Notification.EXTRA_TITLE, Notification.EXTRA_TITLE_BIG),
-        text = extras.text(Notification.EXTRA_TEXT, Notification.EXTRA_BIG_TEXT),
+        title = notificationTitleOf(posted),
+        text = notificationTextOf(posted),
         isGroupSummary = posted.flags and Notification.FLAG_GROUP_SUMMARY != 0,
         postTime = notification.postTime,
         ongoing = notification.isOngoing,
     )
 }
+
+internal fun notificationTitleOf(notification: Notification): String? =
+    notification.extras.text(Notification.EXTRA_TITLE, Notification.EXTRA_TITLE_BIG)
+
+internal fun notificationTextOf(notification: Notification): String? =
+    notification.extras.text(Notification.EXTRA_TEXT, Notification.EXTRA_BIG_TEXT)
 
 // What the app itself or the user took down. The rest is the system tidying up — an uninstall, a
 // snooze, a channel switched off, a profile paused — and none of that means the thing has ended.

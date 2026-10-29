@@ -10,9 +10,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedSecureTextField
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -42,6 +42,7 @@ import app.cue.launcher.feature.scenarios.JitRequirement
 import app.cue.launcher.feature.scenarios.builder.ConnectedChoice
 import app.cue.launcher.feature.scenarios.builder.ConnectedChoiceRow
 import app.cue.launcher.feature.scenarios.builder.rememberRequirementResolver
+import app.cue.launcher.feature.settings.SettingsGrantRequest
 import app.cue.launcher.system.localNetworkGranted
 
 @Composable
@@ -88,8 +89,10 @@ internal fun HaConnectionSection(
             HaCredentialMode.TOKEN -> HaTokenField(screen = screen)
         }
         if (screen.localNetworkNeeded) {
-            HaLocalNetworkRow(
+            SettingsGrantRequest(
+                action = stringResource(R.string.ha_local_network_grant),
                 onGrant = { permissions.resolve(JitRequirement.Grant(JitPermission.LOCAL_NETWORK)) },
+                note = stringResource(R.string.ha_local_network_note),
             )
         }
 
@@ -144,6 +147,7 @@ private fun HaCredentialChoice(screen: HaScreenState, modifier: Modifier = Modif
     )
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HaSignInRow(
     screen: HaScreenState,
@@ -163,6 +167,7 @@ private fun HaSignInRow(
         ) {
             FilledTonalButton(
                 onClick = onSignIn,
+                shapes = ButtonDefaults.shapes(),
                 enabled = screen.canSignIn && !screen.signingIn,
             ) {
                 GlyphIcon(
@@ -189,23 +194,9 @@ private fun HaSignInRow(
     }
 }
 
-@Composable
-private fun HaLocalNetworkRow(onGrant: () -> Unit, modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Tokens.Settings.rowGap),
-    ) {
-        Note(text = stringResource(R.string.ha_local_network_note))
-        Row(modifier = Modifier.padding(horizontal = Tokens.Settings.surfacePadding)) {
-            OutlinedButton(onClick = onGrant) {
-                Text(text = stringResource(R.string.ha_local_network_grant))
-            }
-        }
-    }
-}
-
 // The test is an action, not a place to navigate to, so it reads as a button with its answer next
 // to it. The per-endpoint results stay under their own field.
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun HaTestRow(
     screen: HaScreenState,
@@ -229,7 +220,11 @@ private fun HaTestRow(
         horizontalArrangement = Arrangement.spacedBy(Tokens.Settings.surfacePadding),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        FilledTonalButton(onClick = onTest, enabled = screen.canTest && !screen.testing) {
+        FilledTonalButton(
+            onClick = onTest,
+            shapes = ButtonDefaults.shapes(),
+            enabled = screen.canTest && !screen.testing,
+        ) {
             GlyphIcon(
                 name = GLYPH_TEST,
                 size = ButtonDefaults.IconSize,

@@ -15,6 +15,8 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+internal enum class ReplyDelivery { SENT, GONE, NO_REPLY_ACTION, FAILED }
+
 @SingleIn(AppScope::class)
 @Inject
 class NotificationReplySender(
@@ -22,16 +24,22 @@ class NotificationReplySender(
     private val link: NotificationListenerLink,
 ) {
 
-    suspend fun send(reply: NotificationReply, text: String): ActionOutcome = withContext(Dispatchers.IO) {
-        val draft = replyDraft(text) ?: return@withContext ActionOutcome.FAILED
-        val notification = link.activeNotification(reply.key)?.notification
-            ?: return@withContext ActionOutcome.NOTIFICATION_GONE
+    suspend fun send(reply: NotificationReply, text: String): ActionOutcome = when (deliver(reply.key, text)) {
+        ReplyDelivery.SENT -> ActionOutcome.DONE
+        ReplyDelivery.GONE, ReplyDelivery.NO_REPLY_ACTION -> ActionOutcome.NOTIFICATION_GONE
+        ReplyDelivery.FAILED -> ActionOutcome.FAILED
+    }
 
-        val target = replyTargetOf(notification) ?: return@withContext ActionOutcome.NOTIFICATION_GONE
+    internal suspend fun deliver(key: String, text: String): ReplyDelivery = withContext(Dispatchers.IO) {
+        val draft = replyDraft(text) ?: return@withContext ReplyDelivery.FAILED
+        val notification = link.activeNotification(key)?.notification
+            ?: return@withContext ReplyDelivery.GONE
+
+        val target = replyTargetOf(notification) ?: return@withContext ReplyDelivery.NO_REPLY_ACTION
         send(target, draft)
     }
 
-    private fun send(target: ReplyTarget, draft: String): ActionOutcome {
+    private fun send(target: ReplyTarget, draft: String): ReplyDelivery {
         val intent = Intent()
         val results = Bundle().apply { putCharSequence(target.input.resultKey, draft) }
         RemoteInput.addResultsToIntent(arrayOf(target.input), intent, results)
@@ -39,10 +47,10 @@ class NotificationReplySender(
         RemoteInput.setResultsSource(intent, RemoteInput.SOURCE_FREE_FORM_INPUT)
         return try {
             target.intent.send(application, 0, intent)
-            ActionOutcome.DONE
+            ReplyDelivery.SENT
         } catch (canceled: PendingIntent.CanceledException) {
             Log.w(NOTIFICATION_LISTENER_TAG, "The reply cannot be sent", canceled)
-            ActionOutcome.FAILED
+            ReplyDelivery.FAILED
         }
     }
 }

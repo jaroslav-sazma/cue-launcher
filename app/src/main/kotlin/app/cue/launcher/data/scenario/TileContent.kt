@@ -240,6 +240,9 @@ enum class SystemActionType(val jsonName: String) {
 
     @SerialName("show_place")
     SHOW_PLACE("show_place"),
+
+    @SerialName("mac_lock")
+    MAC_LOCK("mac_lock"),
     ;
 
     companion object {

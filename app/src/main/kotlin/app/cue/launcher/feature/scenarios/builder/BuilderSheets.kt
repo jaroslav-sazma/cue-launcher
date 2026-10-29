@@ -34,6 +34,7 @@ internal fun BuilderSheetHost(
     appActions: AppActionsRepository,
     widgets: WidgetHosting,
     ha: HaAccess,
+    onConfigureBridge: (() -> Unit)? = null,
 ) {
     val sheet = screen.sheet ?: return
 
@@ -42,14 +43,16 @@ internal fun BuilderSheetHost(
     val content = Modifier.imePadding()
     ModalSheet(onDismissRequest = { screen.show(null) }, sheetState = sheetState, opening = screen.opening) {
         when (sheet) {
-            is BuilderSheet.Catalog -> CatalogSheet(screen, sheet, content)
-            is BuilderSheet.Settings -> SettingsSheet(screen, state, permissions, ha, sheet, content)
+            is BuilderSheet.Catalog -> CatalogSheet(screen, sheet, state.bridgePaired, content)
+            is BuilderSheet.Settings ->
+                SettingsSheet(screen, state, permissions, ha, onConfigureBridge, sheet, content)
             is BuilderSheet.WidgetPicker -> WidgetPickerStep(screen, widgets)
             is BuilderSheet.WidgetBind -> WidgetBindStep(screen, widgets, sheet.widget, content)
             is BuilderSheet.ActionPicker -> ActionPickerStep(screen, sheet.slot, content)
             is BuilderSheet.AppPicker -> AppPickerStep(screen, launcherApps, sheet.request, content)
             is BuilderSheet.AppActions -> AppActionsStep(screen, appActions, sheet, content)
-            is BuilderSheet.SystemAction -> SystemActionStep(screen, permissions, sheet.slot, content)
+            is BuilderSheet.SystemAction ->
+                SystemActionStep(screen, permissions, sheet.slot, state.bridgePaired, content)
             is BuilderSheet.HaAction -> HaActionStep(screen, ha, sheet.slot, content)
             is BuilderSheet.UriAction -> UriActionStep(screen, sheet.slot, content)
             is BuilderSheet.IconPicker -> IconPickerStep(screen, sheet.item, content)
@@ -58,7 +61,12 @@ internal fun BuilderSheetHost(
 }
 
 @Composable
-private fun CatalogSheet(screen: BuilderState, sheet: BuilderSheet.Catalog, modifier: Modifier) {
+private fun CatalogSheet(
+    screen: BuilderState,
+    sheet: BuilderSheet.Catalog,
+    bridgePaired: Boolean,
+    modifier: Modifier,
+) {
     ConditionCatalog(
         draft = screen.draft,
         replacing = sheet.replacing,
@@ -66,6 +74,7 @@ private fun CatalogSheet(screen: BuilderState, sheet: BuilderSheet.Catalog, modi
         onPick = { type -> screen.show(BuilderSheet.Settings(newCondition(type), index = null)) },
         onClose = { screen.show(null) },
         modifier = modifier,
+        bridgePaired = bridgePaired,
     )
 }
 
@@ -75,6 +84,7 @@ private fun SettingsSheet(
     state: SystemState,
     permissions: ConditionPermissions,
     ha: HaAccess,
+    onConfigureBridge: (() -> Unit)?,
     sheet: BuilderSheet.Settings,
     modifier: Modifier,
 ) {
@@ -84,6 +94,7 @@ private fun SettingsSheet(
         state = state,
         permissions = permissions,
         ha = ha,
+        onConfigureBridge = onConfigureBridge,
         denied = screen.denied,
         modifier = modifier,
         diagnosis = sheet.diagnosis,

@@ -1,5 +1,6 @@
 package app.cue.launcher.feature.home
 
+import app.cue.launcher.R
 import app.cue.launcher.data.scenario.ActionApp
 import app.cue.launcher.data.scenario.AppProfile
 import app.cue.launcher.data.scenario.SystemActionType
@@ -9,6 +10,7 @@ import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
 import app.cue.launcher.designsystem.glyph.MdiGlyphs
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -70,8 +72,72 @@ class TemplateContentTest {
         val font = MdiGlyphs(mapOf("gate-open" to 0xF0299))
         val glyphs = mapOf("cover.gate" to listOf("mdi:gate-future", "mdi:gate-open"))
 
-        assertEquals(listOf("mdi:gate-open"), templateStateGlyphs(item, glyphs, font))
-        assertEquals(emptyList<String>(), templateStateGlyphs(item, emptyMap(), font))
+        assertEquals(listOf("mdi:gate-open"), templateStateGlyphs(item, glyphs, font, macLocked = null))
+        assertEquals(emptyList<String>(), templateStateGlyphs(item, emptyMap(), font, macLocked = null))
+    }
+
+    @Test
+    fun `Lock Mac draws the laptop it locks, a lock once locked and a crossed laptop while unknown`() {
+        val item = TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.MAC_LOCK)))
+        val font = MdiGlyphs(emptyMap())
+        val glyph = { locked: Boolean? -> templateGlyphName(item, templateStateGlyphs(item, emptyMap(), font, locked)) }
+
+        assertEquals("laptop", glyph(false))
+        assertEquals("lock", glyph(true))
+        assertEquals("laptop-off", glyph(null))
+        val chosen = TemplateItem(icon = "mdi:monitor", actions = item.actions)
+        assertEquals("monitor", templateGlyphName(chosen, templateStateGlyphs(chosen, emptyMap(), font, true)))
+    }
+
+    @Test
+    fun `a text tile that locks the Mac taps only while the Mac is unlocked`() {
+        val lock = TapAction.SystemAction(SystemActionType.MAC_LOCK)
+        val template = TileContent.Template(
+            layout = TemplateLayout.TEXT_ONLY,
+            text = "Lock the Mac",
+            items = listOf(TemplateItem(actions = listOf(lock))),
+        )
+
+        assertEquals(listOf(lock), template.enabledWholeTileActions(macLocked = false))
+        assertTrue(template.enabledWholeTileActions(macLocked = true).isEmpty())
+        assertTrue(template.enabledWholeTileActions(macLocked = null).isEmpty())
+        assertTrue(template.wholeTileEnabled(macLocked = false))
+        assertFalse(template.wholeTileEnabled(macLocked = true))
+        assertFalse(template.wholeTileEnabled(macLocked = null))
+        assertNull(template.wholeTileStateRes(macLocked = false))
+        assertEquals(R.string.tile_mac_locked, template.wholeTileStateRes(macLocked = true))
+        assertEquals(R.string.tile_mac_unavailable, template.wholeTileStateRes(macLocked = null))
+    }
+
+    @Test
+    fun `a button that locks the Mac among other actions ignores the Mac`() {
+        val actions = listOf(
+            TapAction.SystemAction(SystemActionType.MAC_LOCK),
+            TapAction.SystemAction(SystemActionType.DND_OFF),
+        )
+        val item = TemplateItem(actions = actions)
+        val template = TileContent.Template(layout = TemplateLayout.TEXT_ONLY, text = "Leaving", items = listOf(item))
+        val font = MdiGlyphs(emptyMap())
+
+        listOf(true, false, null).forEach { locked ->
+            assertEquals(actions, template.enabledWholeTileActions(locked)) { "locked=$locked" }
+            assertTrue(template.wholeTileEnabled(locked)) { "locked=$locked" }
+            assertNull(template.wholeTileStateRes(locked)) { "locked=$locked" }
+            assertNull(macLockStateRes(item, locked)) { "locked=$locked" }
+            assertEquals("laptop", templateGlyphName(item, templateStateGlyphs(item, emptyMap(), font, locked)))
+        }
+    }
+
+    @Test
+    fun `a text tile that does not lock the Mac has no lock state`() {
+        val template = TileContent.Template(
+            layout = TemplateLayout.TEXT_ONLY,
+            text = "Torch",
+            items = listOf(TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.FLASHLIGHT)))),
+        )
+
+        assertTrue(template.wholeTileEnabled(macLocked = null))
+        assertNull(template.wholeTileStateRes(macLocked = true))
     }
 
     @Test

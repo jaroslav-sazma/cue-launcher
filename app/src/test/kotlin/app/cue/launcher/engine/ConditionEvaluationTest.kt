@@ -42,6 +42,71 @@ class ConditionEvaluationTest {
     }
 
     @Test
+    fun `the Mac holds only while it is nearby`() {
+        val nearby = Condition.MacNearby()
+        val reading = { mac: MacBridgeState? -> stateConditionOutcome(nearby, SystemState(macBridge = mac)) }
+
+        assertEquals(ConditionOutcome.HOLDS, reading(MacBridgeState.NEARBY))
+        assertEquals(ConditionOutcome.FAILS, reading(MacBridgeState.AWAY))
+        assertEquals(ConditionOutcome.UNKNOWN, reading(null))
+    }
+
+    @Test
+    fun `with the bridge off the Mac is never nearby, and turned around it always holds`() {
+        val off = SystemState(macBridge = MacBridgeState.OFF)
+
+        assertEquals(ConditionOutcome.FAILS, stateConditionOutcome(Condition.MacNearby(), off))
+        assertEquals(ConditionOutcome.HOLDS, stateConditionOutcome(Condition.MacNearby(negate = true), off))
+    }
+
+    @Test
+    fun `the Mac counts as locked or unlocked only on its own word`() {
+        val reading = { negate: Boolean, lock: MacLockState? ->
+            stateConditionOutcome(Condition.MacLocked(negate = negate), SystemState(macLock = lock))
+        }
+
+        assertEquals(ConditionOutcome.HOLDS, reading(false, MacLockState.LOCKED))
+        assertEquals(ConditionOutcome.FAILS, reading(false, MacLockState.UNLOCKED))
+        assertEquals(ConditionOutcome.FAILS, reading(true, MacLockState.LOCKED))
+        assertEquals(ConditionOutcome.HOLDS, reading(true, MacLockState.UNLOCKED))
+    }
+
+    @Test
+    fun `a Mac that has not reported its screen is neither locked nor unlocked`() {
+        listOf(MacLockState.UNREPORTED, null).forEach { lock ->
+            listOf(false, true).forEach { negate ->
+                assertEquals(
+                    ConditionOutcome.UNKNOWN,
+                    stateConditionOutcome(Condition.MacLocked(negate = negate), SystemState(macLock = lock)),
+                ) { "lock=$lock negate=$negate" }
+            }
+        }
+    }
+
+    @Test
+    fun `with the bridge off or the Mac away neither form of Mac locked holds`() {
+        listOf(MacBridgeState.OFF, MacBridgeState.AWAY).forEach { mac ->
+            val state = SystemState(macBridge = mac, macLock = MacLockState.UNREPORTED)
+
+            assertEquals(ConditionOutcome.UNKNOWN, stateConditionOutcome(Condition.MacLocked(), state)) { "$mac" }
+            assertEquals(
+                ConditionOutcome.UNKNOWN,
+                stateConditionOutcome(Condition.MacLocked(negate = true), state),
+            ) { "negated, $mac" }
+        }
+    }
+
+    @Test
+    fun `a gate on Mac not locked lets nothing through while the Mac is away`() {
+        val away = SystemState(macBridge = MacBridgeState.AWAY, macLock = MacLockState.UNREPORTED)
+        val unlocked = SystemState(macBridge = MacBridgeState.NEARBY, macLock = MacLockState.UNLOCKED)
+        val notLocked = scenario("lock-it", conditions = listOf(Condition.MacLocked(negate = true)))
+
+        assertEquals(ConditionOutcome.UNKNOWN, stateGateOutcome(notLocked, away))
+        assertEquals(ConditionOutcome.HOLDS, stateGateOutcome(notLocked, unlocked))
+    }
+
+    @Test
     fun `bt without an address holds for any connected device`() {
         val state = SystemState(bluetooth = BluetoothState(setOf("AA:BB:CC:DD:EE:FF")))
 
@@ -106,6 +171,8 @@ class ConditionEvaluationTest {
             bluetooth = BluetoothState(setOf("AA:BB:CC:DD:EE:FF")),
             wifi = WifiState(connected = true, ssid = "Doma-5G"),
             clock = ClockState(minuteOfDay = 19 * MINUTES_PER_HOUR, isoDayOfWeek = 1),
+            macBridge = MacBridgeState.NEARBY,
+            macLock = MacLockState.LOCKED,
         )
 
         STATE_CONDITIONS.forEach { condition ->
@@ -331,6 +398,8 @@ class ConditionEvaluationTest {
             Condition.RingerMode(RingerModeState.SILENT),
             Condition.RingerMode(RingerModeState.DND),
             Condition.CalendarEvent(),
+            Condition.MacNearby(),
+            Condition.MacLocked(),
         )
     }
 }

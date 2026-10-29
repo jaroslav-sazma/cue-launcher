@@ -109,11 +109,13 @@ internal fun SystemActionStep(
     screen: BuilderState,
     permissions: ConditionPermissions,
     slot: ActionSlot,
+    bridgePaired: Boolean,
     modifier: Modifier,
 ) {
     SystemActionSheetContent(
         initial = (screen.actionAt(slot) as? TapAction.SystemAction)?.action,
         permissions = permissions,
+        bridgePaired = bridgePaired,
 
         onConfirm = { action ->
             screen.setAction(slot, TapAction.SystemAction(action), actionLabel = null)

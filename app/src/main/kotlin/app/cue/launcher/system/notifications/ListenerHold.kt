@@ -5,7 +5,9 @@ package app.cue.launcher.system.notifications
 // notification condition, or the badges. With nothing needing them it is released, so no post of
 // any app wakes the process. The need is kept on disk: when the system restarts the process to bind
 // the listener again, it has to decide before any screen has loaded a scenario. A sample picked in
-// the builder binds it only for the rest of the session.
+// the builder binds it only for the rest of the session; the Mac bridge binds it while a paired Mac
+// is in reach, for each holder on its own: the session link while the home screen is started, and
+// the companion window while the system keeps it bound.
 internal class ListenerHold(private val store: NeedStore) {
 
     private var sessions = 0
@@ -18,12 +20,14 @@ internal class ListenerHold(private val store: NeedStore) {
 
     private var sampling = false
 
+    private var bridges = 0
+
     private var connectedBefore = false
 
     private var unheardSince: Long? = null
 
     val wanted: Boolean
-        @Synchronized get() = needed || sampling
+        @Synchronized get() = needed || sampling || bridges > 0
 
     @Synchronized
     fun enter() {
@@ -37,7 +41,7 @@ internal class ListenerHold(private val store: NeedStore) {
         sessions = (sessions - 1).coerceAtLeast(0)
         if (sessions > 0 || !sampling) return false
         sampling = false
-        val release = !needed
+        val release = !needed && bridges == 0
         if (release) released()
         return release
     }
@@ -55,7 +59,7 @@ internal class ListenerHold(private val store: NeedStore) {
         if (!needed) return false
         needed = false
         store.write(false)
-        val release = !sampling
+        val release = !sampling && bridges == 0
         if (release) released()
         return release
     }
@@ -67,6 +71,20 @@ internal class ListenerHold(private val store: NeedStore) {
         if (sessions == 0) return false
         sampling = true
         return true
+    }
+
+    @Synchronized
+    fun bridge() {
+        bridges++
+    }
+
+    // True when the bridge's last holder was the last to want the listener, which is then released.
+    @Synchronized
+    fun unbridge(): Boolean {
+        if (bridges == 0 || --bridges > 0) return false
+        val release = !needed && !sampling
+        if (release) released()
+        return release
     }
 
     // The moment to replay from, as what is still posted is checked against it. The first connect of

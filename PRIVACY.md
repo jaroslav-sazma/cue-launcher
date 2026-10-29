@@ -1,12 +1,12 @@
 # Privacy Policy — Cue: React & Act
 
-*Last updated: 2026-10-11. Applies to the Android app `app.cue.launcher`, developed by Jaroslav
+*Last updated: 2026-10-29. Applies to the Android app `app.cue.launcher`, developed by Jaroslav
 Sazma ([contact](#contact)).*
 
-**Cue: itself sends nothing to its developer or to any third party.** The app has no telemetry, no
-analytics, no ads, no crash reporting and no accounts. Everything it reads is processed on your
-device. The only data the app sends goes to your own Home Assistant, if you set one up, and is
-listed under *Network* below.
+**Cue: React & Act itself sends nothing to its developer or to any third party.** The app has no
+telemetry, no analytics, no ads, no crash reporting and no accounts. Everything it reads is
+processed on your device. The only data the app sends goes to your own Home Assistant, if you set
+one up, and to your own Mac, if you pair one through the optional Mac bridge; both are listed below.
 
 ## On-device processing
 
@@ -43,11 +43,50 @@ capabilities that come with them; the names and addresses of paired Bluetooth de
 while the app has the Bluetooth permission; and your Home Assistant entities and the services your
 instance offers, offered only once you set one up. What you untick, and what is not offered, is not
 read at all for the description. The app hands the description to an app your phone chooses through
-Android's sharing, or, if you ask, saves it as a file where you choose. For it, Cue: itself contacts
-nothing but your own Home Assistant, if you set one up and leave it ticked, to read its entity and
-service lists, and sends nothing anywhere. A scenario you paste back is checked against all of it,
-unticked parts included: on the phone, asking nothing but your own Home Assistant, if you set one
-up. It becomes one of your scenarios only if you save it in the builder.
+Android's sharing, or, if you ask, saves it as a file where you choose. For it, Cue: React & Act
+itself contacts nothing but your own Home Assistant, if you set one up and leave it ticked, to read
+its entity and service lists, and sends nothing anywhere. A scenario you paste back is checked
+against all of it, unticked parts included: on the phone, asking nothing but your own Home
+Assistant, if you set one up. It becomes one of your scenarios only if you save it in the builder.
+
+## The Mac bridge
+
+The Mac bridge is optional and off by default. When you turn it on and pair the phone with
+Cue: Relay & Reply on your own Mac, Cue: React & Act sends to that one Mac, and to nothing else:
+
+- the notifications on the phone that the bridge shows on the Mac — the app's name, package name and
+  icon, the title and text, the time, the conversation it belongs to and whether it can be answered
+  — and the moment each one goes away. Silent, ongoing and media notifications and the app's own are
+  not sent, nor are those of apps you keep off the Mac or those your lock screen does not show; one
+  whose content your lock screen hides goes the way the lock screen shows it, without that content;
+- for each reply you type on the Mac, whether the phone could hand it to the app;
+- text you send with *Send to Mac*. Text you copy on the phone is never sent by itself;
+- whether *Clipboard from the Mac* is on, so that the Mac sends no copied text while it is off;
+- a request to lock the Mac's screen, each time you run *Lock the Mac* yourself — with a tap on a
+  tile, a swipe or anywhere else you put it — and never by itself.
+
+From the Mac it receives which notifications you closed there, the replies you typed, which it hands
+to the notification's own app, text you copied on the Mac, which it puts on the phone's clipboard
+while *Clipboard from the Mac* is on, and whether the Mac's screen is locked, which the phone keeps
+in memory only while the Mac is in range; the Mac sends no copied text while
+*Send Clipboard to Phone* is off in its Settings. Text that arrives while the phone is locked waits
+in memory until you unlock it, and is dropped then if it was copied longer ago than the limit you
+set; it is also dropped about a minute after the phone leaves the Mac's range.
+
+The phone and the Mac talk to each other directly, over your local network and over Bluetooth;
+nothing passes through a server or the internet. When you pair them, each device learns the other's
+key: you confirm the pairing by typing the six-digit code the phone shows into the Mac, and both
+devices then show the Mac's certificate so you can compare it. From then on every connection is
+mutually authenticated and end-to-end encrypted, and the phone talks to no other device in the
+bridge's name. Apart from a few seconds' look on the local network while you pair, the phone does
+not search for the Mac: Android watches for the paired Mac's Bluetooth signal on the app's behalf.
+On the Mac, notifications appear in Notification Center and copied text on its clipboard. So that
+macOS can show a notification as a message from a person, the Mac app also hands macOS's Siri &
+Suggestions on that Mac the sender's name (the notification's title), the app's name, package name
+and icon and an identifier of the conversation — never the text; this stays on the Mac and is
+removed when you unpair there. The Mac app passes nothing on to anyone else; what it stores is
+described in its own
+[privacy policy](https://github.com/jaroslav-sazma/cue-bridge/blob/main/PRIVACY.md).
 
 ## Stored on your device
 
@@ -72,6 +111,11 @@ The app keeps its data in its private storage on the phone:
   key in the Android Keystore;
 - the list of default icons your Home Assistant uses, read from it when a tile needs one and again
   after it updates;
+- for the Mac bridge, the paired Mac's name, address and certificate fingerprint, and the key for
+  its Bluetooth messages, encrypted with a key in the Android Keystore, where the phone's own bridge
+  key is kept as well. Turning the bridge off or unpairing deletes all of it. The list of apps you
+  keep off the Mac stays when you unpair and is deleted when you turn the bridge off. Notifications
+  and copied text sent to the Mac are not stored on the phone;
 - the last description assembled for an AI chat, as a file in the app's cache, replaced by the next
   one, and, in the settings, what you chose to include and whether a pasted answer is still awaited.
 
@@ -79,16 +123,18 @@ Contacts, calendar entries and what is playing are read when needed and not stor
 above is included in Android's cloud backup or carried over when you move to a new phone.
 
 Exporting scenarios or the configuration writes a file to the place you choose. The file never
-contains the Home Assistant addresses, the credential or the pairing secret, and Bluetooth addresses
-and Wi-Fi names in it are replaced with placeholders. It does contain your scenarios as written —
-names, the apps a notification rule listens to and the text it looks for, Home Assistant entities
-and the data sent with them, links, and app shortcut ids (a messaging app's shortcut often names a
-contact) — and, for a whole configuration, the home screen layout and the list of hidden apps.
+contains the Home Assistant addresses, the credential, the pairing secret or anything of the Mac
+bridge, and Bluetooth addresses and Wi-Fi names in it are replaced with placeholders. It does
+contain your scenarios as written — names, the apps a notification rule listens to and the text it
+looks for, Home Assistant entities and the data sent with them, links, and app shortcut ids (a
+messaging app's shortcut often names a contact) — and, for a whole configuration, the home screen
+layout and the list of hidden apps.
 
 ## Network
 
-The app's own network traffic goes only to your Home Assistant instance, and only if you set one
-up:
+The app's own network traffic goes only to your Home Assistant instance and to the Mac you paired,
+and only if you set them up. What goes to the Mac is described under *The Mac bridge* above; for
+Home Assistant:
 
 - **Finding the instance.** When you tap *Find my Home Assistant*, Android searches the local
   network for Home Assistant instances and shows you the ones it finds; the app learns only the one
@@ -136,8 +182,10 @@ GitHub's own privacy statement applies to that page.
 All app data lives on your device. Clearing the launch history or the event log in the app deletes
 them; deleting a scenario deletes what it stored. Uninstalling the app removes everything. What the
 app wrote into your Home Assistant — the blueprint and the sign-in session — stays there until you
-remove it in Home Assistant.
+remove it in Home Assistant. Turning the Mac bridge off or unpairing deletes the pairing on the
+phone; notifications already shown on the Mac stay there until you close them or unpair the Mac
+too.
 
 ## Contact
 
-Cue: is developed by Jaroslav Sazma. Questions about this policy: apps@sazmovi.cz
+Cue: React & Act is developed by Jaroslav Sazma. Questions about this policy: apps@sazmovi.cz

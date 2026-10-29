@@ -29,6 +29,8 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntRect
 import app.cue.launcher.R
@@ -198,7 +200,8 @@ private fun BentoTileContent(
     }
     val template = scenario.content as? TileContent.Template
     val launcherWidget = (scenario.content as? TileContent.LauncherWidget)?.widget
-    val tileActions = template?.wholeTileActions.orEmpty()
+    val tileActions = template?.enabledWholeTileActions(entry.macLocked).orEmpty()
+    val tileState = template?.wholeTileStateRes(entry.macLocked)?.let { stringResource(it) }
     var bounds by remember(scenario.id) { mutableStateOf<Rect?>(null) }
     var anchorBounds by remember(scenario.id) { mutableStateOf(IntRect.Zero) }
     var menuOpen by rememberSaveable(scenario.id) { mutableStateOf(false) }
@@ -219,7 +222,8 @@ private fun BentoTileContent(
                 onLongClick = { menuOpen = true }
                     .takeIf { entry.isClosable || reply != null || configure != null },
                 longClickLabel = stringResource(R.string.tile_menu),
-            ),
+            )
+            .semantics { tileState?.let { stateDescription = it } },
     ) {
         when {
             template != null -> TemplateTileContent(
@@ -231,6 +235,7 @@ private fun BentoTileContent(
                 accented = entry.accentedEntities,
                 haGlyphs = entry.haGlyphs,
                 onReply = { replyOpen = true }.takeIf { reply != null },
+                macLocked = entry.macLocked,
             )
 
             launcherWidget != null -> LauncherWidgetContent(widget = launcherWidget)
@@ -362,9 +367,10 @@ private fun BentoChipIcon(
             level = GlassLevel.REGULAR,
 
             glyphTint = templateIconTint(item, entry.payload.semantic, entry.accentedEntities),
-            stateGlyphs = templateStateGlyphs(item, entry.haGlyphs, LocalMdiGlyphs.current),
+            stateGlyphs = templateStateGlyphs(item, entry.haGlyphs, LocalMdiGlyphs.current, entry.macLocked),
             contentDescription = entry.scenario.tileLabel(),
             onLongClick = onLongClick,
+            macLocked = entry.macLocked,
         )
 
         else -> TileSurface(
@@ -419,7 +425,9 @@ private fun FolderPreviewIcon(entry: QueueEntry, launcherApps: LauncherAppsRepos
         }
         return
     }
-    val stateGlyphs = item?.let { templateStateGlyphs(it, entry.haGlyphs, LocalMdiGlyphs.current) }.orEmpty()
+    val stateGlyphs = item
+        ?.let { templateStateGlyphs(it, entry.haGlyphs, LocalMdiGlyphs.current, entry.macLocked) }
+        .orEmpty()
     GlyphIcon(
         name = item?.let { templateGlyphName(it, stateGlyphs) },
         size = Tokens.Folder.glyphInField,

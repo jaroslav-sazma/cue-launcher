@@ -7,6 +7,8 @@ import app.cue.launcher.data.scenario.EndEventType
 import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.WifiMode
 import app.cue.launcher.engine.DEFAULT_INSTANT_DURATION_SEC
+import app.cue.launcher.engine.MacBridgeState
+import app.cue.launcher.engine.SystemState
 
 enum class ConditionSection {
 
@@ -26,6 +28,8 @@ val CONDITION_CATALOG: List<ConditionType> = listOf(
     ConditionType.RINGER_MODE,
     ConditionType.CALENDAR_EVENT,
     ConditionType.HA_STATE,
+    ConditionType.MAC_NEARBY,
+    ConditionType.MAC_LOCKED,
     ConditionType.ALARM,
     ConditionType.BT_DISCONNECTED,
     ConditionType.NOTIFICATION,
@@ -33,6 +37,17 @@ val CONDITION_CATALOG: List<ConditionType> = listOf(
     ConditionType.PLACE_SAVED,
     ConditionType.HA_EVENT,
 )
+
+// Mac nearby predates this and stays listed with its set-up note; the lock is offered only once a Mac
+// is paired.
+private val PAIRED_MAC_CONDITIONS: Set<ConditionType> = setOf(ConditionType.MAC_LOCKED)
+
+fun conditionCatalog(bridgePaired: Boolean): List<ConditionType> =
+    if (bridgePaired) CONDITION_CATALOG else CONDITION_CATALOG.filterNot { it in PAIRED_MAC_CONDITIONS }
+
+// Not read yet counts as not paired: the entries appear a moment later rather than vanish under a tap.
+val SystemState.bridgePaired: Boolean
+    get() = macBridge != null && macBridge != MacBridgeState.OFF
 
 fun conditionSection(type: ConditionType): ConditionSection =
     if (type.isInstant) ConditionSection.INSTANT else ConditionSection.STATE
@@ -63,6 +78,8 @@ fun newCondition(type: ConditionType): Condition = when (type) {
     ConditionType.RINGER_MODE -> Condition.RingerMode(RingerModeState.SILENT)
     ConditionType.CALENDAR_EVENT -> Condition.CalendarEvent()
     ConditionType.HA_STATE -> Condition.HaState(entity = "", states = emptyList())
+    ConditionType.MAC_NEARBY -> Condition.MacNearby()
+    ConditionType.MAC_LOCKED -> Condition.MacLocked()
     ConditionType.TIME_INSTANT -> Condition.TimeInstant(
         at = DEFAULT_INSTANT_AT,
         durationSec = DEFAULT_INSTANT_DURATION_SEC,
@@ -99,6 +116,8 @@ fun conditionTypeOf(condition: Condition): ConditionType = when (condition) {
     is Condition.RingerMode -> ConditionType.RINGER_MODE
     is Condition.CalendarEvent -> ConditionType.CALENDAR_EVENT
     is Condition.HaState -> ConditionType.HA_STATE
+    is Condition.MacNearby -> ConditionType.MAC_NEARBY
+    is Condition.MacLocked -> ConditionType.MAC_LOCKED
     is Condition.TimeInstant -> ConditionType.TIME_INSTANT
     is Condition.Alarm -> ConditionType.ALARM
     is Condition.BtDisconnected -> ConditionType.BT_DISCONNECTED

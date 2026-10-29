@@ -3,7 +3,10 @@ package app.cue.launcher.feature.scenarios.builder
 import app.cue.launcher.data.scenario.Condition
 import app.cue.launcher.data.scenario.ConditionType
 import app.cue.launcher.engine.DEFAULT_INSTANT_DURATION_SEC
+import app.cue.launcher.engine.MacBridgeState
+import app.cue.launcher.engine.SystemState
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.Test
@@ -17,6 +20,24 @@ class ConditionCatalogTest {
     }
 
     @Test
+    fun `Mac locked is offered only with a Mac paired, Mac nearby always`() {
+        val unpaired = conditionCatalog(bridgePaired = false)
+
+        assertFalse(ConditionType.MAC_LOCKED in unpaired)
+        assertTrue(ConditionType.MAC_NEARBY in unpaired)
+        assertEquals(CONDITION_CATALOG - ConditionType.MAC_LOCKED, unpaired)
+        assertEquals(CONDITION_CATALOG, conditionCatalog(bridgePaired = true))
+    }
+
+    @Test
+    fun `a bridge counts as paired only once it reads as more than off`() {
+        assertFalse(SystemState().bridgePaired)
+        assertFalse(SystemState(macBridge = MacBridgeState.OFF).bridgePaired)
+        assertTrue(SystemState(macBridge = MacBridgeState.AWAY).bridgePaired)
+        assertTrue(SystemState(macBridge = MacBridgeState.NEARBY).bridgePaired)
+    }
+
+    @Test
     fun `a moment in time starts at the alarm`() {
         val moment = newCondition(ConditionType.ALARM)
 
@@ -25,7 +46,7 @@ class ConditionCatalogTest {
     }
 
     @Test
-    fun `sections have nine state and six instant`() {
+    fun `sections have eleven state and six instant`() {
         val sections = catalogSections(CONDITION_CATALOG)
 
         assertEquals(listOf(ConditionSection.STATE, ConditionSection.INSTANT), sections.map { it.section })
@@ -107,7 +128,7 @@ class ConditionCatalogTest {
     }
 
     private companion object {
-        const val STATE_COUNT = 9
+        const val STATE_COUNT = 11
         const val INSTANT_COUNT = 6
 
         val LONGER_DEFAULTS = setOf(ConditionType.NOTIFICATION_ENDED, ConditionType.PLACE_SAVED)

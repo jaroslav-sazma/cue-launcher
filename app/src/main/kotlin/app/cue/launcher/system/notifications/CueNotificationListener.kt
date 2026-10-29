@@ -72,6 +72,10 @@ class CueNotificationListener : NotificationListenerService() {
         if (sbn == null || !current) return
         badges?.posted(sbn)
         connection?.events?.trySend(Event.Posted(sbn))
+        link?.mirrors?.takeIf { it.isNotEmpty() }?.let { sinks ->
+            val rankings = currentRanking
+            sinks.forEach { it.posted(sbn, rankings) }
+        }
     }
 
     // The overload with the reason is the one the system calls; the shorter ones only exist for it to
@@ -80,6 +84,7 @@ class CueNotificationListener : NotificationListenerService() {
         if (sbn == null || !current) return
         badges?.removed(sbn)
         connection?.events?.trySend(Event.Removed(sbn, reason, at = System.currentTimeMillis()))
+        link?.mirrors?.forEach { it.removed(sbn) }
     }
 
     private val current: Boolean

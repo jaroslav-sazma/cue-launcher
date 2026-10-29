@@ -41,9 +41,10 @@ internal fun ConditionCatalog(
     onPick: (ConditionType) -> Unit,
     onClose: () -> Unit,
     modifier: Modifier = Modifier,
+    bridgePaired: Boolean = false,
 ) {
     var query by remember { mutableStateOf("") }
-    val entries = rememberCatalogEntries()
+    val entries = rememberCatalogEntries(bridgePaired)
     val matched = remember(entries, query) { searchCatalog(entries, query) }
     val sections = remember(matched) { catalogSections(matched) }
 
@@ -154,6 +155,8 @@ private fun conditionTypeGlyph(type: ConditionType): String = when (type) {
     ConditionType.RINGER_MODE -> "volume-high"
     ConditionType.CALENDAR_EVENT -> "calendar"
     ConditionType.HA_STATE -> "home-automation"
+    ConditionType.MAC_NEARBY -> "laptop"
+    ConditionType.MAC_LOCKED -> "lock"
     ConditionType.TIME_INSTANT, ConditionType.ALARM -> "timer-outline"
     ConditionType.BT_DISCONNECTED -> "bluetooth-off"
     ConditionType.NOTIFICATION -> "bell-outline"

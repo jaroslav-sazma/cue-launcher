@@ -74,6 +74,7 @@ fun ScenarioBuilderScreen(
     modifier: Modifier = Modifier,
 
     ha: HaAccess = HaAccess.NOT_CONFIGURED,
+    onConfigureBridge: (() -> Unit)? = null,
     initial: Scenario? = null,
     initialStep: Int = FIRST_STEP,
 ) {
@@ -140,6 +141,7 @@ fun ScenarioBuilderScreen(
         appActions = appActions,
         widgets = widgets,
         ha = ha,
+        onConfigureBridge = onConfigureBridge,
     )
 
     if (leaving) WizardDiscardDialog(onDismiss = { leaving = false }, onDiscard = onClose)

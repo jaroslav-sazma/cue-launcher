@@ -2,4 +2,42 @@
 <resources>
     <!-- Tells the debug build apart from the release one in the home app picker and the drawer. -->
     <string name="app_name">Cue: debug</string>
+
+    <!-- The bridge's fixture notifications, which exist in debug builds only. -->
+    <string name="bridge_fixture_section">Fixture notifications (debug build)</string>
+    <string name="bridge_fixture_note">Posts test notifications for the bridge to mirror. Pressing a button again updates its notification in place. The same fixtures can be posted over adb; CONTRIBUTING.md lists the commands.</string>
+    <string name="bridge_fixture_denied">Notifications are not allowed for this build, so no fixture can be posted.</string>
+    <string name="bridge_fixture_plain">Plain</string>
+    <string name="bridge_fixture_updating">Updating</string>
+    <string name="bridge_fixture_grouped">Group</string>
+    <string name="bridge_fixture_reply">Reply</string>
+    <string name="bridge_fixture_progress">Progress</string>
+    <string name="bridge_fixture_low">Low importance</string>
+    <string name="bridge_fixture_cancel">Cancel all</string>
+    <string name="bridge_fixture_channel_default">Bridge fixtures</string>
+    <string name="bridge_fixture_channel_low">Bridge fixtures, low importance</string>
+    <string name="bridge_fixture_plain_title">Plain fixture</string>
+    <string name="bridge_fixture_plain_text">A plain notification for the bridge to mirror.</string>
+    <string name="bridge_fixture_updating_title">Updating fixture</string>
+    <string name="bridge_fixture_updating_text">Updated at %1$s</string>
+    <string name="bridge_fixture_grouped_title">Group fixture %1$d</string>
+    <string name="bridge_fixture_grouped_text">Child %1$d of %2$d in one group.</string>
+    <string name="bridge_fixture_grouped_summary">Group fixture summary</string>
+    <string name="bridge_fixture_grouped_summary_text">The summary stays on the phone.</string>
+    <string name="bridge_fixture_reply_title">Reply fixture</string>
+    <string name="bridge_fixture_reply_text">Reply to this here or on the Mac.</string>
+    <string name="bridge_fixture_reply_action">Reply</string>
+    <string name="bridge_fixture_reply_received">Reply received, length %1$d</string>
+    <string name="bridge_fixture_progress_title">Progress fixture</string>
+    <string name="bridge_fixture_progress_text">Working on it…</string>
+    <string name="bridge_fixture_low_title">Low-importance fixture</string>
+    <string name="bridge_fixture_low_text">This one stays on the phone.</string>
+    <string name="bridge_fixture_private">Private</string>
+    <string name="bridge_fixture_private_title">Private fixture</string>
+    <string name="bridge_fixture_private_text">The lock screen hides this text when it hides sensitive content.</string>
+    <string name="bridge_fixture_private_public_title">Private fixture, public version</string>
+    <string name="bridge_fixture_private_public_text">What the lock screen shows instead.</string>
+    <string name="bridge_fixture_secret">Secret</string>
+    <string name="bridge_fixture_secret_title">Secret fixture</string>
+    <string name="bridge_fixture_secret_text">This one stays on the phone.</string>
 </resources>

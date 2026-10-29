@@ -3,11 +3,13 @@ package app.cue.launcher.engine
 import app.cash.turbine.test
 import app.cue.launcher.data.scenario.Activation
 import app.cue.launcher.data.scenario.Condition
+import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceTimeBy
@@ -28,11 +30,14 @@ class ScenarioEngineTest {
 
     private val haStates = FakeHaStateSource()
 
+    private val macLocked = MutableStateFlow<Boolean?>(null)
+
     private fun TestScope.engine() = ScenarioEngine(
         scenarios = scenarios,
         activations = activations,
         clock = WallClock { testScheduler.currentTime },
         haStates = haStates,
+        macLock = MacLockSource { macLocked },
     )
 
     private fun ids(queue: SizeClassQueue) = queue.entries.map { it.scenario.id }
@@ -232,7 +237,43 @@ class ScenarioEngineTest {
 
         assertEquals(1, haStates.refreshes)
     }
+
+    @Test
+    fun `a Lock Mac tile carries the Mac's lock state as it changes`() = runTest {
+        val engine = engine()
+        scenarios.emit(fallback("mac").copy(content = macLockTemplate()))
+
+        engine.queues.test {
+            assertNull(awaitItem().small.entries.single().macLocked)
+
+            macLocked.value = false
+            assertEquals(false, awaitItem().small.entries.single().macLocked)
+
+            macLocked.value = true
+            assertEquals(true, awaitItem().small.entries.single().macLocked)
+        }
+    }
+
+    @Test
+    fun `without a Lock Mac tile the lock state is not followed`() = runTest {
+        val engine = engine()
+        scenarios.emit(fallback("trvaly"))
+
+        engine.queues.test {
+            awaitItem()
+
+            assertEquals(0, macLocked.subscriptionCount.value)
+            macLocked.value = true
+            runCurrent()
+            expectNoEvents()
+        }
+    }
 }
+
+private fun macLockTemplate() = TileContent.Template(
+    layout = TemplateLayout.ICON_TEXT,
+    items = listOf(TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.MAC_LOCK)))),
+)
 
 private fun haTemplate(text: String) = TileContent.Template(
     layout = TemplateLayout.ICON_TEXT,

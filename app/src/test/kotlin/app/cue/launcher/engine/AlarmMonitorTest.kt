@@ -36,6 +36,7 @@ class AlarmMonitorTest {
                 activations = activations,
                 clock = clock,
                 haStates = HaStateSource.NONE,
+                macLock = MacLockSource.NONE,
             ),
             memory = alarmMemory,
             clock = clock,

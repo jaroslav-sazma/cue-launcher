@@ -200,6 +200,8 @@ class ConditionSummaryTest {
             Condition.RingerMode(RingerModeState.SILENT),
             Condition.CalendarEvent(),
             Condition.HaState(entity = "binary_sensor.door", states = listOf("on")),
+            Condition.MacNearby(),
+            Condition.MacLocked(),
             Condition.TimeInstant(at = "17:00"),
             Condition.Alarm(),
             Condition.BtDisconnected(),

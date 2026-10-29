@@ -8,6 +8,8 @@ import app.cue.launcher.engine.ConditionMonitor
 import app.cue.launcher.engine.ScenarioEngine
 import app.cue.launcher.engine.ScenarioSource
 import app.cue.launcher.engine.needsNotificationPosts
+import app.cue.launcher.system.bridge.BridgeComponentGate
+import app.cue.launcher.system.bridge.BridgeSessionLink
 import app.cue.launcher.system.iconpack.IconPackRepository
 import app.cue.launcher.system.notifications.NotificationListenerLink
 import app.cue.launcher.system.widget.WidgetHostMaintenance
@@ -17,7 +19,9 @@ import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -48,6 +52,8 @@ class ForegroundSession(
     private val scenarios: ScenarioSource,
     private val activations: ActivationStore,
     private val settings: SettingsRepository,
+    private val bridgeLink: Lazy<BridgeSessionLink>,
+    private val bridgeComponentGate: BridgeComponentGate,
 ) {
 
     private val prepared = AtomicBoolean(false)
@@ -62,6 +68,7 @@ class ForegroundSession(
         alarmReceiverGate.start(processScope)
         contentSeed.start(processScope)
         widgetHostMaintenance.start(processScope)
+        bridgeComponentGate.start(processScope)
         processScope.launch { layoutMaintenance.seedDock() }
         processScope.launch { followNotificationNeed() }
     }
@@ -73,6 +80,14 @@ class ForegroundSession(
         isolated("Condition monitor") { conditionMonitor.runForeground() }
         isolated("Layout maintenance") { layoutMaintenance.runForeground() }
         isolated("Notification listener hold") { notificationListener.holdSession() }
+        isolated("Bridge session") { followBridge() }
+    }
+
+    // With the bridge off this flag is the only thing on the path: the link is not even constructed.
+    private suspend fun followBridge() {
+        settings.settings.map { it.bridge.enabled }.distinctUntilChanged().collectLatest { enabled ->
+            if (enabled) bridgeLink.value.run()
+        }
     }
 
     // A failure would otherwise cancel its siblings and reach the activity's lifecycleScope, taking

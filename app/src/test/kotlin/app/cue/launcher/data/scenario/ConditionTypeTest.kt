@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 class ConditionTypeTest {
 
     @Test
-    fun `there are nine state condition types and seven instant ones`() {
-        assertEquals(9, ConditionType.entries.count { !it.isInstant })
+    fun `there are eleven state condition types and seven instant ones`() {
+        assertEquals(11, ConditionType.entries.count { !it.isInstant })
         assertEquals(7, ConditionType.entries.count { it.isInstant })
     }
 
@@ -80,6 +80,8 @@ class ConditionTypeTest {
             ConditionType.RINGER_MODE to ""","mode":"dnd"""",
             ConditionType.CALENDAR_EVENT to "",
             ConditionType.HA_STATE to ""","entity":"media_player.tv","states":["playing"]""",
+            ConditionType.MAC_NEARBY to "",
+            ConditionType.MAC_LOCKED to "",
             ConditionType.TIME_INSTANT to ""","at":"17:00"""",
             ConditionType.ALARM to "",
             ConditionType.BT_DISCONNECTED to "",

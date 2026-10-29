@@ -6,25 +6,28 @@ Report privately through GitHub's **Security → Report a vulnerability** on thi
 opens a private advisory only the maintainer can see. If that is not available to you, email
 apps@sazmovi.cz instead. Please do not open a public issue for a vulnerability.
 
-Useful in a report: the Cue: version, the Android version, and the shortest sequence of steps or the
-`adb` command that shows the problem. A proof of concept is welcome but not required — a clear
-description of the mechanism is enough to start.
+Useful in a report: the version of Cue: React & Act, the Android version, and the shortest sequence
+of steps or the `adb` command that shows the problem. A proof of concept is welcome but not required
+— a clear description of the mechanism is enough to start.
 
-Cue: is a one-person project maintained in spare time, with no security team behind it. Reports are
-handled on a best-effort basis: there is no promised response time, no paid bounty and no guaranteed
-patch window. A fix lands as soon as the maintainer can make one, and the advisory is published once
-it ships.
+Cue: React & Act is a one-person project maintained in spare time, with no security team behind it.
+Reports are handled on a best-effort basis: there is no promised response time, no paid bounty and
+no guaranteed patch window. A fix lands as soon as the maintainer can make one, and the advisory is
+published once it ships.
 
 Supported: the latest release. Older versions receive no fixes.
 
-## What Cue: is, in security terms
+## What Cue: React & Act is, in security terms
 
-Cue: is an offline Android launcher. It has no accounts, no backend and no analytics, and nothing of
-its own reports to its developer or to anyone else. The launcher's own network traffic is limited to
-the Home Assistant instance the user set up, and only when they set one up: calls to the addresses
-they typed in or picked, a search for the instance on the local network when they ask for it, and —
-during sign-in — a socket on the phone's own loopback address that waits for the browser to come
-back, plus the instance's sign-in page opened in a browser tab.
+Cue: React & Act is an offline Android launcher. It has no accounts, no backend and no analytics,
+and nothing of its own reports to its developer or to anyone else. The launcher's own network
+traffic is limited to the Home Assistant instance the user set up, and only when they set one up:
+calls to the addresses they typed in or picked, a search for the instance on the local network when
+they ask for it, and — during sign-in — a socket on the phone's own loopback address that waits for
+the browser to come back, plus the instance's sign-in page opened in a browser tab. The optional Mac
+bridge, off by default, adds the user's own paired Mac: TLS connections to it on the local network,
+and a Bluetooth link while it is in range, which also carries those connections where the two share
+no network.
 
 Sensitive data it can hold, all of it inside the app's private storage, kept out of cloud backup and
 out of device-to-device transfer when moving to a new phone:
@@ -35,6 +38,13 @@ out of device-to-device transfer when moving to a new phone:
   Assistant when they upload the blueprint from the launcher;
 - the Home Assistant addresses, and the home Wi-Fi names or BSSIDs that tell the launcher it is at
   home;
+- the Mac bridge's pairing: the paired Mac's certificate fingerprint, name and address, and the key
+  that seals its Bluetooth frames, itself sealed with an AES-GCM key held in the Android Keystore.
+  The phone's own TLS key is generated inside the Keystore and never leaves it. All of it is deleted
+  when the bridge is turned off or unpaired. Notifications and clipboard text pass through memory on
+  their way between the phone and the Mac and are not stored; a clip from the Mac that arrives while
+  the phone is locked waits in memory until the unlock, until the phone has been out of the Mac's
+  range for about a minute or until the companion service's window closes, whichever comes first;
 - notification titles and texts: a notification that activates a scenario has its title and text
   stored with the tile it raised, until that tile ends (after 60 seconds unless the scenario sets
   its own duration or an event that ends it) or — when no such event is set and no state the
@@ -62,14 +72,14 @@ out of device-to-device transfer when moving to a new phone:
   or saves it.
 
 Exported scenario and configuration files carry neither the credential, the Home Assistant
-addresses nor the pairing secret, and the Bluetooth MAC addresses and Wi-Fi network names inside
-them are replaced with placeholders. The rest is exported as it is — scenario names, notification
-filters, Home Assistant entity ids, links, app shortcut ids, the home screen layout and the list of
-hidden apps — and is worth a look before a file is shared.
+addresses, the pairing secret nor anything of the Mac bridge, and the Bluetooth MAC addresses and
+Wi-Fi network names inside them are replaced with placeholders. The rest is exported as it is —
+scenario names, notification filters, Home Assistant entity ids, links, app shortcut ids, the home
+screen layout and the list of hidden apps — and is worth a look before a file is shared.
 
 ## Threat model
 
-What Cue: defends against:
+What Cue: React & Act defends against:
 
 - **Another app on the same device.** It can send the launcher's event broadcast, and it can hand
   the launcher a file to import. Both paths are treated as untrusted input. Until the secret
@@ -78,7 +88,10 @@ What Cue: defends against:
   home screen, and rejected broadcasts are rate-limited. A file is accepted only as a `content:`
   link the sender granted, and lands in a preview that shows what every imported tile would do
   before the user confirms anything. The file provider that hands an AI chat its description is not
-  exported: it serves that one cached file, and only to the app a send grants a one-off read.
+  exported: it serves that one cached file, and only to the app a send grants a one-off read. While
+  a Mac is paired, an app can also hand *Send to Mac* a text, as the selection menu and the share
+  sheet do; the text goes to the user's own Mac clipboard, read as plain text only and capped at
+  100 KB, and the Mac announces it.
 - **Scenario JSON pasted from an AI chat.** It is untrusted input, treated like an imported file:
   the same import gate, then a check against the phone — installed apps, their shortcuts and
   screens, paired devices, Home Assistant entities and services, widget providers, the system
@@ -88,7 +101,38 @@ What Cue: defends against:
 - **A link the user pasted in.** A deep link may be a serialized intent, which is a target and not
   just an address. It is parsed, but never started as it arrived: permission grants are stripped
   from it, a selector is dropped, and a link aimed at the launcher's own components or at a `file:`
-  is refused, so pasting a link found on the web cannot turn into a way into Cue: itself.
+  is refused, so pasting a link found on the web cannot turn into a way into Cue: React & Act
+  itself.
+- **The network and the radio between the phone and the Mac.** Pairing trusts nothing it is told:
+  the phone finds the Mac by a Bonjour flag that only says where to look, and both sides accept any
+  certificate on the pairing connection. The phone shows a six-digit code derived from both
+  certificate fingerprints and both ephemeral X25519 keys; the Mac's user types it in, and the Mac
+  compares it with its own in constant time, so the code is what binds the Mac's side of the pairing
+  to the phone that showed it. The phone commits to its key before it learns the Mac's, the Mac's
+  key is fresh for each attempt, and each attempt ends the Mac's pairing mode. A second device that
+  asks to pair while a pairing runs is told the Mac is busy. Each side's `pair-confirm` carries an
+  HMAC proof keyed by the shared secret and checked in constant time: the phone sends its own right
+  after revealing its key, and the Mac sends its own once it has accepted the typed code and
+  completes once the phone's has verified too. The phone completes the pairing when the Mac's proof
+  verifies and pins the certificate it observed on the pairing connection. Both sides show the first
+  eight characters of the Mac's certificate — the phone in its bridge settings, the Mac in its
+  pairing window — so the two can be compared. After pairing, every connection over the network is
+  TLS 1.3 with mutual authentication, and each side accepts only the leaf certificate it pinned. A
+  connection over the Bluetooth L2CAP channel, which the phone uses where the two share no network,
+  is authenticated by possession of the pairing key instead: each side sends a fresh X25519 key, and
+  the record keys are derived from that exchange together with the pairing key, so a device without
+  the pairing can neither seal nor open a single record, and a recorded connection stays unreadable
+  even if the pairing key leaks later. Its records are sealed with ChaCha20-Poly1305 under a key per
+  direction and a counter that never repeats under it. Bluetooth frames are sealed with
+  ChaCha20-Poly1305 under a key derived during pairing, with a nonce bound to the direction and a
+  sequence number that is never used twice under the key and accepted at most once, so a frame that
+  is forged, replayed or reflected back is dropped. A foreign Bluetooth device can connect,
+  subscribe and open the channel, but reads nothing and is never taken for the phone: the Mac counts
+  a subscriber as the phone only once a frame that subscriber wrote itself has opened, and sends a
+  stranger nothing but a sealed wake-up call — never a closing, a reply or a clip. The phone,
+  likewise, counts a Bluetooth connection as one to the Mac only once a frame from the Mac has
+  opened over it. While the bridge is off its companion service and the *Send to Mac* entry are
+  disabled components, so nothing of it can be reached or bound.
 - **A hostile network.** The address away from home is forced to `https://`, and a cleartext
   `http://` address is only accepted at all when its host is a local one — a `.local` name, a
   private or a Tailscale address — since being at home cannot protect a connection that leaves the
@@ -97,24 +141,31 @@ What Cue: defends against:
   not sent in the clear to whatever answers that name on a foreign LAN. The same rule holds for an
   address that arrives from the mDNS record of a discovered instance, and testing the connection
   obeys it instead of probing.
-- **A lost or stolen device, offline.** The credential is sealed with a Keystore key that never
-  leaves the device, and nothing is written to a backup or carried over to a new phone.
+- **A lost or stolen device, offline.** The credential and the bridge's frame key are sealed with
+  Keystore keys that never leave the device, the bridge's TLS key lives in the Keystore itself, and
+  nothing is written to a backup or carried over to a new phone.
 
 What it does not defend against, by design:
 
 - **A rooted or physically unlocked device.** Anything with root, `adb` or the unlocked screen can
   read the app's private storage and therefore the pairing secret. Android's app sandbox is the
-  boundary; Cue: does not try to be a second one.
+  boundary; Cue: React & Act does not try to be a second one.
 - **Someone who deliberately impersonates the home network.** "At home" is decided by a network name
   or BSSID and by the paired instance's identity, none of which is a secret. An attacker who copies
   them on another network can receive a cleartext home address's credential. An `https://` home
   address is not exposed to this.
 - **Home Assistant itself.** Whoever controls the user's HA instance can already do more than any
   launcher event would allow.
+- **The paired Mac itself.** The bridge trusts the Mac the user paired as the user's own device:
+  whoever controls it sees the mirrored notifications and can close them, reply through the phone's
+  apps and set the phone's clipboard. It reaches only the notifications it was shown: those of apps
+  the user keeps off the Mac and those the lock screen does not show are out of its reach.
 - **A malicious icon pack or app widget.** Both run as their own app with their own permissions.
-  Cue: only asks the system to draw them.
+  Cue: React & Act only asks the system to draw them.
 
 ## Audit
 
 [`docs/security-audit.md`](docs/security-audit.md) records what a security review of the launcher
-covered and what the state of each area is.
+covered and what the state of each area is. The Mac app's own side of the bridge — what it stores,
+its signing and its residual risks — is described in its repository's
+[`docs/security.md`](https://github.com/jaroslav-sazma/cue-bridge/blob/main/docs/security.md).

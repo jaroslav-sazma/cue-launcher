@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material3.FilterChip
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
@@ -23,6 +22,7 @@ import app.cue.launcher.designsystem.Tokens
 import app.cue.launcher.feature.scenarios.JitPermission
 import app.cue.launcher.feature.scenarios.JitRequirement
 import app.cue.launcher.feature.scenarios.builder.rememberRequirementResolver
+import app.cue.launcher.feature.settings.SettingsGrantRequest
 import app.cue.launcher.system.fineLocationGranted
 import app.cue.launcher.system.locationServicesEnabled
 import app.cue.launcher.designsystem.Note
@@ -68,17 +68,17 @@ internal fun HaHomeWifiSection(screen: HaScreenState, modifier: Modifier = Modif
             ),
         )
         if (networks.isNotEmpty() && !granted) {
-            HaLocationRow(
-                label = R.string.ha_location_note,
-                action = R.string.ha_location_grant,
-                onResolve = { permissions.resolve(JitRequirement.Grant(JitPermission.LOCATION)) },
+            SettingsGrantRequest(
+                action = stringResource(R.string.ha_location_grant),
+                onGrant = { permissions.resolve(JitRequirement.Grant(JitPermission.LOCATION)) },
+                note = stringResource(R.string.ha_location_note),
             )
         }
         if (networks.isNotEmpty() && granted && !servicesOn) {
-            HaLocationRow(
-                label = R.string.ha_location_services_note,
-                action = R.string.ha_location_services_open,
-                onResolve = { permissions.resolve(JitRequirement.LocationServices) },
+            SettingsGrantRequest(
+                action = stringResource(R.string.ha_location_services_open),
+                onGrant = { permissions.resolve(JitRequirement.LocationServices) },
+                note = stringResource(R.string.ha_location_services_note),
             )
         }
     }
@@ -113,27 +113,6 @@ private fun HaNetworkChips(
                 onClick = { onAdd(ssid) },
                 label = { Text(text = stringResource(R.string.ha_home_wifi_add, ssid)) },
             )
-        }
-    }
-}
-
-@Composable
-private fun HaLocationRow(
-    label: Int,
-    action: Int,
-    onResolve: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        verticalArrangement = Arrangement.spacedBy(Tokens.Settings.rowGap),
-    ) {
-        Note(text = stringResource(label))
-        OutlinedButton(
-            onClick = onResolve,
-            modifier = Modifier.padding(horizontal = Tokens.Settings.surfacePadding),
-        ) {
-            Text(text = stringResource(action))
         }
     }
 }

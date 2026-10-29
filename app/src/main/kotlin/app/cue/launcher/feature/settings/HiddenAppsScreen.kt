@@ -49,7 +49,7 @@ fun HiddenAppsScreen(
     val hidden by remember(hiddenApps) { hiddenApps.observeHidden() }
         .collectAsStateWithLifecycle(initialValue = emptySet())
     var query by rememberSaveable { mutableStateOf("") }
-    val visible = remember(apps, query) { filterHiddenAppRows(apps.orEmpty(), query) }
+    val visible = remember(apps, query) { filterAppRows(apps.orEmpty(), query) }
     val scope = rememberCoroutineScope()
 
     DetailPaneScaffold(
@@ -57,7 +57,9 @@ fun HiddenAppsScreen(
         onBack = onBack,
         modifier = modifier,
     ) {
-        HiddenAppsHeader(
+        AppListHeader(
+            hint = stringResource(R.string.settings_hidden_hint),
+            searchPlaceholder = stringResource(R.string.settings_hidden_search),
             query = query,
             onQueryChange = { query = it },
             note = when {
@@ -87,7 +89,9 @@ fun HiddenAppsScreen(
 }
 
 @Composable
-private fun HiddenAppsHeader(
+internal fun AppListHeader(
+    hint: String,
+    searchPlaceholder: String,
     query: String,
     onQueryChange: (String) -> Unit,
     @StringRes note: Int?,
@@ -99,7 +103,7 @@ private fun HiddenAppsHeader(
     )
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
-            text = stringResource(R.string.settings_hidden_hint),
+            text = hint,
             modifier = noteModifier,
             style = supportingStyle,
             color = supportingInk(),
@@ -107,7 +111,7 @@ private fun HiddenAppsHeader(
         SearchField(
             query = query,
             onQueryChange = onQueryChange,
-            placeholder = stringResource(R.string.settings_hidden_search),
+            placeholder = searchPlaceholder,
             container = MaterialTheme.colorScheme.surfaceContainer,
             modifier = Modifier
                 .fillMaxWidth()
@@ -127,7 +131,7 @@ private fun HiddenAppsHeader(
     }
 }
 
-private fun filterHiddenAppRows(apps: List<InstalledApp>, query: String): List<InstalledApp> {
+internal fun filterAppRows(apps: List<InstalledApp>, query: String): List<InstalledApp> {
     val trimmed = query.trim()
     if (trimmed.isEmpty()) return apps
     return apps.filter {
