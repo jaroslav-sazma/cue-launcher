@@ -11,7 +11,7 @@ navigation3 = "1.2.0"
 metro = "1.4.5"
 room = "2.8.5"
 ktor = "3.6.0"
-ksp = "2.3.12"               # KSP versions its own way since 2.3.0, and 2.3.12 is built
+ksp = "2.3.13"               # KSP versions its own way since 2.3.0, and 2.3.12 is built
                              # against Kotlin 2.3.20. The pairing with 2.4.21 is verified:
                              # Room codegen runs and the *Dao_Impl classes land in the APK.
 coroutines = "1.11.0"
