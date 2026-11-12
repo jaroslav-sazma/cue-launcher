@@ -1,5 +1,5 @@
 [versions]
-kotlin = "2.4.21"            # Metro is a compiler plugin built against one Kotlin release (1.4.5
+kotlin = "2.4.21"            # Metro is a compiler plugin built against one Kotlin release (1.5.2
                              # against 2.4.20): a Kotlin bump is merged only after CI has run it
                              # together with the current Metro.
 agp = "9.4.1"                # 9.5.0 is alpha only — do not take it.
@@ -8,7 +8,7 @@ agp = "9.4.1"                # 9.5.0 is alpha only — do not take it.
 # end up mixing 1.12 with 1.13.
 composeBomAlpha = "2026.10.01"
 navigation3 = "1.2.1"
-metro = "1.4.5"
+metro = "1.5.2"
 room = "2.8.5"
 ktor = "3.6.1"
 ksp = "2.3.13"               # KSP versions its own way since 2.3.0, and 2.3.13 is built
