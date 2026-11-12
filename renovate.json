@@ -22,6 +22,11 @@
       "groupName": "compose-bom-alpha"
     },
     {
+      "description": "The validation API shares its catalog version with the screenshot Gradle plugin but is often published first; only the plugin moves that version, or the build asks for a plugin that does not exist.",
+      "matchPackageNames": ["com.android.tools.screenshot:screenshot-validation-api"],
+      "enabled": false
+    },
+    {
       "description": "From v6 the caching in gradle/actions is a proprietary component under Gradle's terms of use; stay on v5 (MIT).",
       "matchDepNames": ["gradle/actions"],
       "allowedVersions": "<6"
