@@ -76,6 +76,8 @@ fun defectText(defect: ScenarioDefect): String = when (defect) {
     is ScenarioDefect.InvalidExtractRule -> extractDefectText(defect)
 
     is ScenarioDefect.InvalidHaEntity -> stringResource(R.string.defect_ha_entity, defect.entity)
+
+    is ScenarioDefect.TooLong -> stringResource(R.string.defect_too_long, defect.field, defect.max)
 }
 
 @Composable

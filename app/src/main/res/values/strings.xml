@@ -1150,6 +1150,7 @@
     <string name="defect_extract_anchor_length">The after field of the value “%1$s” is longer than %2$d characters.</string>
     <string name="defect_extract_marker_length">The until field of the value “%1$s” is longer than %2$d characters.</string>
     <string name="defect_ha_entity">“%1$s” is not a Home Assistant entity id, which looks like media_player.living_room.</string>
+    <string name="defect_too_long">The field %1$s is longer than %2$d characters.</string>
     <string name="ha_title">Home Assistant</string>
     <string name="ha_section_connection">The connection</string>
     <string name="ha_section_credential">Access</string>
@@ -1170,6 +1171,7 @@
     <string name="ha_discover_paired">Paired with %1$s</string>
     <string name="ha_discover_found">Found it — check both addresses and save.</string>
     <string name="ha_discover_none">No instance picked. You can type the address by hand.</string>
+    <string name="ha_discover_replaced">“Find my Home Assistant” replaced %1$s here. Check the new address before you save.</string>
     <string name="ha_credential_session">Sign in</string>
     <string name="ha_credential_token">Token</string>
     <string name="ha_signin">Sign in to Home Assistant</string>
@@ -1198,6 +1200,7 @@
     <string name="ha_test_network_detail">✗ Not reached · %1$s</string>
     <string name="ha_test_timeout">⏱ Sent, no answer in time</string>
     <string name="ha_test_blocked">Not tried — this http:// address is only used at home.</string>
+    <string name="ha_test_unsaved">Not tried — save this address first. Your sign-in or token only goes to saved addresses.</string>
     <string name="ha_test_local_network">✗ Not reached — local network access is missing.</string>
     <string name="ha_test_not_configured">Add the address and sign in, or paste a token.</string>
     <string name="ha_test_needs_session">Add the address and sign in.</string>

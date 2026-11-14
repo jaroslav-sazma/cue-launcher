@@ -69,16 +69,26 @@ per event.
 Scenario and configuration JSON can arrive from any app. The launcher reads it only from a
 `content:` URI — a `file:` path would be read with the launcher's own rights rather than a grant the
 sender holds — and an intent whose stream extra cannot be unparcelled is ignored. Reads are capped
-at 4 MB, a file brings at most 500 scenarios (the rest are counted, never decoded), parsing runs off
-the main thread and is failure-tolerant, and the preview is a lazy list, so a hostile file can
-neither exhaust memory nor freeze the home screen.
+at 4 MB, a file brings at most 500 scenarios (the rest are counted, never decoded), JSON nested
+deeper than 128 levels fails the parse instead of overflowing the stack, parsing runs off the main
+thread and is failure-tolerant, and the preview is a lazy list, so a hostile file can neither
+exhaust memory nor freeze the home screen. Every free-text field is capped in length — names and
+ids at 200 characters, Home Assistant ids at 255, texts, labels and packages at 1000, links,
+shortcut ids and serialized Home Assistant data at 8192 — and a scenario over a cap is rejected by
+naming the field, so no field of a hostile file reaches layout at an unbounded size; a
+configuration whose gesture action breaks a cap is refused as a whole. A deep link's URI is stored
+trimmed, and the preview's parser trims before parsing too, so the preview and the executor read
+one string the same way wherever it was stored.
 
 The preview lists accepted, rejected, skipped and incomplete entries, and for every scenario what
-its tiles do: each action in full rather than its label; a Home Assistant call with its service, its
-target and every `*_id` key of its data in full, the rest of the data shortened; a link parsed by
-the same code the executor uses, its target app, action, address and fallback shown before the raw
-text, so padding inside an `intent:` link cannot push the target out of view, and a link the
-launcher would refuse or cannot parse marked as such. A Home Assistant call that will run without
+its tiles do: each action in full rather than its label — an app screen with its package and
+absolute class, a shortcut with its id, a capability with its name; a Home Assistant call with its
+service, its target and every `*_id` key of its data in full, the rest of the data shortened; a
+link parsed by the same code the executor uses, its target app, action, address and fallback shown
+before the raw text, so padding inside an `intent:` link cannot push the target out of view, and a
+link the launcher would refuse or cannot parse marked as such. The parts of a line that name a
+target are never shortened — the import caps bound them — while free text around them is cut for
+display. A Home Assistant call that will run without
 the confirmation prompt is marked in red, because the file — not the importing device — decides that
 flag. Each scenario that pulls values out of notifications names the app it reads and every rule.
 A whole configuration additionally names what it replaces: the gestures and the actions they run,
@@ -170,7 +180,8 @@ counts as local only in its canonical dotted form, since the resolver reads `134
 home says nothing about a connection that leaves the network. This is also what an address coming
 from the mDNS record of a discovered instance has to pass — anything on the network can publish such
 a record, so what it offers is validated exactly like typing, and the user still confirms it with
-*Save*.
+*Save*. A picker result that replaces an address already filled in is never silent: a notice under
+the field names the old address until the field is saved or edited.
 
 A cleartext local address is then used only while the device is recognised as being at home — the
 Wi-Fi network is one the user listed, matched by SSID or BSSID, or the instance the user paired
@@ -178,8 +189,13 @@ through the system picker answers on the local network, matched by the `uuid` it
 network the address is dropped rather than tried, and the cache of "which endpoint worked last"
 cannot reinstate it. The same rule governs the live channel and *Test the connection*: a test
 reports a cleartext home address as untried rather than probing it, so the test cannot leak what the
-rule protects. A cleartext home address with neither a listed network nor a paired instance cannot
-be saved. An `https://` home address carries no such restriction, since TLS authenticates the host.
+rule protects. The test also sends a stored credential — the session's refresh token as much as a
+saved long-lived token — only to an address that matches, after normalization, one saved with it:
+any other address is reported as untried and nothing is sent, the token refresh included. A token
+just typed into the field is tested as typed, before any save, and a test with an untried address
+remembers no endpoint as the one that worked. A cleartext home address with neither a listed
+network nor a paired instance cannot be saved. An `https://` home address carries no such
+restriction, since TLS authenticates the host.
 
 Two kinds of credential exist. A **signed-in session** is the preferred one: the OAuth flow of Home
 Assistant's own auth API, with the callback on a loopback socket so no redirect ever leaves the
@@ -208,8 +224,11 @@ certificate handling of the project's own, and the user certificate store is not
 Certificate transparency, on by default for apps targeting Android 17, is deliberately left on. A
 service call goes out on a client with the OkHttp engine's silent retry on a failed connection
 switched off, so whether it may be tried again is decided in one place only — never once it may have
-left the phone. Reads and the token requests keep that retry: repeated, none of them can do anything
-twice on the instance.
+left the phone. Only a failure that provably precedes the request counts as never sent — a refused
+connection, an unknown host, a TLS handshake that failed or a peer that never verified; a TLS error
+after that, a connection reset while reading the answer included, does not, and the call is not
+tried on the other address. Reads and the token requests keep the retry: repeated, none of them can
+do anything twice on the instance.
 
 The blueprint is **uploaded** over the WebSocket API with `blueprint/save`, on an explicit tap only,
 with the credential the launcher already holds. The request is built in code — domain `automation`,
@@ -656,8 +675,9 @@ These are known, accepted and unfixed, because fixing them would cost more than 
   another network, and answers the address there, receives the credential in the clear. It takes a
   targeted attacker who already knows the home network, it concerns only an `http://` home address,
   and an `https://` home address removes it entirely. Since either answer is enough, a `BSSID:`
-  entry does not raise the bar while an instance is paired. The README says so where the fields are
-  described.
+  entry does not raise the bar while an instance is paired. Picking an instance in the system
+  picker also stores its `uuid` at the pick, before *Save*, so a rogue entry picked once can anchor
+  "at home" until another instance is picked. The README says so where the fields are described.
 - **The pairing secret is readable with root or `adb`.** It is stored unencrypted in the app's
   private storage: it authorizes nothing outside the device, it has to be displayed so it can be
   carried over to a new phone, and sealing it in the Keystore would mean a keystore failure silently
@@ -717,9 +737,12 @@ These are known, accepted and unfixed, because fixing them would cost more than 
   compares the phone's pin with the Mac.
 - **The phone completes on the Mac's proof.** The code is typed into the Mac and compared there. The
   phone's completion does not depend on the code: it pins the certificate of the peer on the pairing
-  connection whose `pair-confirm` proof verifies. The code binds the Mac's side, and the certificate
-  prefix shown on both sides — in the phone's bridge settings and in the Mac's pairing window — is
-  how the two pins are compared.
+  connection whose `pair-confirm` proof verifies, so a device on the pairing network that runs the
+  ceremony itself can become the phone's pinned peer, with the mirror, the replies and the clipboard
+  that brings. The code binds the Mac's side, and the certificate prefix shown on both sides — in
+  the phone's bridge settings and in the Mac's pairing window — is how the two pins are compared.
+  The README tells the user to pair on a Wi-Fi they trust and to take **Paired** on the Mac as the
+  confirmation: with a party in between, the real Mac never gets there.
 - **The Mac's Bluetooth advertisement is recognisable.** It carries the bridge's fixed service UUID,
   so a scanner nearby can tell that a Mac running the bridge is in range, though not whose; macOS
   rotates the Bluetooth address. The Bonjour record carries the Mac's host name, which macOS already
@@ -794,8 +817,13 @@ The properties above are not left to a future reader's memory:
 - `HaInstanceTest` — what an instance publishes over mDNS is validated like typing, so a cleartext
   address to a host outside the network is never offered to be saved.
 - `HaEndpointTest` — a cleartext home address is never selected off the home network, not even from
-  the cache, a blocked local connection is told apart from an instance that is switched off, and a
-  service call is only ever tried on the second address when the first connection never happened.
+  the cache, a blocked local connection is told apart from an instance that is switched off, a
+  service call is only ever tried on the second address when the first connection never happened,
+  and a TLS failure after the request left is never read as "never sent".
+- `HaConnectionTesterTest` — a stored credential is sent only to saved addresses: a changed address
+  reports untried and gets no request, the token refresh included, a typed token is tested before
+  any save, the cleartext rule still holds, and an untried address never makes the other one the
+  network's remembered endpoint.
 - `HaCallbackServerTest` — the sign-in callback reads a request line up to its end and no further
   than its cap, a line that never ends is no request, reading stops when the time is up, the rest of
   an answered request is drained within its own cap and time so the browser gets the whole page,
@@ -874,10 +902,15 @@ The properties above are not left to a future reader's memory:
   actions read without shortcuts and a full read never stand in for each other.
 - `IncomingDocumentTest` — only a `content:` URI is taken for import.
 - `ImportSafetyTest` — a file brings at most its cap of scenarios and the rest are counted, never
-  decoded, and a concrete widget id is imported unbound exactly like the exported placeholder.
-- `ImportDisclosureTest` — the preview discloses every action of every item, flags a Home Assistant
-  call that runs without confirmation, names its target and data, and lists the gestures a
-  configuration sets.
+  decoded, a concrete widget id is imported unbound exactly like the exported placeholder, every
+  length cap rejects by naming the field and admits a value at the cap, a too-long gesture action
+  refuses the whole configuration, a deeply nested payload is refused instead of overflowing, and
+  links arrive trimmed, in scenarios and in a configuration's gestures alike.
+- `ImportDisclosureTest` — the preview discloses every action of every item, names an app screen's
+  package and class and a shortcut's id, flags a Home Assistant call that runs without
+  confirmation, names its target and data with every entity id uncut, shows a padded `intent:`
+  link as the intent it parses into, cuts long free text without splitting a surrogate pair, and
+  lists the gestures a configuration sets.
 - `ExtractAnchorTest`, `ExtractFieldsTest` and one class per kind (`ExtractNumberTest` …
   `ExtractUntilTest`) — every kind reads what it promises in Czech and English text, anchors match
   whole words regardless of case, diacritics and spacing, the 2000- and 200-character caps hold,

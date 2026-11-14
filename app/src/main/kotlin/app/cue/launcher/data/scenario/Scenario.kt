@@ -353,4 +353,5 @@ internal fun Scenario.tidied(): Scenario = copy(
             tidied
         }
     },
+    content = content.tidied(),
 )

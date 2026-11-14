@@ -1175,6 +1175,7 @@
     <string name="defect_extract_anchor_length">Pole after u hodnoty „%1$s“ je delší než %2$d znaků.</string>
     <string name="defect_extract_marker_length">Pole until u hodnoty „%1$s“ je delší než %2$d znaků.</string>
     <string name="defect_ha_entity">„%1$s“ není id entity Home Assistantu, to vypadá jako media_player.obyvak.</string>
+    <string name="defect_too_long">Pole %1$s je delší než %2$d znaků.</string>
     <string name="ha_title">Home Assistant</string>
     <string name="ha_section_connection">Spojení</string>
     <string name="ha_section_credential">Přístup</string>
@@ -1195,6 +1196,7 @@
     <string name="ha_discover_paired">Spárováno s %1$s</string>
     <string name="ha_discover_found">Našel jsem ji — zkontroluj adresy a ulož.</string>
     <string name="ha_discover_none">Žádná instance nevybraná. Adresu můžeš napsat ručně.</string>
+    <string name="ha_discover_replaced">„Najít Home Assistanta“ tu přepsalo %1$s. Než uložíš, zkontroluj novou adresu.</string>
     <string name="ha_credential_session">Přihlášení</string>
     <string name="ha_credential_token">Token</string>
     <string name="ha_signin">Přihlásit se k Home Assistantovi</string>
@@ -1223,6 +1225,7 @@
     <string name="ha_test_network_detail">✗ Nedovoláno · %1$s</string>
     <string name="ha_test_timeout">⏱ Odesláno, odpověď nepřišla včas</string>
     <string name="ha_test_blocked">Nezkoušeno — tahle http:// adresa se používá jen doma.</string>
+    <string name="ha_test_unsaved">Nezkoušeno — tuhle adresu nejdřív ulož. Přihlášení ani token nepošlu jinam než na uložené adresy.</string>
     <string name="ha_test_local_network">✗ Nedostupné — chybí přístup k místní síti.</string>
     <string name="ha_test_not_configured">Doplň adresu a přihlas se, nebo vlož token.</string>
     <string name="ha_test_needs_session">Doplň adresu a přihlas se.</string>

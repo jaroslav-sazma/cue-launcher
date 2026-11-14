@@ -189,6 +189,12 @@ data class GesturesConfig(
     val calendarTap: TapAction? = null,
 )
 
+internal fun GesturesConfig.tidied(): GesturesConfig = copy(
+    swipeLeft = swipeLeft?.tidied(),
+    searchbarTap = searchbarTap?.tidied(),
+    calendarTap = calendarTap?.tidied(),
+)
+
 data class ConfigAppWidget(val key: String, val packageName: String, val provider: String)
 
 fun widgetPlaceholderKey(appWidgetId: Int): String = "widget_$appWidgetId"

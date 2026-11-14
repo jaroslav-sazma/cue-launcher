@@ -3,13 +3,10 @@ package app.cue.launcher.feature.scenarios.builder
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import app.cue.launcher.R
-import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileSize
 import app.cue.launcher.designsystem.glyph.mdiIconReference
 import app.cue.launcher.engine.haGlyphEntity
-import app.cue.launcher.feature.scenarios.AppJoiner
-import app.cue.launcher.feature.scenarios.appListText
 
 @Composable
 internal fun tileTypeTitle(size: TileSize): String = stringResource(
@@ -79,35 +76,6 @@ internal fun templateLayoutLabel(layout: TemplateLayout): String = stringResourc
 internal fun templateItemsSectionTitle(layout: TemplateLayout): String = stringResource(
     if (layout == TemplateLayout.FOUR_ICONS) R.string.builder_items_four else R.string.builder_items_two,
 )
-
-@Composable
-internal fun actionSummary(action: TapAction?, actionLabel: String? = null): String = when (action) {
-    null -> stringResource(R.string.builder_action_empty)
-    // An action read from a saved or imported scenario carries no label of its own.
-    is TapAction.App -> stringResource(
-        R.string.builder_action_app,
-        inProfile(actionLabel ?: appListText(listOf(action.packageName), AppJoiner.OR), action.profile),
-    )
-
-    is TapAction.Shortcut -> stringResource(
-        R.string.builder_action_shortcut,
-        inProfile(actionLabel ?: appListText(listOf(action.packageName), AppJoiner.OR), action.profile),
-    )
-
-    is TapAction.DeepLink -> stringResource(R.string.builder_action_deeplink, actionLabel ?: action.uri)
-    is TapAction.Capability -> stringResource(
-        R.string.builder_action_capability,
-        inProfile(actionLabel ?: action.capability, action.profile),
-    )
-
-    is TapAction.ActivityLaunch ->
-        stringResource(R.string.builder_action_activity, actionLabel ?: action.component)
-
-    is TapAction.SystemAction ->
-        stringResource(R.string.builder_action_system, systemActionLabel(action.action))
-
-    is TapAction.HaAction -> stringResource(R.string.builder_action_ha, action.service)
-}
 
 @Composable
 internal fun iconSummary(item: TemplateItemDraft): String {

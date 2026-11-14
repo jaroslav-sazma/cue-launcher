@@ -12,7 +12,9 @@ import java.net.ConnectException
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
+import javax.net.ssl.SSLException
 import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 
 class HaEndpointTest {
 
@@ -132,10 +134,42 @@ class HaEndpointTest {
         assertTrue(haNeverSent(ConnectTimeoutException("Connect timeout has expired", null)))
         assertTrue(haNeverSent(UnknownHostException("ha.local")))
         assertTrue(haNeverSent(SSLHandshakeException("no trust")))
+        assertTrue(haNeverSent(SSLPeerUnverifiedException("Hostname ha.local not verified")))
 
         assertFalse(haNeverSent(SocketException("Connection reset")))
         assertFalse(haNeverSent(IOException("unexpected end of stream")))
         assertFalse(haNeverSent(SocketTimeoutException("Read timed out")))
+        assertFalse(haNeverSent(postSendReset))
+    }
+
+    // Android's TLS stack reports a reset after the request had left as a bare SSLException.
+    private val postSendReset =
+        SSLException("Read error: ssl=0x7b: I/O error during system call, Connection reset by peer")
+
+    @Test
+    fun `a failed TLS handshake sends the call to the second address`() = runTest {
+        val tried = mutableListOf<HaEndpoint>()
+
+        val attempt = haAttempt(listOf(home, away), fallback = HaProbe.NotConfigured, probeOf = { it }) { endpoint ->
+            tried += endpoint
+            if (endpoint == home) haCallFailure(SSLHandshakeException("no trust")) else HaProbe.Ok(1, 80)
+        }
+
+        assertEquals(listOf(home, away), tried)
+        assertTrue(attempt.succeeded)
+    }
+
+    @Test
+    fun `a TLS read error after the call was sent is not repeated on the other address`() = runTest {
+        val tried = mutableListOf<HaEndpoint>()
+
+        val attempt = haAttempt(listOf(home, away), fallback = HaProbe.NotConfigured, probeOf = { it }) { endpoint ->
+            tried += endpoint
+            haCallFailure(postSendReset)
+        }
+
+        assertEquals(listOf(home), tried)
+        assertEquals(HaProbe.Timeout, attempt.result)
     }
 
     @Test

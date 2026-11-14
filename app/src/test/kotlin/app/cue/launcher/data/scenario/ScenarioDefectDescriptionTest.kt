@@ -33,6 +33,7 @@ class ScenarioDefectDescriptionTest {
         ScenarioDefect.InvalidDays(listOf(0, 8)),
         ScenarioDefect.TooManyExtractRules(count = 5),
         ScenarioDefect.InvalidHaEntity("the TV"),
+        ScenarioDefect.TooLong(field = "name", max = SCENARIO_NAME_MAX_LENGTH),
     ) + ExtractProblem.entries.map { ScenarioDefect.InvalidExtractRule(name = "parcel_code", problem = it) }
 
     @Test

@@ -31,11 +31,17 @@ internal fun haProbeText(probe: HaProbe?, running: Boolean): String? = when {
     probe is HaProbe.Network && probe.detail != null ->
         stringResource(R.string.ha_test_network_detail, probe.detail)
 
-    probe is HaProbe.Network -> stringResource(R.string.ha_test_network)
-    probe is HaProbe.Timeout -> stringResource(R.string.ha_test_timeout)
-    probe is HaProbe.Blocked -> stringResource(R.string.ha_test_blocked)
-    probe is HaProbe.LocalNetworkDenied -> stringResource(R.string.ha_test_local_network)
-    else -> stringResource(R.string.ha_test_not_configured)
+    else -> stringResource(haProbeRes(probe))
+}
+
+@StringRes
+private fun haProbeRes(probe: HaProbe): Int = when (probe) {
+    is HaProbe.Network -> R.string.ha_test_network
+    HaProbe.Timeout -> R.string.ha_test_timeout
+    HaProbe.Blocked -> R.string.ha_test_blocked
+    HaProbe.Unsaved -> R.string.ha_test_unsaved
+    HaProbe.LocalNetworkDenied -> R.string.ha_test_local_network
+    HaProbe.NotConfigured, is HaProbe.Ok, is HaProbe.Http -> R.string.ha_test_not_configured
 }
 
 @Composable

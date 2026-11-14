@@ -9,7 +9,7 @@ import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.data.ha.HaServiceCall
 import app.cue.launcher.data.ha.haAuthorizationHeader
 import app.cue.launcher.data.ha.haEntitiesOf
-import app.cue.launcher.data.ha.haNeverSent
+import app.cue.launcher.data.ha.haCallFailure
 import app.cue.launcher.data.ha.haServiceBody
 import app.cue.launcher.data.ha.haServicePath
 import app.cue.launcher.data.ha.haWebsocketUrl
@@ -149,10 +149,7 @@ class HaClient(private val http: HaHttp) {
         HaProbe.Timeout
     } catch (cause: Exception) {
         Log.i(TAG, "Service call failed at ${endpoint.kind} (${cause::class.java.simpleName})")
-        when {
-            haNeverSent(cause) -> HaProbe.Network(cause.message ?: cause::class.simpleName)
-            else -> HaProbe.Timeout
-        }
+        haCallFailure(cause)
     }
 
     private suspend fun request(url: String, token: String): HttpResponse = http.get(url, token)

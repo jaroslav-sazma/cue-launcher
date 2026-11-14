@@ -2,7 +2,8 @@ package app.cue.launcher.data.ha
 
 import java.net.ConnectException
 import java.net.UnknownHostException
-import javax.net.ssl.SSLException
+import javax.net.ssl.SSLHandshakeException
+import javax.net.ssl.SSLPeerUnverifiedException
 
 sealed interface HaProbe {
 
@@ -20,6 +21,9 @@ sealed interface HaProbe {
     // A cleartext home address off the home network is not contacted at all.
     data object Blocked : HaProbe
 
+    // An address the connection test would reach with the stored credential before it was saved.
+    data object Unsaved : HaProbe
+
     // Android 17 gates every connection to a local address behind ACCESS_LOCAL_NETWORK. Without it
     // the socket dies in a connect timeout, which on its own reads like an unreachable instance.
     data object LocalNetworkDenied : HaProbe
@@ -35,9 +39,17 @@ fun haFallbackAllowed(probe: HaProbe): Boolean = when (probe) {
 // Whether the request never made it out of the phone. Reading a state may be repeated on the other
 // address whatever went wrong, but a service call may not: Home Assistant runs one to completion
 // before it answers, so a failure that arrived after the request had left could be a gate that is
-// already open. Only a connection that was never established says nothing happened.
+// already open. Only a connection that was never established says nothing happened. A bare
+// SSLException is not one: Android's TLS stack reports a connection reset after the request had left
+// as SSLException("Read error ...").
 fun haNeverSent(cause: Throwable): Boolean =
-    cause is ConnectException || cause is UnknownHostException || cause is SSLException
+    cause is ConnectException ||
+        cause is UnknownHostException ||
+        cause is SSLHandshakeException ||
+        cause is SSLPeerUnverifiedException
+
+fun haCallFailure(cause: Throwable): HaProbe =
+    if (haNeverSent(cause)) HaProbe.Network(cause.message ?: cause::class.simpleName) else HaProbe.Timeout
 
 // Android 17 answers a blocked local connection with a connect timeout, which on its own reads like an
 // instance that is switched off. Everything needed to tell the two apart is here. Whether the permission

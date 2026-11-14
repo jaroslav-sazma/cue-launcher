@@ -316,3 +316,12 @@ file carries, and what it never does, is listed in the README under
    required for the `until` kind and dropped from any other.
 10. A file larger than 4 MB is refused as a whole, and one file brings at most 500 scenarios; the
     preview says how many more it held and skipped.
+11. Length caps, each rejecting the scenario by naming the field: `id` and `name` at most 200
+    characters; the `ha` action's `service` and `stateEntity`, the `ha_state` entity and states
+    and the event codes 255; the `ha` `entity` 1000, since it may hold a comma list of ids; tile
+    texts, labels, icons, a notification's `contains`, packages, components and widget fields
+    1000; a deep link `uri`, a `shortcutId` and the `ha` action's serialized `data` 8192. A
+    configuration whose gesture action breaks one of them is refused as a whole, with the field
+    named as `gestures.<gesture>.<field>`.
+12. JSON nested deeper than 128 levels is refused as unreadable, and a deep link `uri` is stored
+    trimmed of surrounding whitespace, in a scenario and in a configuration's gestures alike.

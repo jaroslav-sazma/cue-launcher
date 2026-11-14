@@ -140,7 +140,10 @@ What Cue: React & Act defends against:
   the user named, or with the paired instance answering on the local network, so the credential is
   not sent in the clear to whatever answers that name on a foreign LAN. The same rule holds for an
   address that arrives from the mDNS record of a discovered instance, and testing the connection
-  obeys it instead of probing.
+  obeys it instead of probing. A discovered address never replaces a filled-in one silently — a
+  notice under the field names the old address until it is saved or edited — and the test sends a
+  stored credential only to addresses the user has saved: any other address is reported as untried
+  and nothing is sent.
 - **A lost or stolen device, offline.** The credential and the bridge's frame key are sealed with
   Keystore keys that never leave the device, the bridge's TLS key lives in the Keystore itself, and
   nothing is written to a backup or carried over to a new phone.

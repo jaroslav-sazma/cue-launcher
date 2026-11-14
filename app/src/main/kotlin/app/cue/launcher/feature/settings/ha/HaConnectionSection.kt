@@ -70,6 +70,7 @@ internal fun HaConnectionSection(
             hint = R.string.ha_url_internal_hint,
             error = screen.internalError,
             probe = haProbeText(screen.probes[HaEndpointKind.HOME], screen.testing),
+            replaced = screen.replaced[HaEndpointKind.HOME],
             onChange = { screen.urlInternal = it },
         )
         HaUrlField(
@@ -78,6 +79,7 @@ internal fun HaConnectionSection(
             hint = R.string.ha_url_external_hint,
             error = screen.externalError,
             probe = haProbeText(screen.probes[HaEndpointKind.AWAY], screen.testing),
+            replaced = screen.replaced[HaEndpointKind.AWAY],
             onChange = { screen.urlExternal = it },
         )
         Note(text = stringResource(R.string.ha_actions_note))
@@ -223,7 +225,7 @@ private fun HaTestRow(
         FilledTonalButton(
             onClick = onTest,
             shapes = ButtonDefaults.shapes(),
-            enabled = screen.canTest && !screen.testing,
+            enabled = screen.canStartTest,
         ) {
             GlyphIcon(
                 name = GLYPH_TEST,
@@ -250,6 +252,7 @@ private fun HaUrlField(
     @StringRes hint: Int,
     error: HaUrlError?,
     probe: String?,
+    replaced: String?,
     onChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -270,6 +273,7 @@ private fun HaUrlField(
             singleLine = true,
         )
         error?.let { Message(text = haUrlErrorText(it)) }
+        replaced?.let { Message(text = stringResource(R.string.ha_discover_replaced, it)) }
         probe?.let { Note(text = it) }
     }
 }

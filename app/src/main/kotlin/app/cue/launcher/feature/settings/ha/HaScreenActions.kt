@@ -3,7 +3,6 @@ package app.cue.launcher.feature.settings.ha
 import android.content.Context
 import androidx.compose.foundation.text.input.clearText
 import app.cue.launcher.R
-import app.cue.launcher.data.ha.HaConfig
 import app.cue.launcher.data.ha.HaConfigRepository
 import app.cue.launcher.data.ha.HaSignIn
 import app.cue.launcher.designsystem.FlashState
@@ -27,9 +26,10 @@ internal suspend fun forget(
     if (!ended) flash.show(R.string.ha_revoke_failed, error = true)
 }
 
-internal suspend fun runProbe(screen: HaScreenState, tester: HaConnectionTester, stored: HaConfig?) {
+internal suspend fun runProbe(screen: HaScreenState, tester: HaConnectionTester, configs: HaConfigRepository) {
     screen.testing = true
-    screen.probes = tester.test(screen.draft(stored ?: HaConfig()))
+    val saved = configs.config()
+    screen.probes = tester.test(screen.draft(saved), saved)
     screen.testing = false
 }
 

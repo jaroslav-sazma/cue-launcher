@@ -723,7 +723,9 @@ on the local network; pick yours and the launcher fills in the **address at home
 an `https://` `external_url`, and the instance's identity, so the launcher can tell later whether
 you are home. Picking the instance is also what gives the launcher access to it — Android 17 blocks
 the local network for apps without access, and a service you picked yourself is enough, with no
-permission dialog.
+permission dialog. When the picker replaces an address you had already filled in, a notice under
+the field names the old one until you save or edit it — anything on a network can announce an
+instance, so check what the picker put in before you save.
 
 If your instance is not on the same network (a different VLAN, a VPN, no mDNS), close the picker and
 type the addresses in. The launcher then needs the **local network** permission for a local address,
@@ -767,9 +769,12 @@ valid until you delete it under *Long-lived access tokens*.
 
 The address fields are stored only when you confirm them with the **Save** bar that appears once you
 edit them; signing in counts as confirming. **Test the connection** reports for each address the
-HTTP status, the time it took and how many entities it can see. An `http://` home address is **not**
-contacted while you are away — the test says so instead, because the token would otherwise travel in
-the clear to whatever answers that name on a foreign network.
+HTTP status, the time it took and how many entities it can see, and it sends a stored sign-in or
+token only to addresses you have saved: an address you changed, typed or took from the picker reads
+*Not tried — save this address first* until you tap Save, while a token you have just typed in is
+tested right away. An `http://` home address is **not** contacted while you are away — the test says
+so instead, because the token would otherwise travel in the clear to whatever answers that name on a
+foreign network.
 
 ### 3. Upload the blueprint (for events)
 
@@ -1028,9 +1033,11 @@ The order matters: a Mac that is not paired yet can be found only while it is wa
    the Mac says the code is wrong, check the digits and type them again.
 
 The code is how the Mac knows it is pairing with your phone: it accepts only the code your phone
-shows. After pairing, the phone's Mac bridge settings show the Mac's certificate under **Mac
-certificate**, and the Mac shows its own in its pairing window; the two match. If they ever differ,
-unpair on both sides and pair again. If the phone says **Your Mac is already pairing with another
+shows. So pair on a Wi-Fi you trust, and take **Paired** on the Mac as the confirmation — if the
+phone says it is paired while the Mac never got there, unpair on the phone and start again. After
+pairing, the phone's Mac bridge settings show the Mac's certificate under **Mac certificate**, and
+the Mac shows its own in its pairing window; the two match. If they ever differ, unpair on both
+sides and pair again. If the phone says **Your Mac is already pairing with another
 device**, something else asked to pair first; cancel on the Mac and start again. An attempt that
 fails, or is cancelled on either side, ends the Mac's waiting — choose **Pair Phone…** again. Once
 paired, keep the Mac app running. When the Mac later gets another address on the network, the phone
@@ -1308,12 +1315,14 @@ number), app shortcut ids (a messaging app's shortcut often names a contact), an
 configuration — the home screen layout, folder names and the list of hidden apps.
 
 A file can come from anywhere, so the launcher takes it only when an app hands it over with access
-granted, never as a `file:` path or from a web page. The preview lists what every tile will **do**:
-each action in full, a Home Assistant call with its service, its target and every `*_id` in its
-data, and a link with its real target — the app and the address it opens — with a link the launcher
-would refuse marked as such. A Home Assistant call that will run without a confirmation prompt is
-marked in red, because the file decides that, and so is a *TV remote* on a phone without the Google
-TV app.
+granted, never as a `file:` path or from a web page. A file that overdoes it — a value longer than
+its field allows, JSON nested absurdly deep — is refused with the field named. The preview lists
+what every tile will **do**: each action with its real target — an app screen with its package and
+class, a shortcut with its id, a Home Assistant call with its service, its target and every `*_id`
+in its data, and a link with the app and the address it opens — with a link the launcher would
+refuse marked as such. A Home Assistant call that will run without a confirmation prompt is marked
+in red, because the file decides that, and so is a *TV remote* on a phone without the Google TV
+app.
 
 ### The scenario file
 

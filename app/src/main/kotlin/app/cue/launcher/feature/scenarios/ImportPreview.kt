@@ -45,7 +45,7 @@ fun ImportPreview(
             Column(verticalArrangement = Arrangement.spacedBy(Tokens.Settings.rowGap)) {
                 SectionLabel(title = stringResource(R.string.import_title))
                 plan.setName?.let { name ->
-                    Note(text = stringResource(R.string.import_set_name, name))
+                    Note(text = stringResource(R.string.import_set_name, previewText(name)))
                 }
             }
         }
@@ -169,7 +169,7 @@ private fun RejectedRow(rejected: RejectedScenario, modifier: Modifier = Modifie
     ImportDetailRow(
         title = rejected.name ?: rejected.id ?: stringResource(R.string.import_scenario_unnamed),
 
-        detail = rejected.defects.map { defect -> defectText(defect) }.joinToString(separator = "\n"),
+        detail = rejected.defects.map { defect -> previewText(defectText(defect)) }.joinToString(separator = "\n"),
         modifier = modifier,
     )
 }

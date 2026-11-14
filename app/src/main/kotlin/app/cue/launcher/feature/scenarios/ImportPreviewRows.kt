@@ -36,10 +36,10 @@ internal fun ImportDetailRow(
             .padding(horizontal = Tokens.Settings.screenPadding),
         verticalArrangement = Arrangement.spacedBy(Tokens.Settings.rowGap),
     ) {
-        Text(text = title, style = MaterialTheme.typography.bodyLarge)
+        Text(text = previewText(title), style = MaterialTheme.typography.bodyLarge)
         detail?.let {
             Text(
-                text = it,
+                text = previewText(it, limit = SUPPORTING_LINE_MAX_CHARS),
                 style = supportingStyle,
                 color = supportingInk(),
             )
@@ -72,15 +72,23 @@ internal fun ImportExtractLine(condition: Condition.NotificationFrom) {
     val rules = condition.extract.map { extractRuleText(it) }
     if (rules.isEmpty()) return
     ImportSupportingLine(
-        text = stringResource(R.string.import_reads_notification, condition.packageName, joinedSummary(rules)),
+        text = stringResource(
+            R.string.import_reads_notification,
+            previewText(condition.packageName),
+            joinedSummary(rules),
+        ),
         maxLines = Int.MAX_VALUE,
     )
 }
 
 @Composable
-internal fun ImportSupportingLine(text: String, maxLines: Int = ACTION_MAX_LINES) {
+internal fun ImportSupportingLine(
+    text: String,
+    maxLines: Int = ACTION_MAX_LINES,
+    maxChars: Int = SUPPORTING_LINE_MAX_CHARS,
+) {
     Text(
-        text = text,
+        text = previewText(text, limit = maxChars),
         style = supportingStyle,
         color = supportingInk(),
         maxLines = maxLines,
@@ -98,7 +106,8 @@ private fun ImportWarningLine(text: String) {
 }
 
 // Never the item's own label: a file can call an intent: link "Weather", and the target is the
-// whole point of showing it. The target line is never cut; only the raw link under it is.
+// whole point of showing it. The target line is cut only past what a real target reaches; the raw
+// link under it is cut to a few lines.
 @Composable
 private fun ImportLinkLines(uri: String) {
     val ownPackage = LocalContext.current.packageName
@@ -116,11 +125,12 @@ private fun ImportLinkLines(uri: String) {
             if (disclosure.refused) ImportWarningLine(stringResource(R.string.import_link_refused))
         }
     }
-    ImportSupportingLine(stringResource(R.string.builder_action_deeplink, uri))
+    ImportSupportingLine(stringResource(R.string.builder_action_deeplink, previewText(uri)))
 }
 
 // Service data is already cut in haDataTextOf after the targets; cutting the line again would hide
-// exactly the targets that a long entity list pushes down.
+// exactly the targets that a long entity list pushes down. The import caps the service, entity and
+// data, which is what keeps this line bounded.
 @Composable
 private fun ImportHaLine(action: TapAction.HaAction) {
     ImportSupportingLine(
@@ -129,6 +139,7 @@ private fun ImportHaLine(action: TapAction.HaAction) {
             joinedSummary(listOfNotNull(action.service, haTargetOf(action), haDataTextOf(action))),
         ),
         maxLines = Int.MAX_VALUE,
+        maxChars = Int.MAX_VALUE,
     )
 }
 
@@ -144,7 +155,8 @@ private fun linkFactText(fact: LinkFact): String = stringResource(
         LinkPart.OPENS -> R.string.import_link_opens
         LinkPart.FALLBACK -> R.string.import_link_fallback
     },
-    fact.value,
+    previewText(fact.value),
 )
 
 private const val ACTION_MAX_LINES = 4
+private const val SUPPORTING_LINE_MAX_CHARS = 4000

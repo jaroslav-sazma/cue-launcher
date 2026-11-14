@@ -73,5 +73,5 @@ fun haActionOutcome(probe: HaProbe): ActionOutcome = when (probe) {
     is HaProbe.Network -> ActionOutcome.HA_UNREACHABLE
     HaProbe.Timeout -> ActionOutcome.HA_TIMEOUT
     HaProbe.LocalNetworkDenied -> ActionOutcome.HA_LOCAL_NETWORK
-    HaProbe.Blocked, HaProbe.NotConfigured -> ActionOutcome.HA_NOT_CONFIGURED
+    HaProbe.Blocked, HaProbe.Unsaved, HaProbe.NotConfigured -> ActionOutcome.HA_NOT_CONFIGURED
 }

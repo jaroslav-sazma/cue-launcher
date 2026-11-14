@@ -58,11 +58,17 @@ sealed interface ScenarioDefect {
     data class InvalidExtractRule(val name: String, val problem: ExtractProblem) : ScenarioDefect
 
     data class InvalidHaEntity(val entity: String) : ScenarioDefect
+
+    data class TooLong(val field: String, val max: Int) : ScenarioDefect
 }
 
 private val TIME_PATTERN = Regex("""^([01]\d|2[0-3]):[0-5]\d$""")
 
 fun validateScenario(scenario: Scenario): List<ScenarioDefect> {
+    // The other checks quote what they refuse; a value too long to show is named by its field only.
+    val tooLong = lengthDefects(scenario)
+    if (tooLong.isNotEmpty()) return tooLong
+
     val defects = mutableListOf<ScenarioDefect>()
 
     if (scenario.id.isBlank()) defects += ScenarioDefect.BlankId(scenario.name)

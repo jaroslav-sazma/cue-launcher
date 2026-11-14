@@ -19,6 +19,7 @@ import app.cue.launcher.data.ha.haHomeNetworkMissing
 import app.cue.launcher.data.ha.haHomeNetworksOf
 import app.cue.launcher.data.ha.haUrlError
 import app.cue.launcher.data.ha.haUrlIsLocal
+import app.cue.launcher.data.ha.normalizeHaUrl
 
 // Two ways to hold the connection, never both at once: showing a sign-in button and a token field
 // under each other asks the user to guess which one counts.
@@ -29,9 +30,28 @@ internal class HaScreenState {
 
     var loaded by mutableStateOf(false)
 
-    var urlInternal by mutableStateOf("")
+    private var internalText by mutableStateOf("")
 
-    var urlExternal by mutableStateOf("")
+    private var externalText by mutableStateOf("")
+
+    var urlInternal: String
+        get() = internalText
+        set(value) {
+            internalText = value
+            replaced -= HaEndpointKind.HOME
+        }
+
+    var urlExternal: String
+        get() = externalText
+        set(value) {
+            externalText = value
+            replaced -= HaEndpointKind.AWAY
+        }
+
+    // The address each field held before the picker overwrote it. An mDNS record is anyone's to
+    // publish, so a replaced address is never silent: it stays on screen until saved or edited.
+    var replaced by mutableStateOf<Map<HaEndpointKind, String>>(emptyMap())
+        private set
 
     val token = TextFieldState()
 
@@ -135,6 +155,10 @@ internal class HaScreenState {
 
     val canTest: Boolean get() = canSave && hasCredential
 
+    // A test started while a save is in flight compares the draft with the config from before it,
+    // so the addresses being saved would come back as not saved yet.
+    val canStartTest: Boolean get() = canTest && !testing && !saving
+
     // Signing in stores the address along with the session, so it has to pass everything saving does —
     // a cleartext home address with nothing to recognise home by must not get in through this door.
     val canSignIn: Boolean get() = canSave
@@ -156,6 +180,7 @@ internal class HaScreenState {
         savedUrlInternal = urlInternal
         savedUrlExternal = urlExternal
         savedNetworksText = homeNetworksText
+        replaced = emptyMap()
     }
 
     fun draft(stored: HaConfig): HaConfig = HaConfig(
@@ -174,8 +199,16 @@ internal class HaScreenState {
     fun apply(instance: HaInstance) {
         instanceUuid = instance.uuid
         instanceName = instance.label
-        instance.homeUrl.takeIf(String::isNotEmpty)?.let { urlInternal = it }
-        instance.awayUrl.takeIf(String::isNotEmpty)?.let { urlExternal = it }
+        instance.homeUrl.takeIf(String::isNotEmpty)?.let { offer(HaEndpointKind.HOME, it) }
+        instance.awayUrl.takeIf(String::isNotEmpty)?.let { offer(HaEndpointKind.AWAY, it) }
+    }
+
+    private fun offer(kind: HaEndpointKind, url: String) {
+        val previous = replaced[kind] ?: if (kind == HaEndpointKind.HOME) urlInternal else urlExternal
+        if (kind == HaEndpointKind.HOME) urlInternal = url else urlExternal = url
+        if (previous.isNotBlank() && normalizeHaUrl(previous) != normalizeHaUrl(url)) {
+            replaced += kind to previous
+        }
     }
 
     fun addNetwork(ssid: String) {

@@ -54,9 +54,11 @@ private fun deepLinkAllowed(parsed: Intent, ownPackage: String): Boolean = deepL
 
 // parseUri promises URISyntaxException, but a typed extra it cannot parse — `i.count=abc` — comes
 // out of Integer.parseInt as a NumberFormatException that the parser never wraps. Catching only the
-// documented one turns a mistyped link into a crashed launcher.
+// documented one turns a mistyped link into a crashed launcher. The link is trimmed here as the
+// executor's route trims it: parseUri reads " intent:…" as a plain view link, so a padded link would
+// otherwise preview as harmless and run as a serialized intent.
 private fun parsedDeepLink(uri: String): Intent? = try {
-    Intent.parseUri(uri, Intent.URI_INTENT_SCHEME or Intent.URI_ANDROID_APP_SCHEME)
+    Intent.parseUri(uri.trim(), Intent.URI_INTENT_SCHEME or Intent.URI_ANDROID_APP_SCHEME)
 } catch (malformed: URISyntaxException) {
     // Only the class: both messages quote the link back, and a link can carry anything.
     Log.w(DEEP_LINK_TAG, "The link is not a serialized intent: ${malformed.javaClass.simpleName}")

@@ -80,16 +80,20 @@ private fun readCollection(root: JsonObject, scenarios: JsonArray): ScenarioRead
     val isConfig = CONFIG_FIELDS.any { it in root }
     val config = if (isConfig) {
         runCatching { scenarioJson.decodeFromJsonElement<LauncherConfig>(root) }.getOrNull()
-            ?: return ScenarioRead.Failed(ScenarioDefect.Malformed.ConfigUnreadable)
     } else {
         null
     }
+    val configDefect = when {
+        isConfig && config == null -> ScenarioDefect.Malformed.ConfigUnreadable
+        else -> config?.let { gestureLengthDefects(it.gestures).firstOrNull() }
+    }
+    if (configDefect != null) return ScenarioRead.Failed(configDefect)
 
     return ScenarioRead.Ok(
         setName = if (isConfig) null else root.stringFieldOrNull(FIELD_NAME),
         accepted = accepted,
         rejected = rejected,
-        config = config,
+        config = config?.let { it.copy(gestures = it.gestures.tidied()) },
         skipped = (scenarios.size - MAX_IMPORTED_SCENARIOS).coerceAtLeast(0),
     )
 }

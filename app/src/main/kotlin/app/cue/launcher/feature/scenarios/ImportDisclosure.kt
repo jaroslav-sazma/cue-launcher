@@ -7,6 +7,7 @@ import app.cue.launcher.data.scenario.Scenario
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TileContent
 import app.cue.launcher.system.DeepLinkTarget
+import app.cue.launcher.system.absoluteClassName
 import app.cue.launcher.system.confirmationRequired
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -57,6 +58,23 @@ fun haDataTextOf(action: TapAction.HaAction, limit: Int = HA_DATA_PREVIEW_CHARS)
     return if (text.length <= kept) text else text.take(kept) + ELLIPSIS
 }
 
+// What an action without a label of its own reaches inside its app. An activity is named whole, by
+// package and absolute class: the class alone can borrow the name of another app's screen.
+fun actionTargetOf(action: TapAction): String? = when (action) {
+    is TapAction.Shortcut -> action.shortcutId.trim()
+    is TapAction.Capability -> action.capability.trim()
+    is TapAction.ActivityLaunch -> action.packageName.trim().let { "$it/${absoluteClassName(it, action.component)}" }
+    is TapAction.App, is TapAction.DeepLink, is TapAction.SystemAction, is TapAction.HaAction -> null
+}
+
+// A file within the size cap can still carry megabytes in one string; laying that out freezes the
+// preview, whatever the import checks let through before.
+fun previewText(text: String, limit: Int = PREVIEW_TEXT_CHARS): String {
+    if (text.length <= limit) return text
+    val end = if (limit > 0 && text[limit - 1].isHighSurrogate()) limit - 1 else limit
+    return text.take(end) + ELLIPSIS
+}
+
 enum class LinkPart { APP, ACTION, OPENS, FALLBACK }
 
 data class LinkFact(val part: LinkPart, val value: String)
@@ -91,4 +109,5 @@ private fun entityInData(data: JsonObject): String? = when (val raw = data[HA_EN
 private const val HA_ENTITY_KEY = "entity_id"
 private const val HA_TARGET_SUFFIX = "_id"
 private const val HA_DATA_PREVIEW_CHARS = 120
+private const val PREVIEW_TEXT_CHARS = 500
 private const val ELLIPSIS = "…"

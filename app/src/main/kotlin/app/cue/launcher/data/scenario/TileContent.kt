@@ -181,6 +181,15 @@ enum class AppProfile {
     WORK,
 }
 
+// The executor trims a link before it parses it, so a padded one is stored trimmed and the preview
+// reads exactly the intent that would run.
+internal fun TapAction.tidied(): TapAction = if (this is TapAction.DeepLink) copy(uri = uri.trim()) else this
+
+internal fun TileContent.tidied(): TileContent = when (this) {
+    is TileContent.Template -> copy(items = items.map { it.copy(actions = it.actions.map(TapAction::tidied)) })
+    is TileContent.LauncherWidget, is TileContent.AppWidget -> this
+}
+
 // A link or an app screen can only be started in the launcher's own profile, so only App, Shortcut
 // and Capability ever name another one.
 data class ActionApp(val packageName: String, val profile: AppProfile? = null)

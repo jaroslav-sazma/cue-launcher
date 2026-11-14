@@ -118,7 +118,8 @@ fun haTestResultOf(probe: HaProbe): HaTestResult = when (probe) {
 
     // Neither is a problem with the action being edited: both are answered on the connection screen,
     // and NotConfigured is what offers the way there.
-    HaProbe.Blocked, HaProbe.LocalNetworkDenied, HaProbe.NotConfigured -> HaTestResult.NotConfigured
+    HaProbe.Blocked, HaProbe.Unsaved, HaProbe.LocalNetworkDenied, HaProbe.NotConfigured ->
+        HaTestResult.NotConfigured
 }
 
 fun interface HaActionTester {

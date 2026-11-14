@@ -2,11 +2,17 @@ package app.cue.launcher.feature.scenarios
 
 import app.cue.launcher.data.scenario.GesturesConfig
 import app.cue.launcher.data.scenario.LauncherWidgetType
+import app.cue.launcher.data.scenario.Scenario
+import app.cue.launcher.data.scenario.ScenarioFormat
+import app.cue.launcher.data.scenario.ScenarioRead
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.data.scenario.TemplateItem
 import app.cue.launcher.data.scenario.TemplateLayout
 import app.cue.launcher.data.scenario.TileContent
+import app.cue.launcher.data.scenario.TileSize
+import app.cue.launcher.system.ActionRoute
 import app.cue.launcher.system.DeepLinkTarget
+import app.cue.launcher.system.actionRouteOf
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
@@ -220,6 +226,95 @@ class ImportDisclosureTest {
     @Test
     fun `a link the parser rejects is disclosed as invalid`() {
         assertEquals(LinkDisclosure.Invalid, linkDisclosureOf(null))
+    }
+
+    // Intent.parseUri reads " intent:…" as a plain view link while the executor trims before routing,
+    // so a padded link once previewed as harmless and ran as a serialized intent. parseUri needs a
+    // device; what is pinned here is that the preview gets the very string the executor starts.
+    @Test
+    fun `a padded intent link reaches the preview as the intent the executor starts`() {
+        val padded = " intent://maps.google.com/" + " ".repeat(2_000) +
+            "#Intent;scheme=https;component=com.evil/.Pay;S.x=y;end"
+        val scenario = Scenario(
+            id = "s",
+            name = "Weather",
+            size = TileSize.GRID_1X1,
+            content = TileContent.Template(
+                layout = TemplateLayout.ICON_TEXT,
+                items = listOf(TemplateItem(label = "Weather", actions = listOf(TapAction.DeepLink(padded)))),
+            ),
+        )
+        val read = ScenarioFormat.read(ScenarioFormat.encodeScenario(scenario)) as ScenarioRead.Ok
+
+        val shown = tapDisclosuresOf(read.accepted.single().scenario.content).single().actions.single()
+
+        val uri = (shown as TapAction.DeepLink).uri
+        assertTrue(uri.startsWith("intent:"), uri)
+        assertTrue(uri.endsWith("component=com.evil/.Pay;S.x=y;end"), uri)
+        assertEquals(ActionRoute.IntentUri(uri), actionRouteOf(shown))
+    }
+
+    @Test
+    fun `an app screen is named by its package and absolute class`() {
+        val spoof = TapAction.ActivityLaunch(packageName = "com.evil", component = "com.android.settings.Settings")
+
+        assertEquals("com.evil/com.android.settings.Settings", actionTargetOf(spoof))
+        assertEquals("com.evil/com.evil.Pay", actionTargetOf(TapAction.ActivityLaunch(" com.evil ", ".Pay")))
+        assertEquals("com.evil/com.evil.Pay", actionTargetOf(TapAction.ActivityLaunch("com.evil", "Pay")))
+    }
+
+    @Test
+    fun `a shortcut and an in-app action name what they reach inside the app`() {
+        assertEquals("transfer_all", actionTargetOf(TapAction.Shortcut("com.bank", " transfer_all ")))
+        val capability = TapAction.Capability("com.x", "actions.intent.GET_THING")
+
+        assertEquals("actions.intent.GET_THING", actionTargetOf(capability))
+    }
+
+    @Test
+    fun `actions without an inner target name none`() {
+        assertNull(actionTargetOf(TapAction.App("com.x")))
+        assertNull(actionTargetOf(link))
+        assertNull(actionTargetOf(disarm))
+    }
+
+    @Test
+    fun `preview text past its limit is cut with an ellipsis`() {
+        assertEquals("short", previewText("short"))
+        assertEquals("x".repeat(500), previewText("x".repeat(500)))
+        assertEquals("x".repeat(500) + "…", previewText("x".repeat(1_000_000)))
+        assertEquals("ab…", previewText("abc", limit = 2))
+    }
+
+    @Test
+    fun `a cut never splits a surrogate pair`() {
+        assertEquals("ab…", previewText("ab🔒cd", limit = 3))
+        assertEquals("ab🔒…", previewText("ab🔒cd", limit = 4))
+    }
+
+    @Test
+    fun `an imported HA call names every entity id in its data, uncut`() {
+        val ids = List(30) { "light.living_room_ceiling_$it" } + "lock.front_door"
+        val action = TapAction.HaAction(
+            service = "homeassistant.turn_on",
+            data = JsonObject(mapOf("entity_id" to JsonArray(ids.map { JsonPrimitive(it) }))),
+        )
+        val scenario = Scenario(
+            id = "s",
+            name = "Lights",
+            size = TileSize.GRID_1X1,
+            content = TileContent.Template(
+                layout = TemplateLayout.ICON_TEXT,
+                items = listOf(TemplateItem(actions = listOf(action))),
+            ),
+        )
+        val read = ScenarioFormat.read(ScenarioFormat.encodeScenario(scenario)) as ScenarioRead.Ok
+
+        val shown = tapDisclosuresOf(read.accepted.single().scenario.content).single().actions.single()
+
+        val target = requireNotNull(haTargetOf(shown as TapAction.HaAction))
+        assertEquals(ids.joinToString(), target)
+        assertFalse(target.contains("…"), target)
     }
 
     @Test

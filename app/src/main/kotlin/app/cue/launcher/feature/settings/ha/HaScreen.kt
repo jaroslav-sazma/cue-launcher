@@ -104,7 +104,7 @@ internal fun HomeAssistantScreen(
                 flash = flash,
                 onDiscover = { scope.launch { discover(screen, configs, setup, flash) } },
                 onSignIn = { scope.launch { signIn(screen, configs, setup, context, flash) } },
-                onTest = { scope.launch { runProbe(screen, setup.tester, stored) } },
+                onTest = { scope.launch { runProbe(screen, setup.tester, configs) } },
             )
         }
     }

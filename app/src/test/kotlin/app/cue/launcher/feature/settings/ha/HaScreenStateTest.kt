@@ -3,6 +3,8 @@ package app.cue.launcher.feature.settings.ha
 import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import app.cue.launcher.R
 import app.cue.launcher.data.ha.HaConfig
+import app.cue.launcher.data.ha.HaEndpointKind
+import app.cue.launcher.data.ha.HaInstance
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNull
@@ -129,6 +131,20 @@ class HaScreenStateTest {
         assertTrue(screen.canTest)
     }
 
+    @Test
+    fun `no test starts while a save or another test is running`() {
+        val screen = HaScreenState().apply { fill(stored.copy(refreshToken = "r", oauthClientId = "c")) }
+
+        assertTrue(screen.canStartTest)
+
+        screen.saving = true
+        assertFalse(screen.canStartTest)
+
+        screen.saving = false
+        screen.testing = true
+        assertFalse(screen.canStartTest)
+    }
+
     // The screen offers one way in at a time, so whatever is typed in the other one must not be what
     // gets saved — nor make the save bar appear for an edit the user cannot see.
     @Test
@@ -173,5 +189,60 @@ class HaScreenStateTest {
 
         assertEquals(HaCredentialMode.SIGN_IN, screen.credentialMode)
         assertTrue(screen.canTest)
+    }
+
+    // An mDNS record is anyone's to publish, so the picker overwriting an address must show.
+    @Test
+    fun `the picker replacing an address leaves a notice with the old one`() {
+        val screen = loaded()
+
+        screen.apply(HaInstance(uuid = "u", externalUrl = "https://rogue.example.com"))
+
+        assertEquals("https://rogue.example.com", screen.urlExternal)
+        assertEquals(mapOf(HaEndpointKind.AWAY to stored.urlExternal), screen.replaced)
+    }
+
+    @Test
+    fun `the picker filling an empty field or repeating the same address leaves no notice`() {
+        val screen = HaScreenState().apply { fill(stored.copy(urlExternal = "")) }
+
+        screen.apply(
+            HaInstance(
+                uuid = "u",
+                internalUrl = "${stored.urlInternal}/",
+                externalUrl = "https://example.ui.nabu.casa",
+            ),
+        )
+
+        assertEquals("https://example.ui.nabu.casa", screen.urlExternal)
+        assertTrue(screen.replaced.isEmpty())
+    }
+
+    @Test
+    fun `a second pick still names the address the user had`() {
+        val screen = loaded()
+
+        screen.apply(HaInstance(uuid = "u", externalUrl = "https://one.example.com"))
+        screen.apply(HaInstance(uuid = "u", externalUrl = "https://two.example.com"))
+
+        assertEquals(mapOf(HaEndpointKind.AWAY to stored.urlExternal), screen.replaced)
+    }
+
+    @Test
+    fun `the notice goes once the field is edited or saved`() {
+        val screen = loaded()
+        val rogue = HaInstance(
+            uuid = "u",
+            internalUrl = "https://rogue.local:8123",
+            externalUrl = "https://rogue.example.com",
+        )
+        screen.apply(rogue)
+        assertEquals(setOf(HaEndpointKind.HOME, HaEndpointKind.AWAY), screen.replaced.keys)
+
+        screen.urlExternal = "https://example.ui.nabu.casa"
+        assertEquals(setOf(HaEndpointKind.HOME), screen.replaced.keys)
+
+        screen.markSaved()
+        assertTrue(screen.replaced.isEmpty())
     }
 }

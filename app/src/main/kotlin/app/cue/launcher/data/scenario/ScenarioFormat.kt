@@ -1,5 +1,6 @@
 package app.cue.launcher.data.scenario
 
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -8,10 +9,17 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 
+// The library's own limit of 400 still lets a hostile file through to a tree whose toString() or
+// validation overflows the stack of a Default worker, which nothing catches. Real scenarios, ha data
+// included, nest a handful of levels.
+@OptIn(ExperimentalSerializationApi::class)
 internal val scenarioJson = Json {
     ignoreUnknownKeys = true
     encodeDefaults = true
+    maxNestingDepth = SCENARIO_MAX_NESTING
 }
+
+private const val SCENARIO_MAX_NESTING = 128
 
 internal val scenarioJsonPretty = Json(scenarioJson) {
     prettyPrint = true

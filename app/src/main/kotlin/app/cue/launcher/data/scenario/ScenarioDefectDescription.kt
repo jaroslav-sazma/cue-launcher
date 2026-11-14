@@ -63,6 +63,8 @@ fun ScenarioDefect.description(): String = when (this) {
 
     is ScenarioDefect.InvalidHaEntity ->
         "\"$entity\" is not a Home Assistant entity id; write domain.object_id, like media_player.living_room."
+
+    is ScenarioDefect.TooLong -> "Field \"$field\" is longer than $max characters."
 }
 
 private fun ScenarioDefect.InvalidExtractRule.extractDescription(): String = when (problem) {
