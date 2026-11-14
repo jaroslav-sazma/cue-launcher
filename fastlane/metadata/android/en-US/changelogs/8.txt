@@ -1,0 +1,1 @@
+Security fixes. The import preview names the exact app screen or shortcut each action opens, and a scenario file with oversized or absurdly nested data is refused with the field named. Your Home Assistant sign-in or token goes only to addresses you have saved, and a call that may already have reached Home Assistant is never repeated on the second address. Updated libraries.
