@@ -304,7 +304,7 @@ androidComponents {
 tasks.named("check") { dependsOn("verifyDebugMergedManifest") }
 
 dependencies {
-    implementation(platform(libs.compose.bom.alpha))
+    implementation(platform(libs.compose.bom))
     implementation(libs.compose.ui)
     implementation(libs.compose.material3)
     implementation(libs.compose.ui.tooling.preview)
@@ -330,7 +330,7 @@ dependencies {
 
     baselineProfile(project(":baselineprofile"))
 
-    screenshotTestImplementation(platform(libs.compose.bom.alpha))
+    screenshotTestImplementation(platform(libs.compose.bom))
     screenshotTestImplementation(libs.compose.ui.tooling)
     screenshotTestImplementation(libs.screenshot.validation.api)
 

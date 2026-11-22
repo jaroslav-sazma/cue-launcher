@@ -6,12 +6,13 @@ Trigger-driven Android launcher "Cue: React & Act" (its Play name; the label und
 ## Hard rules
 - Visuals go through `designsystem` tokens only — no literal colors or dimensions in feature code.
 - UI is built from the **newest Material 3 Expressive** components. The theme is already
-  `MaterialExpressiveTheme` and the alpha BOM is deliberate, so reach for the expressive element
-  before the older one: `ToggleButton` + `ButtonGroupDefaults.connected*Shapes()` instead of
-  `SegmentedButton`, `FloatingToolbar` instead of a hand-rolled bar, the expressive motion schemes
-  instead of raw springs. Opting into `@ExperimentalMaterial3ExpressiveApi` is expected. The
-  exception is the launcher surface itself (home screen, tiles, panel, drawer), which follows the
-  project's own glass design and its tokens — Material components do not belong there.
+  `MaterialExpressiveTheme` and the stable BOM's material3 1.5.0 carries the expressive set, so
+  reach for the expressive element before the older one: `ToggleButton` +
+  `ButtonGroupDefaults.connected*Shapes()` instead of `SegmentedButton`, `FloatingToolbar` instead
+  of a hand-rolled bar, the expressive motion schemes instead of raw springs. Opting into
+  `@ExperimentalMaterial3ExpressiveApi` is expected. The exception is the launcher surface itself
+  (home screen, tiles, panel, drawer), which follows the project's own glass design and its tokens
+  — Material components do not belong there.
 - Android 17 (API 37) is the floor: minSdk and targetSdk are both 37, so runtime version checks have
   no reason to exist at all. Nothing is kept working below it.
 - Comments are kept to a minimum: only workarounds, traps and non-obvious contracts. No descriptive

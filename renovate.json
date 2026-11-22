@@ -17,11 +17,6 @@
       "enabled": false
     },
     {
-      "description": "The Compose alpha BOM tracks its own prerelease train; group its updates alone.",
-      "matchPackageNames": ["androidx.compose:compose-bom-alpha"],
-      "groupName": "compose-bom-alpha"
-    },
-    {
       "description": "The validation API shares its catalog version with the screenshot Gradle plugin but is often published first; only the plugin moves that version, or the build asks for a plugin that does not exist.",
       "matchPackageNames": ["com.android.tools.screenshot:screenshot-validation-api"],
       "enabled": false
