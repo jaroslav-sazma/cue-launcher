@@ -133,6 +133,9 @@ internal suspend fun connectL2cap(
     bleKey: ByteArray,
     connectTimeoutMillis: Int = L2CAP_CONNECT_TIMEOUT_MS,
 ): BridgeConnection = coroutineScope {
+    // The scope's own job, not the IO block's: the scope is marked cancelled before it cancels its
+    // children, but the watcher can close the socket before the cancellation reaches the IO block.
+    val dial = coroutineContext.job
     val opening = AtomicReference<Closeable?>(null)
     val watcher = launch(start = CoroutineStart.UNDISPATCHED) {
         try {
@@ -143,10 +146,9 @@ internal suspend fun connectL2cap(
     }
     try {
         withContext(Dispatchers.IO) {
-            val job = coroutineContext.job
             val socket = route.open()
             opening.set(socket)
-            if (!job.isActive) runCatching { socket.close() }
+            if (!dial.isActive) runCatching { socket.close() }
             try {
                 // The socket's connect takes no timeout of its own, so the deadline closes it instead.
                 ReadDeadline { runCatching { socket.close() } }
@@ -156,7 +158,7 @@ internal suspend fun connectL2cap(
             } catch (failure: IOException) {
                 runCatching { socket.close() }
                 // The failure of a socket the watcher closed is the cancellation, not a carrier failure.
-                job.ensureActive()
+                dial.ensureActive()
                 throw failure
             }
         }.also { opening.set(null) }

@@ -196,6 +196,8 @@ class BridgeTlsClient(private val identity: BridgeIdentity) {
     // the caller goes away; the connection is either returned open or closed, never leaked.
     internal suspend fun connect(host: String, port: Int, expectedFingerprint: ByteArray?): TlsConnection =
         coroutineScope {
+            // The scope's job, for the reason connectL2cap gives.
+            val dial = coroutineContext.job
             val opening = AtomicReference<Socket?>(null)
             val watcher = launch(start = CoroutineStart.UNDISPATCHED) {
                 try {
@@ -206,10 +208,9 @@ class BridgeTlsClient(private val identity: BridgeIdentity) {
             }
             try {
                 withContext(Dispatchers.IO) {
-                    val job = coroutineContext.job
                     connectBlocking(host, port, expectedFingerprint) { socket ->
                         opening.set(socket)
-                        if (!job.isActive) runCatching { socket.close() }
+                        if (!dial.isActive) runCatching { socket.close() }
                     }
                 }.also { opening.set(null) }
             } finally {
