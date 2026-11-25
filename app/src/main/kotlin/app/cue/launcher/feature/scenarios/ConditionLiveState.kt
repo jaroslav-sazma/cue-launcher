@@ -59,6 +59,9 @@ enum class NowKey {
     MAC_LOCK_AWAY,
     MAC_LOCK_BRIDGE_OFF,
     MAC_LOCK_UNKNOWN,
+    VAULT_UNLOCKED,
+    VAULT_LOCKED,
+    VAULT_UNKNOWN,
 
     AWAITS_EVENT,
 }
@@ -112,6 +115,9 @@ private fun measuredNow(condition: Condition.StateCondition, state: SystemState)
             state.macLock == MacLockState.UNLOCKED -> NowKey.MAC_UNLOCKED
             else -> NowKey.MAC_LOCK_UNREPORTED
         }
+
+        is Condition.VaultUnlocked ->
+            pick(state.vaultUnlocked, NowKey.VAULT_UNLOCKED, NowKey.VAULT_LOCKED, NowKey.VAULT_UNKNOWN)
     }
 
 private fun measuredArgument(condition: Condition.StateCondition, state: SystemState): String? =

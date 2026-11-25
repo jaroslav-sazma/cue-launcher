@@ -12,6 +12,7 @@ it or help with a release; what the launcher does and how to use it is in the [R
 - [Documentation](#documentation)
 - [Tests and checks](#tests-and-checks)
 - [The Mac bridge and its macOS app](#the-mac-bridge-and-its-macos-app)
+- [The vault format and its recovery script](#the-vault-format-and-its-recovery-script)
 - [When the build changes](#when-the-build-changes)
 - [Release build](#release-build)
 - [Baseline profile](#baseline-profile)
@@ -96,7 +97,17 @@ runs all day on someone's phone.
   Bluetooth adapter's state, because the stack reports no disconnect for the GATT link when the
   phone's Bluetooth turns off. All its other work lives in a window that opens on the Mac's
   appearance and closes on the debounced absence, and ends with it — the unlock receiver too,
-  registered only while a clip from the Mac waits for a locked phone. The README section
+  registered only while a clip from the Mac waits for a locked phone. The vault's
+  `SafeDocumentsProvider` is the last one: the manifest declares it disabled, it is enabled only
+  from an unlock to the lock, and only a picker or a file manager the user opens calls it; the
+  thread its reads run on starts with the unlock and ends with the lock, unless another app still
+  holds a descriptor from the vault then: the thread stays, idle, failing each of its reads, until
+  the last such descriptor is closed. The vault's automatic lock keeps one one-shot timer, and only
+  inside `ForegroundSession.run()`: while a session is open it waits for the session's limit and
+  locks it then, armed anew whenever the session changes. Outside `run()` the time since the unlock
+  is checked lazily, when `run()` starts, on every call of the provider and before every read of a
+  descriptor it handed out, and a process that starts with the provider still enabled, left behind
+  by one that died unlocked, disables it. The README section
   [Battery and background](README.md#battery-and-background) describes the result as a user sees it,
   and `scripts/background-audit.sh` checks it on an emulator.
 - **The scenario format is a public contract.** `schemaVersion 1` is frozen: adding an optional
@@ -134,11 +145,11 @@ so it can be planned.
 
 `README.md` is the user documentation, ordered from the general to the specific: what the launcher
 is, its screens and settings, scenarios with the catalogs of conditions, tile content and actions,
-the Home Assistant setup, the Mac bridge and examples, then permissions, battery, download and the
-roadmap. It is written for someone using the phone — plain words, the labels the app shows, a short
-example where a description alone would not do — and leaves out how the code works.
-[`docs/scenario-format.md`](docs/scenario-format.md) is the reference of the scenario JSON: every
-field, the notification value rules and the import checks. This file is the contributor
+the Home Assistant setup, the Mac bridge, the vault and examples, then permissions, battery,
+download and the roadmap. It is written for someone using the phone — plain words, the labels the
+app shows, a short example where a description alone would not do — and leaves out how the code
+works. [`docs/scenario-format.md`](docs/scenario-format.md) is the reference of the scenario JSON:
+every field, the notification value rules and the import checks. This file is the contributor
 documentation. **Every change ends with a review of the README and this file**: a behaviour a user
 sees is not finished until the README describes it, a change to the build, the checks or the rules
 above is not finished until this file does, and a change to the scenario JSON not until the format
@@ -150,11 +161,13 @@ and `PRIVACY.md` (the privacy policy, also the one the planned Google Play listi
 change whenever a control or a data flow they name changes.
 
 Prose in every `.md` file is hard-wrapped at 100 characters, counted in characters rather than
-bytes. Tables, fenced blocks and diagrams stay on one line however long they get, a wrap never
-lands inside a `code span` or a link, and editing a sentence means re-wrapping its whole paragraph.
-Examples in the documentation are in English. Prose names the launcher "Cue: React & Act" and the
-Mac app "Cue: Relay & Reply" in full, so the two are told apart at a glance; a bare "Cue:" only
-quotes what a screen shows, such as the label under the icon or *Do Not Disturb (Cue:)*.
+bytes. Tables, fenced blocks and diagrams stay on one line however long they get, a wrap never lands
+inside a `code span` or a link, and editing a sentence means re-wrapping its whole paragraph.
+Examples in the documentation are in English. Prose names the launcher "Cue: React & Act", the Mac
+app of the bridge "Cue: Relay & Reply" and the Mac app of the vault
+"Cue: Vault & View (for Google Drive)", or "Cue Vault" for short, so they are told apart at a
+glance; a bare "Cue:" only quotes what a screen shows, such as the label under the icon or *Do Not
+Disturb (Cue:)*.
 
 ---
 
@@ -166,6 +179,7 @@ quotes what a screen shows, such as the label under the icon or *Do Not Disturb 
 ./gradlew verifyDebugMergedManifest   # no library starts code of its own
 ./gradlew licensee                    # every library's license has its text in LICENSES/
 scripts/background-audit.sh           # on an emulator: nothing may run behind the home screen
+build/cuevault-venv/bin/python scripts/cuevault.py vectors --check fixtures/vault   # vault vectors
 ```
 
 Unit tests are JUnit (Jupiter) and run on the JVM; the fixtures in `fixtures/scenarios/` double as
@@ -180,18 +194,23 @@ such reads, so the files are listed as inputs of the test task in `app/build.gra
 file leaves the tests up to date. Screenshot tests (`./gradlew validateDebugScreenshotTest`) render
 the settings screens through layoutlib.
 
-`scripts/background-audit.sh [seconds] [--with-listener]` sends a debug build of the launcher behind
-Settings on a connected emulator and reposts a notification every two seconds, the way a progress
-notification is updated. It then fails if the process holds a content observer, a registered
-receiver, a binding to another app's service or one of its own other than the notification listener,
-keeps the listener bound although the need it stored says nothing wants it, is in another state than
-the one the listener calls for — a bound service while it is bound, otherwise the home state or a
-cached one — or spent more than 0.3 s of CPU a minute. The one receiver it lets through is the Mac
-bridge's single registration for the Bluetooth adapter's state and nothing else, and only while the
-system binds the companion service. `--with-listener` grants notification access for the run; the
-listener binds only while badges are on, a scenario watches notifications or a running tile waits
-for one to end it. The reposted notification stays in the shade under the tag `cue-audit`, as the
-shell cannot cancel it.
+`scripts/background-audit.sh [seconds] [--with-listener] [--vault-unlocked]` sends a debug build of
+the launcher behind Settings on a connected emulator and reposts a notification every two seconds,
+the way a progress notification is updated. It then fails if the process holds a content observer, a
+registered receiver, a binding to another app's service or one of its own other than the
+notification listener, keeps the listener bound although the need it stored says nothing wants it,
+is in another state than the one the listener calls for — a bound service while it is bound,
+otherwise the home state or a cached one — or spent more than 0.3 s of CPU a minute. The one
+receiver it lets through is the Mac bridge's single registration for the Bluetooth adapter's state
+and nothing else, and only while the system binds the companion service. `--with-listener` grants
+notification access for the run; the listener binds only while badges are on, a scenario watches
+notifications or a running tile waits for one to end it. The vault's provider must be disabled and
+its reading thread absent, unless `--vault-unlocked` says the vault was unlocked on the emulator
+before the run, with an automatic lock longer than the run; then both must be there, and content
+observers under `<package>.vault/document/` pass too — the cursor a file manager keeps on a vault
+folder it shows, which lives in the launcher's process until the file manager lets it go or the
+vault locks. The reposted notification stays in the shade under the tag `cue-audit`, as the shell
+cannot cancel it.
 
 Debug builds carry a generator of fixture notifications for the Mac bridge, so the mirror can be
 exercised on the emulator without other apps. The debug section of the Mac bridge screen has a
@@ -240,14 +259,21 @@ the report; the ones a security reader will look for — the exported `HaEventRe
 traffic — are deliberate and explained in `SECURITY.md` and `docs/security-audit.md`. Screenshot
 tests run too but do not block yet, until rendering on Linux and macOS is known to match.
 
-On `main` a second job submits the resolved dependency graph to GitHub, which is what lets
-Dependabot alerts see vulnerable libraries in a Gradle project. Renovate (`renovate.json`) proposes
-the updates themselves and opens an update with a `security` label as soon as an advisory names a
-version in use. Every action in the workflow is pinned to a full commit hash with the version as a
-comment, because a tag can be moved to other code and a commit cannot; Renovate keeps the pins
-current. `gradle/actions` is held on v5 on purpose: from v6 its caching is a proprietary component
-under Gradle's own terms of use, and `renovate.json` keeps it below 6. The workflow's token is
-read-only, except for the dependency job, which needs to write the graph.
+A second job, beside the build, runs in a `python:3.9-slim` container pinned by digest, because 3.9
+is the oldest Python the vault format's reference script supports: it installs the script's pinned
+dependencies into a venv and runs `scripts/cuevault.py vectors --check fixtures/vault`, see
+[The vault format and its recovery script](#the-vault-format-and-its-recovery-script). It needs no
+Gradle and takes seconds. `renovate.json` lets the image take digest updates only, never another
+Python.
+
+On `main` another job submits the resolved dependency graph to GitHub, which is what lets Dependabot
+alerts see vulnerable libraries in a Gradle project. Renovate (`renovate.json`) proposes the updates
+themselves and opens an update with a `security` label as soon as an advisory names a version in
+use. Every action in the workflow is pinned to a full commit hash with the version as a comment,
+because a tag can be moved to other code and a commit cannot; Renovate keeps the pins current.
+`gradle/actions` is held on v5 on purpose: from v6 its caching is a proprietary component under
+Gradle's own terms of use, and `renovate.json` keeps it below 6. The workflow's token is read-only,
+except for the dependency job, which needs to write the graph.
 
 ---
 
@@ -306,6 +332,93 @@ only, never content.
 
 ---
 
+## The vault format and its recovery script
+
+The vault is one encrypted `.cuevault` file that the Mac app Cue: Vault & View (for Google Drive),
+Cue Vault for short, creates and writes and the launcher reads. Cue Vault lives in a repository of
+its own, [cue-vault](https://github.com/jaroslav-sazma/cue-vault). Its format is shared the way the
+bridge protocol is, and lives here too.
+
+- **One spec, kept here.** [`docs/vault-format.md`](docs/vault-format.md) is the only normative
+  description of the container, at format version 1: the header, the key derivation and wrapping,
+  the segments, the ustar profile, the limits, the error categories and the password rules. Like the
+  bridge spec, it is CC0-1.0, and so are `scripts/cuevault.py`, its requirements file and
+  `fixtures/vault/` (`NOTICE`); a contribution to any of them is made under the same dedication.
+  Format version 1 is frozen: a change to any byte it describes is a new format version.
+- **A reference implementation that needs neither app.** `scripts/cuevault.py` reads and writes
+  vaults (`extract`, `create`), streaming them a segment at a time so that no vault has to fit in
+  memory, and generates and checks the vectors (`vectors`), which are small enough to build in
+  memory with the same functions. It is also the recovery path for users, so it runs on the system
+  Python of macOS, 3.9, and depends on `cryptography` alone; its ustar writer and reader are its
+  own, because the vectors compare bytes. Its dependencies are pinned with hashes in
+  `scripts/cuevault-requirements.txt` and go into a venv under `build/`, never into the system or
+  your home directory:
+
+  ```bash
+  python3 -m venv build/cuevault-venv
+  build/cuevault-venv/bin/pip install --require-hashes -r scripts/cuevault-requirements.txt
+  ```
+
+  The pins are the newest versions that still support Python 3.9. Renovate cannot tell which
+  release of a package still does, so `renovate.json` holds back the cffi and pycparser releases
+  that dropped it and caps cryptography below 51 and typing-extensions below 4.17. Lifting a cap, or
+  landing any update of the file, means checking on PyPI that every pinned version still declares
+  Python 3.9 support (`Requires-Python`) and that the hashes cover the CPython wheels for macOS
+  arm64, manylinux x86_64 and aarch64 and Windows x86_64. CI installs the file on Python 3.9 and
+  fails when a pin no longer supports it, but only on Linux x86_64.
+- **Vectors change here only.** `fixtures/vault/` holds the canonical vectors: `vectors.json` with
+  every input and expected value, and the `*.cuevault` files. A vector changes by editing the inputs
+  in `vectors.json`, then
+  `build/cuevault-venv/bin/python scripts/cuevault.py vectors fixtures/vault` rewrites the expected
+  values and the files, and `… vectors --check fixtures/vault` verifies them, as CI does;
+  `fixtures/vault/README.md` describes the schema. Cue Vault's repository keeps an identical copy of
+  `vectors.json` and the `*.cuevault` files, not the README, refreshed by its
+  `tools/sync-vectors.sh`, and its parity test fails on any file that differs while a checkout of
+  this repository sits beside it. Cue Vault's Swift writer has to reproduce the positive files byte
+  for byte; a format change lands as a pair of commits, one in each repository.
+- **The launcher's reader.** `engine/safe/` reads a vault in plain Kotlin, without the Android
+  framework, so `VaultVectorsTest` opens the vectors in place on the JVM, through the same
+  random-access reader the phone uses: every positive case with its password and with its stored
+  key, every accepted case to exactly its entries, and every negative case with exactly its category
+  — or, in the order the phone checks a pipe, whose length it learns only from its copy, the
+  credential before the length, the alternative a case names for a reader that learns the length
+  late. `SafeVaultTest` runs the negative cases through the whole unlock as well, with the
+  descriptor's length (exactly the category) and as a pipe (the alternative allowed). A format
+  change updates it in the same commit.
+- **The vault on the phone.** `system/safe/` and `data/safe/` hold it, named `safe` because
+  `feature/drawer/vault/` is the drawer's A–Z index. `SafeVault` is the one entry point: its state
+  flow, the unlock with the kept key or with the password, the lock and the settings. The CEK is
+  kept sealed under a Keystore key that every use has to authenticate. An unlock reads the file's
+  header, checks its layout against the length when the descriptor states one, obtains the key, then
+  copies the rest of the same stream into `noBackupFilesDir/safe/` (`SafeCopies`, which removes the
+  copy's name at once, so only its descriptor keeps it) and has `VaultReader` verify every segment
+  and index the archive in one pass. The session keeps the copy, the CEK and the index;
+  `SafeDocumentsProvider` decrypts what a read touches on its one reading thread, with a small cache
+  of segments, so the phone's memory grows only with the index, capped at `SAFE_MAX_ENTRIES` files
+  and directories, and the vault has no size limit but the free storage. Its document ids are a
+  random token drawn at every unlock and the number the session's index gives the document, never
+  its path, which the system's picker would keep with its recents (`SafeDocumentIds`), so no id,
+  grant or stored URI of one unlock names anything in the next, and the lock revokes every grant on
+  the authority while the provider is still enabled. Disabling it then makes Android kill any app
+  that still holds one of its descriptors (`REASON_DEPENDENCY_DIED`); that is accepted, and the
+  README warns about it. `SafeReadGate` fails each read of a descriptor past its session's limit and
+  has the main thread lock it, and a segment that no longer verifies fails its read and posts the
+  lock the same way, never locking on the reading thread. A lock bumps a generation that the copy
+  and the index pass check at every chunk and segment, so it stops an unlock under way at once.
+  `SafeVaultTest` runs the state machine against the vectors with fakes for the Keystore, the prompt
+  and the file, and a real copy in a temporary directory; the Keystore, the prompt, the provider and
+  the reservation of storage need a device. `feature/settings/safe/` is the settings screen with the
+  password dialog, the one place a password is typed, and the actions `vault_toggle`, `vault_unlock`
+  and `vault_lock` go through `ActionExecutor` like `mac_lock`, with `vaultTapOf` deciding what a
+  tap does: a tap that needs the user — no vault yet, the password, the file again, an error — opens
+  that screen rather than putting Material UI on the home screen. The `vault_unlocked` condition
+  reads `SafeConditions`, a provider over the session in memory that registers nothing: a session
+  past its limit reads as locked there before anything locks it, and while the reading is collected
+  — by the home screen, or for an event's five seconds — a wait for the limit turns it false on time
+  and ends with the collection.
+
+---
+
 ## When the build changes
 
 What has to follow a change to the build, and when:
@@ -323,6 +436,8 @@ What has to follow a change to the build, and when:
 | Startup or the first interactions | Regenerate the baseline profile, see below. |
 | The Home Assistant blueprint | Both `ha/launcher_event.yaml` and `ha/launcher_event.cs.yaml`, the receiver and `HA_EVENT_ACTION` stay in agreement; `HaEventContractTest` fails otherwise. |
 | The Mac bridge protocol — `docs/bridge-protocol.md` or `fixtures/bridge/` | The paired commit in the macOS app's repository with the same `bridgeProtocolVersion`, bumped unless the change is additive, carrying the vectors copied over by its `tools/sync-vectors.sh` — its parity test fails until they match — see [The Mac bridge and its macOS app](#the-mac-bridge-and-its-macos-app). `SECURITY.md` and the audit change with anything in the pairing or the cryptography. |
+| The vault format — `docs/vault-format.md`, `scripts/cuevault.py` or `fixtures/vault/` | Format version 1 is frozen: new vectors and changes that leave every byte as it is keep it, anything else is a new format version. The vectors are regenerated and pass `--check`, and the paired commit in Cue Vault's repository carries the Swift codec and the copy its `tools/sync-vectors.sh` makes — its parity test fails until they match — see [The vault format and its recovery script](#the-vault-format-and-its-recovery-script). |
+| `scripts/cuevault-requirements.txt` | Every pinned version still supports Python 3.9, the system Python of macOS, and every hash comes from PyPI, covering the CPython wheels for macOS arm64, manylinux x86_64 and aarch64 and Windows x86_64; a fresh venv installs the file with `--require-hashes`. |
 | The signing key | Never into the repository; `keystore.properties` points at it, and it is backed up in two independent places. It cannot be replaced: once Cue: React & Act is on Play, Play keeps signing with its enrolled copy, but a lost key means no APK on GitHub can ever update an installed copy again, and a new key would also change the certificate under [Verifying a download](README.md#verifying-a-download). |
 
 ---
@@ -464,18 +579,21 @@ adb uninstall app.cue.launcher && adb uninstall app.cue.launcher.baselineprofile
 | `CONTRIBUTING.md` | this file: the contributor documentation |
 | `docs/scenario-format.md` | the reference of the scenario JSON, `schemaVersion 1` |
 | `docs/bridge-protocol.md` | the normative protocol between the launcher and the macOS bridge app, `bridgeProtocolVersion 1`; `BridgeSpecParityTest` keeps its version, message and frame types, derivation labels, close and abort reasons, GATT UUIDs and MTU floor and vector catalog in step with the code; CC0-1.0, not GPL |
-| `LICENSE`, `NOTICE`, `LICENSES/` | the GPL text; the license notice with its section 7 terms, the CC0 dedication of the bridge spec and vectors, and the third-party material; the license texts that material and the dedication need. All three are packaged into the APK by the `licenseAssets` task and shown in the app |
+| `docs/vault-format.md` | the normative vault container format, format version 1, which Cue Vault, the launcher and `scripts/cuevault.py` implement; CC0-1.0, not GPL |
+| `LICENSE`, `NOTICE`, `LICENSES/` | the GPL text; the license notice with its section 7 terms, the CC0 dedication of the bridge and vault specs, their vectors and the vault's recovery script, and the third-party material; the license texts that material and the dedication need. All three are packaged into the APK by the `licenseAssets` task and shown in the app |
 | `art/icon/`, `fastlane/metadata/android/` | the icon master files; the store listing texts, screenshots and graphics. They are GPL files like the rest, but the GPL grants no trademark rights to the name and icon, see `NOTICE` |
 | `fixtures/scenarios/` | example scenarios in the JSON contract; also used by round-trip tests |
 | `fixtures/bridge/` | the bridge protocol's test vectors, CC0-1.0 like the spec; the canonical copy, whose JSON files the macOS app's repository mirrors with its `tools/sync-vectors.sh` and checks byte for byte |
+| `fixtures/vault/` | the vault format's test vectors, `vectors.json` and the `*.cuevault` files, CC0-1.0 like the spec; the canonical copy, which Cue Vault's repository mirrors with its `tools/sync-vectors.sh` and checks byte for byte |
 | `fixtures/baselineprofile/` | the whole configuration the baseline profile journeys seed the measured app with; packaged into the test APK only, not an example to import |
 | `ha/launcher_event.yaml`, `ha/launcher_event.cs.yaml` | the Home Assistant blueprint in English and Czech, packaged into the APK straight from here |
 | `baselineprofile/` | baseline profile generator |
 | `config/detekt/detekt.yml` | deviations from the default detekt config |
 | `scripts/background-audit.sh` | emulator check that nothing needless runs while the home screen is not shown |
+| `scripts/cuevault.py`, `scripts/cuevault-requirements.txt` | the vault format's reference implementation and recovery tool (`extract`, `create`, `vectors`), and its dependencies pinned with hashes; CC0-1.0, not GPL |
 | `gradle/libs.versions.toml` | version catalog |
 | `keystore.example.properties` | the template for the gitignored `keystore.properties` that signs the release build |
-| `.github/workflows/ci.yml` | CI: build, lint, tests, detekt, merged manifest and license checks; dependency graph for Dependabot |
+| `.github/workflows/ci.yml` | CI: build, lint, tests, detekt, merged manifest and license checks; the vault vectors; dependency graph for Dependabot |
 | `.github/ISSUE_TEMPLATE/`, `.github/pull_request_template.md` | the forms for bug reports and feature requests, and the pull request checklist; *About → Report a bug* fills the bug form's `device`, `android` and `version` fields by their ids and opens it at `REPOSITORY_URL` (`feature/scenarios/AboutLinks.kt`), which a fork points at its own repository; `AboutLinksTest` fails if an id goes missing |
 | `renovate.json` | dependency and action updates, security updates labelled |
 | `SECURITY.md` | how to report a vulnerability, and the threat model the launcher is built against |

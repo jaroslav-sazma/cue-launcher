@@ -2,6 +2,7 @@ package app.cue.launcher
 
 import android.app.Application
 import app.cue.launcher.di.AppGraph
+import app.cue.launcher.system.safe.discardSafeCopies
 import dev.zacsweers.metro.createGraphFactory
 
 class CueApplication : Application() {
@@ -11,6 +12,7 @@ class CueApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        discardSafeCopies(this)
         graph = createGraphFactory<AppGraph.Factory>().create(this)
     }
 }

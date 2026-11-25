@@ -84,6 +84,7 @@ class ScenarioFormatTest {
             Condition.HaState(entity = "media_player.living_room_tv", states = listOf("playing", "paused")),
             Condition.MacNearby(),
             Condition.MacLocked(),
+            Condition.VaultUnlocked(),
         )
 
         conditions.forEach { condition ->

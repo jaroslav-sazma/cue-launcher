@@ -1,6 +1,7 @@
 package app.cue.launcher.system
 
 import android.app.Application
+import android.os.SystemClock
 import app.cue.launcher.data.settings.SettingsRepository
 import app.cue.launcher.engine.ActivationStore
 import app.cue.launcher.engine.AlarmMonitor
@@ -12,6 +13,7 @@ import app.cue.launcher.system.bridge.BridgeComponentGate
 import app.cue.launcher.system.bridge.BridgeSessionLink
 import app.cue.launcher.system.iconpack.IconPackRepository
 import app.cue.launcher.system.notifications.NotificationListenerLink
+import app.cue.launcher.system.safe.SafeHost
 import app.cue.launcher.system.widget.WidgetHostMaintenance
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
@@ -54,6 +56,7 @@ class ForegroundSession(
     private val settings: SettingsRepository,
     private val bridgeLink: Lazy<BridgeSessionLink>,
     private val bridgeComponentGate: BridgeComponentGate,
+    private val safe: SafeHost,
 ) {
 
     private val prepared = AtomicBoolean(false)
@@ -74,6 +77,9 @@ class ForegroundSession(
     }
 
     suspend fun run(): Unit = withContext(Dispatchers.Default) {
+        // An unlock older than its limit locks as the launcher comes back, before anything reads it.
+        safe.lockIfExpired(SystemClock.elapsedRealtime())
+        isolated("Vault automatic lock") { safe.lockWhenDue(SystemClock::elapsedRealtime) }
         // Catches a change the receiver never saw, e.g. the app was updated over the alarm.
         isolated("Alarm catch-up") { alarmMonitor.onNextAlarm { nextAlarmMillis(application) } }
         isolated("Scenario engine") { engine.runForeground() }

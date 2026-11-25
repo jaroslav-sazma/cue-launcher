@@ -70,7 +70,8 @@
 
     <uses-permission android:name="android.permission.EXPAND_STATUS_BAR" />
 
-    <!-- The confirmation prompt on a Home Assistant action the user marked as sensitive. -->
+    <!-- The confirmation prompt on a Home Assistant action the user marked as sensitive, and the
+         vault's unlock, which opens its Keystore key. -->
     <uses-permission android:name="android.permission.USE_BIOMETRIC" />
 
     <!-- Nothing may start the launcher at boot; this keeps any library from declaring otherwise.
@@ -243,6 +244,23 @@
             <meta-data
                 android:name="android.support.FILE_PROVIDER_PATHS"
                 android:resource="@xml/ai_chat_paths" />
+        </provider>
+
+        <!-- The unlocked vault, read-only, decrypted from its private copy as it is read. Disabled
+             here and switched on only from the unlock to the lock (OpenSafe), so a locked or never
+             set up vault has no provider the system could create. exported="true" plus
+             MANAGE_DOCUMENTS, which only the system's document UI holds: any other app reaches a
+             file only through the grant a picker hands it. -->
+        <provider
+            android:name=".system.safe.SafeDocumentsProvider"
+            android:authorities="${applicationId}.vault"
+            android:enabled="false"
+            android:exported="true"
+            android:grantUriPermissions="true"
+            android:permission="android.permission.MANAGE_DOCUMENTS">
+            <intent-filter>
+                <action android:name="android.content.action.DOCUMENTS_PROVIDER" />
+            </intent-filter>
         </provider>
 
         <!-- Only event triggers need a manifest receiver, because they must wake the process while

@@ -63,6 +63,7 @@ internal fun ScenarioListScreen(
     onOpenBackups: () -> Unit,
     onHomeAssistant: () -> Unit,
     onBridge: () -> Unit,
+    onVault: () -> Unit,
     onOpenLicenses: () -> Unit,
     onNewScenario: () -> Unit,
     onEditScenario: (Scenario) -> Unit,
@@ -104,7 +105,8 @@ internal fun ScenarioListScreen(
         title = stringResource(R.string.scenarios_title),
         modifier = modifier,
         actions = {
-            ScenarioListMenu(onOpenBackups, onHomeAssistant, onBridge, onAbout = { screen.aboutVisible = true })
+            val about = { screen.aboutVisible = true }
+            ScenarioListMenu(onOpenBackups, onHomeAssistant, onBridge, onVault, onAbout = about)
         },
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
@@ -268,6 +270,7 @@ private fun ScenarioListMenu(
     onImport: () -> Unit,
     onHomeAssistant: () -> Unit,
     onBridge: () -> Unit,
+    onVault: () -> Unit,
     onAbout: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -293,6 +296,10 @@ private fun ScenarioListMenu(
             MenuItem(title = stringResource(R.string.scenarios_menu_bridge)) {
                 open = false
                 onBridge()
+            }
+            MenuItem(title = stringResource(R.string.scenarios_menu_vault)) {
+                open = false
+                onVault()
             }
             MenuItem(title = stringResource(R.string.scenarios_menu_about)) {
                 open = false

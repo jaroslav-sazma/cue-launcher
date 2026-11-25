@@ -98,6 +98,8 @@ internal fun ConditionFormBody(
                 note = R.string.builder_mac_locked_note,
             )
 
+            is Condition.VaultUnlocked -> Note(text = stringResource(R.string.builder_vault_unlocked_note))
+
             else -> Unit
         }
     }

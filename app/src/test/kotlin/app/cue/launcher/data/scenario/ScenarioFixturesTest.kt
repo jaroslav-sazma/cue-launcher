@@ -143,6 +143,30 @@ class ScenarioFixturesTest {
     }
 
     @Test
+    fun `the vault fixture unlocks and locks the vault and imports enabled`() {
+        val imported = importedFixture(FixtureFile.VAULT).single()
+        val content = imported.scenario.content as TileContent.Template
+
+        assertEquals(
+            listOf(SystemActionType.VAULT_UNLOCK, SystemActionType.VAULT_LOCK).map(TapAction::SystemAction),
+            content.items.flatMap { it.actions },
+        )
+        assertTrue(imported.placeholders.isEmpty())
+        assertTrue(imported.asStored().enabled)
+    }
+
+    @Test
+    fun `the open vault fixture shows a toggle while the vault is unlocked`() {
+        val imported = importedFixture(FixtureFile.VAULT_OPEN).single()
+        val content = imported.scenario.content as TileContent.Template
+
+        assertEquals(listOf(Condition.VaultUnlocked()), imported.scenario.conditions)
+        assertEquals(listOf(TapAction.SystemAction(SystemActionType.VAULT_TOGGLE)), content.items.single().actions)
+        assertTrue(imported.placeholders.isEmpty())
+        assertTrue(imported.asStored().enabled)
+    }
+
+    @Test
     fun `the doorbell fixture carries a duration on the condition`() {
         val scenario = importedFixture(FixtureFile.HA_GATE).single().scenario
 
@@ -289,6 +313,8 @@ class ScenarioFixturesTest {
         const val NOTIFICATION_PARCEL = "notification-parcel.json"
         const val NOTIFICATION_RIDE = "notification-ride.json"
         const val NOTIFICATION_UNTIL_WATCH = "notification-until-watch.json"
+        const val VAULT = "vault-office.json"
+        const val VAULT_OPEN = "vault-open.json"
     }
 
     private companion object {

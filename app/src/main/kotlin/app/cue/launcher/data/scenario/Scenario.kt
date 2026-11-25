@@ -166,6 +166,10 @@ sealed interface Condition {
     data class MacLocked(override val negate: Boolean = false) : StateCondition
 
     @Serializable
+    @SerialName("vault_unlocked")
+    data class VaultUnlocked(override val negate: Boolean = false) : StateCondition
+
+    @Serializable
     @SerialName("time_instant")
     data class TimeInstant(
         val at: String,
@@ -247,6 +251,7 @@ fun Condition.StateCondition.withNegate(negate: Boolean): Condition.StateConditi
     is Condition.HaState -> copy(negate = negate)
     is Condition.MacNearby -> copy(negate = negate)
     is Condition.MacLocked -> copy(negate = negate)
+    is Condition.VaultUnlocked -> copy(negate = negate)
 }
 
 fun Condition.InstantCondition.withUntil(until: EndEvent?): Condition.InstantCondition = when (this) {
@@ -271,6 +276,7 @@ enum class ConditionType(val jsonName: String, val isInstant: Boolean) {
     HA_STATE("ha_state", isInstant = false),
     MAC_NEARBY("mac_nearby", isInstant = false),
     MAC_LOCKED("mac_locked", isInstant = false),
+    VAULT_UNLOCKED("vault_unlocked", isInstant = false),
     TIME_INSTANT("time_instant", isInstant = true),
     ALARM("alarm", isInstant = true),
     BT_DISCONNECTED("bt_disconnected", isInstant = true),

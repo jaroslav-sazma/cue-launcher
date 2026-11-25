@@ -63,6 +63,7 @@ internal fun systemActionSectionTitle(section: SystemActionSection): String = st
         SystemActionSection.PANELS -> R.string.action_system_panels
         SystemActionSection.PLACE -> R.string.action_system_place
         SystemActionSection.MAC -> R.string.action_system_mac
+        SystemActionSection.VAULT -> R.string.action_system_vault
     },
 )
 
@@ -85,6 +86,9 @@ internal fun systemActionLabel(action: SystemActionType): String = stringResourc
         SystemActionType.REMEMBER_PLACE -> R.string.action_system_remember_place
         SystemActionType.SHOW_PLACE -> R.string.action_system_show_place
         SystemActionType.MAC_LOCK -> R.string.action_system_mac_lock
+        SystemActionType.VAULT_UNLOCK -> R.string.action_system_vault_unlock
+        SystemActionType.VAULT_LOCK -> R.string.action_system_vault_lock
+        SystemActionType.VAULT_TOGGLE -> R.string.action_system_vault_toggle
     },
 )
 
@@ -102,6 +106,9 @@ internal fun systemActionDetail(action: SystemActionType): String? = when (actio
     SystemActionType.REMEMBER_PLACE -> stringResource(R.string.action_system_remember_place_detail)
     SystemActionType.SHOW_PLACE -> stringResource(R.string.action_system_show_place_detail)
     SystemActionType.MAC_LOCK -> stringResource(R.string.action_system_mac_lock_detail)
+    SystemActionType.VAULT_UNLOCK -> stringResource(R.string.action_system_vault_unlock_detail)
+    SystemActionType.VAULT_LOCK -> stringResource(R.string.action_system_vault_lock_detail)
+    SystemActionType.VAULT_TOGGLE -> stringResource(R.string.action_system_vault_toggle_detail)
     else -> null
 }
 

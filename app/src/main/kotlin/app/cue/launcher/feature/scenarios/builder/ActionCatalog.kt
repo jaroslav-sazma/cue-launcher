@@ -34,7 +34,7 @@ fun actionChoiceOf(action: TapAction): ActionChoice = when (action) {
     is TapAction.DeepLink -> ActionChoice.URI
 }
 
-enum class SystemActionSection { SOUND, DEVICE, PLACE, MAC, PANELS }
+enum class SystemActionSection { SOUND, DEVICE, PLACE, MAC, VAULT, PANELS }
 
 data class SystemActionGroup(val section: SystemActionSection, val actions: List<SystemActionType>)
 
@@ -49,6 +49,9 @@ val SYSTEM_ACTION_CATALOG: List<SystemActionType> = listOf(
     SystemActionType.REMEMBER_PLACE,
     SystemActionType.SHOW_PLACE,
     SystemActionType.MAC_LOCK,
+    SystemActionType.VAULT_TOGGLE,
+    SystemActionType.VAULT_UNLOCK,
+    SystemActionType.VAULT_LOCK,
     SystemActionType.PANEL_VOLUME,
     SystemActionType.PANEL_INTERNET,
     SystemActionType.PANEL_WIFI,
@@ -77,6 +80,11 @@ fun systemActionSection(action: SystemActionType): SystemActionSection = when (a
     -> SystemActionSection.PLACE
 
     SystemActionType.MAC_LOCK -> SystemActionSection.MAC
+
+    SystemActionType.VAULT_TOGGLE,
+    SystemActionType.VAULT_UNLOCK,
+    SystemActionType.VAULT_LOCK,
+    -> SystemActionSection.VAULT
 
     SystemActionType.PANEL_VOLUME,
     SystemActionType.PANEL_INTERNET,

@@ -5,7 +5,8 @@ review of the whole `app/` module, the merged release manifest, the Home Assista
 build and CI configuration, the resolved release dependencies and the repository history, with the
 conclusions pinned down by unit tests and the import preview checked on an emulator. The Mac bridge
 (section 12), which came after 1.0.0, was reviewed within the reviews of its development phases,
-2026-10-12 to 2026-10-14, by the same method, against `docs/bridge-protocol.md`.
+2026-10-12 to 2026-10-14, by the same method, against `docs/bridge-protocol.md`, and so was the
+vault (section 13), in 2026-11, against `docs/vault-format.md`.
 
 **Result: no open findings.** Every area below is described as it stands today; the residual risks
 that remain are listed explicitly at the end, as are the things this review did not cover.
@@ -28,6 +29,7 @@ Every component in the merged manifest was traced from the entry point to the ef
 | `AiChatFileProvider` (`FileProvider`) | nothing | not exported; opens only for the app a send grants a one-off read of the one cached AI chat description, see section 11 |
 | `ZenModeStatusReceiver` | nothing | not exported; the system sends `AUTOMATIC_ZEN_RULE_STATUS_CHANGED` only to the package that owns the mode; it only removes the launcher's own Do Not Disturb mode once that is off |
 | `BridgeCompanionService` (exported service) | nothing | guarded by `BIND_COMPANION_DEVICE_SERVICE`, which only the system holds; declared disabled and enabled only while the Mac bridge is on and paired (section 12) |
+| `SafeDocumentsProvider` (exported documents provider) | while the vault is unlocked, read a file the user picked for it | guarded by `MANAGE_DOCUMENTS`, which only the system's document UI holds, so another app reaches a file only through the per-document read grant a picker hands it; read-only, no tree access; document ids that hold for one unlock, and every grant revoked at the lock; declared disabled and enabled only from an unlock to the lock (section 13) |
 | `ProcessTextActivity` (exported, `PROCESS_TEXT` and `SEND` on `text/plain`) | while a Mac is paired, send a text to the user's own Mac clipboard | declared disabled and enabled only while the Mac bridge is on and paired; the text is read through the typed getter alone, an unreadable extras bundle is dropped, the text is capped at 100 KB, and the Mac announces it (section 12) |
 
 `HaEventReceiver` has to stay exported — the Home Assistant companion app is a separate process and
@@ -83,20 +85,20 @@ one string the same way wherever it was stored.
 The preview lists accepted, rejected, skipped and incomplete entries, and for every scenario what
 its tiles do: each action in full rather than its label — an app screen with its package and
 absolute class, a shortcut with its id, a capability with its name; a Home Assistant call with its
-service, its target and every `*_id` key of its data in full, the rest of the data shortened; a
-link parsed by the same code the executor uses, its target app, action, address and fallback shown
-before the raw text, so padding inside an `intent:` link cannot push the target out of view, and a
-link the launcher would refuse or cannot parse marked as such. The parts of a line that name a
-target are never shortened — the import caps bound them — while free text around them is cut for
-display. A Home Assistant call that will run without
-the confirmation prompt is marked in red, because the file — not the importing device — decides that
-flag. Each scenario that pulls values out of notifications names the app it reads and every rule.
-A whole configuration additionally names what it replaces: the gestures and the actions they run,
-the hidden apps, icon overrides and the media widget's player. Nothing is written before the
-user confirms. Scenarios that still contain unresolved placeholders are stored disabled, and a
-concrete `appWidgetId` in a file is treated as a placeholder, so an import cannot point a tile at a
-widget the launcher already hosts. Nothing in an imported file can overwrite the Home Assistant
-addresses, credential or pairing secret — those are not part of the format.
+service, its target and every `*_id` key of its data in full, the rest of the data shortened; a link
+parsed by the same code the executor uses, its target app, action, address and fallback shown before
+the raw text, so padding inside an `intent:` link cannot push the target out of view, and a link the
+launcher would refuse or cannot parse marked as such. The parts of a line that name a target are
+never shortened — the import caps bound them — while free text around them is cut for display. A
+Home Assistant call that will run without the confirmation prompt is marked in red, because the file
+— not the importing device — decides that flag. Each scenario that pulls values out of notifications
+names the app it reads and every rule. A whole configuration additionally names what it replaces:
+the gestures and the actions they run, the hidden apps, icon overrides and the media widget's
+player. Nothing is written before the user confirms. Scenarios that still contain unresolved
+placeholders are stored disabled, and a concrete `appWidgetId` in a file is treated as a
+placeholder, so an import cannot point a tile at a widget the launcher already hosts. Nothing in an
+imported file can overwrite the Home Assistant addresses, credential or pairing secret — those are
+not part of the format.
 
 ### 3. Actions built from scenario data
 
@@ -285,14 +287,14 @@ to Home Assistant is the same with or without it.
 
 ### 5. Data at rest, backups and transfer
 
-Everything lives in the app's private storage under the Android sandbox: a Room database, one
-DataStore file and, once a scenario was created in an AI chat, one file in the cache.
+Everything lives in the app's private storage under the Android sandbox: a Room database, DataStore
+files and, once a scenario was created in an AI chat, one file in the cache.
 `android:allowBackup="false"` keeps it out of cloud and `adb` backup, but for an app targeting
 Android 12 or newer that attribute does not stop a device-to-device transfer, so
 `android:dataExtractionRules` excludes every storage domain, credential- and device-protected alike,
 from both cloud backup and device transfer. Nothing — the sealed credential, the pairing secret, the
-event log, stored notification text, the launch history, the home networks, the Mac bridge's pairing
-— moves to another phone.
+event log, stored notification text, the launch history, the home networks, the Mac bridge's
+pairing, the vault's sealed key — moves to another phone.
 
 What is stored, and for how long:
 
@@ -307,6 +309,9 @@ What is stored, and for how long:
 | settings | Home Assistant addresses, sealed credential, plaintext pairing secret, home networks, instance id; widget and appearance settings; whether creating scenarios in an AI chat is switched on | until changed |
 | settings, Mac bridge | the switch, the clipboard choices (whether clips from the Mac are taken, and their age limit) and the package names of the apps kept off the Mac; while paired the Mac's name, address and pinned fingerprint, the companion-device association and `K_ble` sealed with an AES-GCM Keystore key; beside them, in a file of their own, the sequence state — the bound of the outgoing numbers reserved and the incoming replay window — tagged with a hash of the `K_ble` it counts for | the pairing until the bridge is turned off or unpaired, which deletes it together with the Keystore keys |
 | Android Keystore | the bridge's TLS identity, an EC P-256 key generated inside it, and the AES key that seals `K_ble` | as the row above |
+| settings, vault (`safe.json`, a file of its own) | the chosen file's URI, with its persisted read grant, and name, the `written_at` of the last unlock, the automatic lock and the file-manager switch; once a key is kept, the CEK sealed with the vault's Keystore key, its GCM IV, and the file's `vault_id` and `key_id` | the file and the key until another file is chosen or the vault is forgotten, which releases the grant and deletes the sealed key and the Keystore key |
+| Android Keystore, vault | the AES-256 key that seals the CEK, usable only after an authentication for each use (section 13) | until the vault is forgotten or the screen lock is removed |
+| vault copy (`no_backup/safe/`) | the chosen vault file as its provider served it, still encrypted; its name is removed as soon as its room is reserved, so only the open descriptor keeps it | from the unlock to the lock, the automatic lock, a failed unlock or the end of the process; a leftover of a process that died before removing the name is deleted at the next start of the process |
 | AI chat description, in the app's cache | the scenario format and the inventory described in section 11 | one file, overwritten by the next send |
 
 Contacts, calendar entries, media metadata and covers, notification badge state, the reply text,
@@ -318,8 +323,11 @@ loaded shortly after the listener binds.
 
 The Mac bridge's mirror state, icons, clipboard texts and replies, and the Mac's last reported lock
 state, are held in memory only. A clip from the Mac that arrives while the phone is locked is kept,
-the newest one alone, until the user unlocks the phone or the companion service's window closes,
-and is dropped at the unlock if it has outgrown the user's age limit.
+the newest one alone, until the user unlocks the phone or the companion service's window closes, and
+is dropped at the unlock if it has outgrown the user's age limit. From the unlock to the lock
+(section 13) the vault's file sits, still encrypted, in private storage outside every backup, its
+CEK in memory, and its plaintext only in the buffer of each read and a cache of a few decrypted
+segments; the password typed to set it up is held only while it is checked.
 
 Exports of scenarios and configuration carry no credential, address or secret, Bluetooth MAC
 addresses and Wi-Fi names in them are replaced by placeholders, and so is any widget id. What they
@@ -356,29 +364,33 @@ settings screen for special access) alone leads to the system prompt or screen, 
 That dialog is `ask` in `rememberRequirementResolver`, while its direct `resolve` is kept for
 buttons with the rationale already beside them. A denial disables only the feature that needed it.
 The install-time ones are `INTERNET`, `ACCESS_NETWORK_STATE`, `EXPAND_STATUS_BAR` and
-`USE_BIOMETRIC`, and for the Mac bridge `REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE`,
-`REQUEST_COMPANION_RUN_IN_BACKGROUND` and `REQUEST_COMPANION_USE_DATA_IN_BACKGROUND`, which act
-only for an association the user created in the system's own dialog; the system, not the launcher,
-scans for the paired Mac. The bridge's runtime permissions are `BLUETOOTH_CONNECT` (*nearby
-devices*, usually granted inside that dialog) and `ACCESS_LOCAL_NETWORK`, both requested while
-pairing. `RECEIVE_BOOT_COMPLETED` is declared only with `tools:node="remove"`, so no library can
-make the launcher start at boot; none asks for it today.
+`USE_BIOMETRIC` — the confirmation on a marked Home Assistant action and the vault's per-use
+Keystore key — and for the Mac bridge `REQUEST_OBSERVE_COMPANION_DEVICE_PRESENCE`,
+`REQUEST_COMPANION_RUN_IN_BACKGROUND` and `REQUEST_COMPANION_USE_DATA_IN_BACKGROUND`, which act only
+for an association the user created in the system's own dialog; the system, not the launcher, scans
+for the paired Mac. The bridge's runtime permissions are `BLUETOOTH_CONNECT` (*nearby devices*,
+usually granted inside that dialog) and `ACCESS_LOCAL_NETWORK`, both requested while pairing. The
+vault needs none: it reads only the file the user picks, through the grant the picker hands over.
+`RECEIVE_BOOT_COMPLETED` is declared only with `tools:node="remove"`, so no library can make the
+launcher start at boot; none asks for it today.
 
 ### 8. Dangerous API classes
 
 Searched for and not present anywhere in the app: `WebView`, `DexClassLoader` or any other dynamic
 code loading, `Runtime.exec` or `ProcessBuilder`, world-readable file modes, external storage, raw
 SQL (`@RawQuery`/`SimpleSQLiteQuery`/`rawQuery`/`execSQL`), `sendBroadcast`, and any `PendingIntent`
-created by the app. The one content provider of the app's own is the AI chat's `FileProvider`, not
-exported (section 11). Every `registerReceiver` passes an explicit export flag, except the read of
-the sticky battery broadcast, which needs none. Of those, only three are exported: the one in
-`BluetoothConditions`, for the reason `BluetoothDisconnectReceiver` is (section 1); the Mac bridge
-window's adapter-state receiver, because Bluetooth broadcasts may come from the Bluetooth module's
-own uid, which an unexported receiver would shut out; and the Mac bridge's `USER_PRESENT` receiver,
-because SystemUI sends that broadcast under its own uid. Their actions are all protected, so no app
-can fake them; the adapter-state receiver only reads the state the broadcast names, and the unlock
-receiver only makes the launcher read the keyguard state itself. Reflection is used once, on a fixed
-system class and method, to open the notification shade.
+created by the app. The app has two content providers of its own: the AI chat's `FileProvider`, not
+exported (section 11), and the vault's `SafeDocumentsProvider`, exported only to holders of
+`MANAGE_DOCUMENTS` and enabled only while the vault is unlocked (section 13). Every
+`registerReceiver` passes an explicit export flag, except the read of the sticky battery broadcast,
+which needs none. Of those, only three are exported: the one in `BluetoothConditions`, for the
+reason `BluetoothDisconnectReceiver` is (section 1); the Mac bridge window's adapter-state receiver,
+because Bluetooth broadcasts may come from the Bluetooth module's own uid, which an unexported
+receiver would shut out; and the Mac bridge's `USER_PRESENT` receiver, because SystemUI sends that
+broadcast under its own uid. Their actions are all protected, so no app can fake them; the
+adapter-state receiver only reads the state the broadcast names, and the unlock receiver only makes
+the launcher read the keyguard state itself. Reflection is used once, on a fixed system class and
+method, to open the notification shade.
 
 ### 9. Local denial of service
 
@@ -389,8 +401,9 @@ table tracking when each pairing code last arrived is only written for codes a s
 waits for. The broadcast receiver reads a bounded amount of a bounded shape (section 1), the import
 is bounded in size, count and rendering (section 2), notification value rules by construction
 (section 3), the sign-in callback in time and size (section 4), a pasted scenario in characters
-(section 11), and every media cover in pixels. The notification badge state is bounded by the
-system's own per-app notification limit.
+(section 11), a vault file in its length, its segments and its key derivation's iterations before
+any of it is decrypted (section 13), and every media cover in pixels. The notification badge state
+is bounded by the system's own per-app notification limit.
 
 ### 10. Release build and supply chain
 
@@ -664,6 +677,152 @@ keeps a copy that its tests hold byte for byte to this one.
   part of the bridge that needs it, and the screen says which. Without `ACCESS_LOCAL_NETWORK` a
   paired phone's sessions run over the L2CAP channel alone.
 
+### 13. Vault
+
+The vault is one encrypted file that the Mac app Cue: Vault & View (for Google Drive) writes on the
+Mac and the phone only reads; `docs/vault-format.md` is its normative description, and
+`engine/safe/` is tested against the vectors in `fixtures/vault/`, which that app's repository,
+cue-vault, keeps a byte-identical copy of.
+
+- **Off until set up.** Nothing of the vault runs until the user picks a file. Its settings are a
+  DataStore file of their own, `safe.json`, read only once the vault's screen or one of its actions
+  touches it; the Keystore is not touched; `SafeDocumentsProvider` is declared
+  `android:enabled="false"`; and the expiry check at the start of `ForegroundSession.run()` and the
+  timer beside it read only the session in memory, which then does not exist; the start of the
+  process only looks for a leftover copy (see *The copy and the plaintext*), which then does not
+  exist either. The vault's settings screen, its three actions in the action sheet and its condition
+  in the builder are the only things a user sees of it.
+- **The file.** It is picked with `ACTION_OPEN_DOCUMENT` and kept with a persisted read grant alone,
+  which is released when another file is chosen or the vault is forgotten. It is opened read-only
+  through the provider of the app that holds it — the Google Drive app — and read as one stream: the
+  header first, the rest, once the key is obtained, straight into the session's private copy; the
+  launcher has no network path to it of its own. A grant that is gone reads as *choose the file
+  again*, a file that cannot be read as an error to retry; neither is a crash or a dead end.
+  Whatever else that provider throws across the binder while the file is opened, measured or read —
+  `IllegalArgumentException`, `IllegalStateException`, `NullPointerException` and the like — is
+  turned into the same error to retry. A lock stops an unlock under way at its next 256 KiB of the
+  copy or its next segment, which frees the copy. Forgetting the vault, or choosing another file,
+  locks first and then waits for that unlock to end, so it never opens a session and never stores
+  anything after the vault was forgotten; forgetting also resets the vault's settings.
+- **Reading untrusted bytes.** The file comes from a cloud account and is read as hostile input by
+  `engine/safe/`, against `docs/vault-format.md`. The header's magic, version and key derivation's
+  iteration count (100 000 to 10 000 000) are checked before any key is tried. So are the file's
+  length and segment layout — at most the 2^32 segments the nonce's index can count — when the
+  provider's descriptor states the file's size, so the format's order of checks holds. A pipe, which
+  Google Drive hands out while it streams a file it has not cached, has no size: its layout is
+  checked as soon as the copy is complete, before any of the payload is decrypted, so a file that is
+  cut short and opened with a wrong password or a stale key asks for the password rather than
+  reporting the damage, as the format allows a reader that learns the length late. Either way the
+  layout is checked again against the length of the copy. The size the provider's own query reports
+  only sets how much room the copy reserves, never what the layout is checked against. The phone
+  sets no size limit of its own; the copy needs as much free storage as the file is large, and a
+  lack of it is reported as such. It does limit the index to 100 000 files and directories, implied
+  ones included, since each of them stays on the heap — some 250 to 700 bytes — while the vault is
+  unlocked: the pass ends as soon as the archive has more, and the user is told the vault holds more
+  than the phone can open, which is no category of the format. Each 64 KiB segment is AES-256-GCM
+  under the CEK with the whole header as additional data and a nonce carrying its index and a
+  last-segment flag, so a changed header byte, a reordered, forged or missing segment, and a
+  truncated file all fail. The unlock decrypts and verifies every segment in order and feeds it to a
+  streaming ustar indexer that enforces the format's profile and keeps only each entry's path, type,
+  modification time, offset and size; a damaged segment ends that pass as corrupt at once, a breach
+  of the profile is reported only once every segment verified. A session opens only after that pass;
+  anything that fails closes and frees the copy first, and the user is told the file is damaged,
+  with no partial content shown.
+- **Keys.** The master password derives the KEK by PBKDF2-HMAC-SHA256, and the KEK unwraps the CEK,
+  whose wrap authenticates the KDF parameters and both ids. The phone keeps neither the password nor
+  the KEK. It keeps the CEK sealed under an AES-256-GCM key in the Android Keystore, generated in
+  StrongBox where the device has it and in the TEE otherwise, with
+  `setUserAuthenticationRequired(true)`,
+  `setUserAuthenticationParameters(0, AUTH_BIOMETRIC_STRONG or AUTH_DEVICE_CREDENTIAL)` — every seal
+  and every open needs its own authentication, which authorizes exactly one cipher through
+  `BiometricPrompt`'s `CryptoObject` — and `setInvalidatedByBiometricEnrollment(false)`, since the
+  screen lock opens the key as well and an invalidation on a new fingerprint would protect nothing;
+  removing the screen lock invalidates it. Beside the sealed CEK lie its IV and the file's
+  `vault_id` and `key_id`, compared with the file's header before the prompt, so a key of another
+  vault or of a changed password is never tried. A key that is lost, invalidated or does not decode
+  falls back to the password, never to an error, and without a screen lock no key is kept at all.
+  The launcher overwrites the byte arrays it owns: the password's bytes and the KEK as soon as the
+  CEK is unwrapped, and its own copy of the CEK as soon as the session's cipher holds it. The CEK
+  has to stay in memory while the vault is unlocked, since every read decrypts again: it lives in
+  the session's platform key and cipher objects, which the lock drops but nothing can wipe, like
+  every copy the platform's key, MAC and cipher objects make inside — a limit of the JVM. The
+  password field is not saved into the activity's state, its text and undo history are cleared when
+  it is submitted or closed, and the password goes on as a character array that is overwritten after
+  the attempt; its Unicode normalization makes a `String`, which cannot be wiped either.
+- **The copy and the plaintext.** The copy lies in `noBackupFilesDir/safe/`, which no backup
+  includes and the system never clears. When the provider states the file's size, that much room is
+  reserved first through `StorageManager.allocateBytes`, which may free other apps' caches, so a
+  vault that does not fit fails at once as *not enough storage space* rather than after a long
+  download; a failing write to the copy reads the same. The copy's name is removed as soon as the
+  room is reserved: only the open descriptor keeps it, so the session reads one consistent snapshot
+  even if Google Drive replaces the file meanwhile, and the lock, the automatic lock, a failed or
+  cancelled unlock and the end of the process all free it with the descriptor. A process that died
+  between creating the file and removing its name leaves a leftover, which the next start of the
+  process deletes in `Application.onCreate`. The plaintext reaches no storage, cache or log: the
+  provider's reading thread decrypts the segments a read touches, verifying each again, into the
+  read's own buffer and an LRU cache of at most 16 decrypted 64 KiB segments, wiped as they leave it
+  and at the lock. A segment that no longer verifies during a read means the private copy changed
+  under the session: that read fails with `EIO`, a warning that names nothing of the vault goes to
+  the log, and the lock is posted to the main thread, as an expired session's is, so the reading
+  thread never waits on the package manager. The content is closed on the reading thread, after
+  every read queued before it, so no read meets a closed copy halfway, and every later read fails
+  with `EIO`. That thread starts at the unlock and ends at the lock, unless another app still holds
+  a descriptor from the vault: then it stays, idle, until the last such descriptor is closed, so
+  those reads get the launcher's own error rather than whatever the system answers for a thread that
+  is gone.
+- **Provider.** `SafeDocumentsProvider` is exported, as a documents provider has to be, and guarded
+  by `MANAGE_DOCUMENTS`, which only the system's document UI holds; another app reaches a file only
+  through the per-document read grant a picker hands it. Its root carries `FLAG_LOCAL_ONLY` alone
+  and its documents no flags: no create, write, delete, rename, thumbnail, recents or search, and no
+  tree access, so no app can hold the whole vault on one grant. `openDocument` refuses every mode
+  but `"r"` and serves through `StorageManager.openProxyFileDescriptor` in `MODE_READ_ONLY`,
+  decrypting from the private copy as it is read; a read at or past the end of a file, however far,
+  returns its end without touching the copy, and a negative offset is refused. A document id is a
+  token, a `/` and the number the session's index gives the document — the root 0, the rest in the
+  archive's order — and never its path, because the system's picker keeps the ids of what was opened
+  with its recents; the token is 128 bits from `SecureRandom`, drawn at every unlock, kept only in
+  the session in memory and never derived from the vault. An id that carries another token, or a
+  number that is not in the index or not in its plain decimal form, is not found, so a grant another
+  app took, persisted or not, and a URI it stored name nothing once the vault locked, while within
+  one unlock the roots, the children, `isChildDocument` and `findDocumentPath` resolve as usual. A
+  document's display name is the file's own name, as a picker has to show something to pick, and
+  that name can stay in the picker's recents after the lock (see Residual risks). The lock also
+  revokes every app's grant below the authority, persisted ones included, with
+  `Context.revokeUriPermission`, which the provider's own app may do and the system honours only
+  while the component resolves, so it comes before the component is disabled. The component is
+  enabled only from the unlock to the lock, with a change notified on its roots and its authority so
+  the document UI drops what it showed; a process that starts with it still enabled, left behind by
+  one that died unlocked, revokes the grants and disables it in `onCreate`, before the application
+  exists, and serves nothing. Disabling the component makes the system kill every process that still
+  holds a descriptor from it (`removeDyingProviderLocked`, `REASON_DEPENDENCY_DIED`), so an app
+  still showing a vault file may be closed at the lock and lose what it had unsaved; the vault's
+  files are read-only, so the vault itself loses nothing. That is accepted for a provider no app can
+  reach past the lock, and the README says so.
+- **Automatic lock on one foreground timer.** The session keeps the elapsed-realtime moment of its
+  unlock, and the limit of 1 to 60 minutes, 15 by default, counts from it; a changed limit applies
+  to the open session at once. While `ForegroundSession.run()` runs — the home screen or the
+  launcher's settings started, both in the one activity — one coroutine waits for the open session's
+  limit and locks it then, armed anew whenever the session changes and cancelled with `run()`; the
+  settings screen collects the state with the lifecycle, so it shows the lock as it happens. Beyond
+  that the limit is checked at every start of `run()`, on every provider call, where an expired
+  session is locked on the spot and the call finds nothing, and before every read of a descriptor
+  the provider handed out: the reading thread compares the elapsed clock with the current limit of
+  the session that opened the descriptor and fails the read with `EIO` once that session is past it
+  or gone, posting the lock to the main thread so that it never waits on the package manager itself.
+  The `vault_unlocked` condition reads an expired session as locked, and while something collects it
+  — the home screen, or an event's reading kept for five seconds — it waits for the limit and turns
+  false there by itself, a wait that ends with the collection. Outside `run()` no alarm, job, wake
+  lock or thread waits to lock the vault at its limit, so a vault nobody uses away from the home
+  screen stays unlocked past it until the next use.
+- **Actions.** `vault_toggle`, `vault_unlock` and `vault_lock` run only when the user taps, swipes
+  or otherwise starts the item that carries them; a scenario never runs them by itself, its
+  `vault_unlocked` condition only reads whether a session is open and within its limit, and an
+  imported scenario brings nothing of the vault with it. An unlock always passes the Keystore prompt
+  or the password, and the one thing a tap opens outside the launcher is the vault's own root in the
+  file manager (`ACTION_VIEW` on the root URI). A tap that cannot finish — no vault set up, the
+  password needed, the file to be chosen again, a file that failed to open — opens the vault's
+  settings screen in the launcher, which is where the password is typed.
+
 ## Residual risks
 
 These are known, accepted and unfixed, because fixing them would cost more than the risk they carry.
@@ -768,6 +927,31 @@ These are known, accepted and unfixed, because fixing them would cost more than 
   sensitive content is read from a secure setting Android lets apps read but does not document.
   Should a release refuse it, an app's own private notifications cross in full, while the user's
   per-channel choices and secret notifications still hold; the refusal is logged.
+- **The vault opens with the screen lock.** Its key opens with a fingerprint, a face or the screen
+  lock alike, so whoever knows the PIN, pattern or password unlocks the vault on that phone. Binding
+  it to biometrics alone would lock out a user whose fingerprint stops working and buy nothing
+  against someone who already holds the unlocked phone and its PIN.
+- **A vault file opened in another app is that app's.** The provider is read-only, but a viewer or a
+  mail app the user opens a file in may cache or copy it, beyond the launcher's reach. The README
+  says so.
+- **The names of vault files can outlive the lock in the picker's recents.** A document id names no
+  path, only the unlock's token and a number, so an id the system's picker or file manager keeps
+  with its recent files resolves to nothing once the vault locks. A document's display name is the
+  file's own name, though — a picker has to show something to pick — and the system's document UI
+  may keep the names of the documents it last showed beside their ids, beyond the launcher's reach.
+  None of the content is kept there; what can remain readable on the phone is the name. Hiding the
+  names would leave nothing a user could pick.
+- **An unlocked vault can outlive its limit.** Away from the home screen the automatic lock is
+  checked only when the launcher returns to the foreground, the provider is called or a descriptor
+  from it is read, so a vault nobody touches stays unlocked past its limit, its key in memory and
+  its copy in storage, until one of these happens or the process ends. Nothing reads it in between;
+  a timer there would mean background work for a vault that is not being used.
+- **The phone may show an old version.** The launcher reads what the Google Drive app last
+  downloaded. The settings screen shows the `written_at` of the file it opened as *Last saved on the
+  Mac*, so a stale copy can be spotted, but nothing forces a fresh download.
+- **The vault is readable with root.** While the vault is unlocked its CEK sits in the launcher's
+  process beside the encrypted copy in its private storage, so root or a debugger attached to the
+  process can read the whole vault; that is the rooted-device case the threat model leaves out.
 
 ## What this review did not cover
 
@@ -783,14 +967,19 @@ These are known, accepted and unfixed, because fixing them would cost more than 
 - **Nothing on the Home Assistant side.** The blueprint was reviewed as the launcher's contract.
   Hardening an HA instance is out of scope.
 - **No cryptographic review.** The constructions used are standard ones (AES-GCM with a Keystore
-  key, the platform's TLS stack, and for the Mac bridge X25519, HKDF-SHA256, HMAC-SHA256 and
-  ChaCha20-Poly1305 checked against known-answer vectors); they received no independent
+  key, the platform's TLS stack, for the Mac bridge X25519, HKDF-SHA256, HMAC-SHA256 and
+  ChaCha20-Poly1305 checked against known-answer vectors, and for the vault PBKDF2-HMAC-SHA256 and
+  AES-256-GCM in segments, checked against the shared vectors); they received no independent
   cryptanalysis.
-- **The macOS app.** What the Mac side of the bridge stores, how it is signed and bound to its Mac,
-  and its own residual risks are described in the Bridge repository's
+- **The bridge's macOS app.** What the Mac side of the bridge stores, how it is signed and bound to
+  its Mac, and its own residual risks are described in the Bridge repository's
   [`docs/security.md`](https://github.com/jaroslav-sazma/cue-bridge/blob/main/docs/security.md), the
   menu-bar app's own; here the Mac appears only as the peer the protocol describes. Its Bluetooth
   link and the gestures on the Mac were tested on real hardware, not reviewed further here.
+- **The vault's macOS app.** What Cue: Vault & View (for Google Drive) stores on the Mac, how it is
+  signed and how it keeps the vault and its own disk are described in its repository's
+  [`docs/security.md`](https://github.com/jaroslav-sazma/cue-vault/blob/main/docs/security.md); here
+  the Mac appears only as the writer of the file the format describes.
 
 ## Tests that hold this in place
 
@@ -995,5 +1184,43 @@ The properties above are not left to a future reader's memory:
   filter keeps back can be neither answered nor closed.
 - `BridgeSpecParityTest` — the protocol version, message and frame types, labels, reasons and UUIDs
   in the spec match the code.
+- `VaultVectorsTest`, `VaultReaderTest`, `VaultArchiveTest` — every shared vector opens to exactly
+  its entries, read back through random access, and every negative one fails with its category, a
+  cut file with a wrong credential also in the order the phone checks a pipe, a length of more than
+  2^32 segments or without a segment layout fails before any crypto, every file of every vector
+  reads the same at any offset and in pieces that cross segment boundaries, empty reads and empty
+  files included, a segment changed after the index pass fails its read as corrupt and is never
+  cached, a damaged segment outranks a breach of the profile, the cache keeps at most its capacity
+  and wipes every segment that leaves it, the archive indexes the same however it is cut into
+  blocks, an archive that breaks the format's profile is refused, and more entries than the caller's
+  limit, implied directories included, end the index pass in the segment that holds one too many.
+- `SafeVaultTest`, `SafeAutoLockTest`, `SafeCopiesTest` — nothing is set up until a file is chosen,
+  without a kept key the password is asked for before anything is read, a wrong password keeps
+  nothing and copies nothing, a key of another vault or of a changed password asks for the password
+  without a prompt, a lost or undecodable key falls back to the password, a lost grant asks for the
+  file again, a damaged file, a cut file or a broken archive opens nothing and leaves no copy, a
+  file cut short is refused before anything is copied when the descriptor states its length, every
+  negative vector ends in its category's state — exactly that with the descriptor's length, its
+  alternative allowed for a pipe, whose size the provider's column does not stand in for — a file of
+  unknown length is copied all the same, a lock or forgetting during the copy or as the index pass
+  starts stops the unlock at once and frees the copy, a vault the storage has no room for says so
+  and leaves nothing behind, as does a provider that fails or an unlock that is cancelled during the
+  copy, the copy keeps no name and the session reads it rather than the original, the vault locks
+  once its time since the unlock has passed and only then, a shorter limit applies to the open
+  session, and locking, expiring and forgetting close the copy, forgetting also releasing the file
+  and deleting the key. Every unlock draws a new document token, which a changed limit keeps; a
+  descriptor reads only until the current limit of the session that opened it, then fails and asks
+  once for the lock without taking it itself, and reads nothing once its session is locked, in a
+  later unlock neither. The `vault_unlocked` condition reads unlocked until the limit, and one still
+  collected turns false at the limit by itself, without locking the vault, and follows a changed
+  limit.
+- `SafeManifestTest`, `SafeDocumentsTest` — the provider is declared disabled and reachable directly
+  only by holders of `MANAGE_DOCUMENTS`, its root offers nothing but local read-only browsing, a
+  document id maps onto exactly one archive path within its unlock, implied directories included,
+  and carries a number rather than any part of the path, an id that is none, a number in another
+  form, or one of an earlier unlock, is no document, a token is 128 random bits in hex, a document's
+  path runs from the root through every directory above it, and a read never runs past the end of
+  its file: one at or past it, however far, or of no bytes returns nothing without touching the
+  content, and a negative offset or size is refused.
 
 Run them with `./gradlew test detekt`; CI runs them together with the release build and lint.

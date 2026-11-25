@@ -1,13 +1,13 @@
 # Bridge test vectors
 
 Shared test vectors of the Cue: bridge protocol. The normative specification is
-`docs/bridge-protocol.md` in the Cue: launcher's repository; it describes what each file contains,
-and this file records where the values come from. Both implementations run their contract tests
-against these files. The launcher's repository holds the canonical copy of this directory, which its
-Kotlin tests read in place. The Bridge repository keeps a copy of the JSON files, refreshed by its
-`tools/sync-vectors.sh`; its Swift tests read that copy and, while the launcher's repository is
-checked out beside it, fail on any JSON file that differs from the canonical one. Change the vectors
-in the launcher's repository only.
+`docs/bridge-protocol.md` in the repository of Cue: React & Act; it describes what each file
+contains, and this file records where the values come from. Both implementations run their contract
+tests against these files. The launcher's repository holds the canonical copy of this directory,
+which its Kotlin tests read in place. The Bridge repository keeps a copy of the JSON files,
+refreshed by its `tools/sync-vectors.sh`; its Swift tests read that copy and, while the launcher's
+repository is checked out beside it, fail on any JSON file that differs from the canonical one.
+Change the vectors in the launcher's repository only.
 
 ## License
 

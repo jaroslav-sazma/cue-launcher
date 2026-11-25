@@ -30,6 +30,7 @@ val CONDITION_CATALOG: List<ConditionType> = listOf(
     ConditionType.HA_STATE,
     ConditionType.MAC_NEARBY,
     ConditionType.MAC_LOCKED,
+    ConditionType.VAULT_UNLOCKED,
     ConditionType.ALARM,
     ConditionType.BT_DISCONNECTED,
     ConditionType.NOTIFICATION,
@@ -39,7 +40,7 @@ val CONDITION_CATALOG: List<ConditionType> = listOf(
 )
 
 // Mac nearby predates this and stays listed with its set-up note; the lock is offered only once a Mac
-// is paired.
+// is paired. The vault is always offered, like its actions: without a vault it is simply locked.
 private val PAIRED_MAC_CONDITIONS: Set<ConditionType> = setOf(ConditionType.MAC_LOCKED)
 
 fun conditionCatalog(bridgePaired: Boolean): List<ConditionType> =
@@ -80,6 +81,7 @@ fun newCondition(type: ConditionType): Condition = when (type) {
     ConditionType.HA_STATE -> Condition.HaState(entity = "", states = emptyList())
     ConditionType.MAC_NEARBY -> Condition.MacNearby()
     ConditionType.MAC_LOCKED -> Condition.MacLocked()
+    ConditionType.VAULT_UNLOCKED -> Condition.VaultUnlocked()
     ConditionType.TIME_INSTANT -> Condition.TimeInstant(
         at = DEFAULT_INSTANT_AT,
         durationSec = DEFAULT_INSTANT_DURATION_SEC,
@@ -118,6 +120,7 @@ fun conditionTypeOf(condition: Condition): ConditionType = when (condition) {
     is Condition.HaState -> ConditionType.HA_STATE
     is Condition.MacNearby -> ConditionType.MAC_NEARBY
     is Condition.MacLocked -> ConditionType.MAC_LOCKED
+    is Condition.VaultUnlocked -> ConditionType.VAULT_UNLOCKED
     is Condition.TimeInstant -> ConditionType.TIME_INSTANT
     is Condition.Alarm -> ConditionType.ALARM
     is Condition.BtDisconnected -> ConditionType.BT_DISCONNECTED

@@ -75,11 +75,22 @@ class ActionCatalogTest {
                 SystemActionSection.DEVICE,
                 SystemActionSection.PLACE,
                 SystemActionSection.MAC,
+                SystemActionSection.VAULT,
                 SystemActionSection.PANELS,
             ),
             sections.map { it.section },
         )
         assertEquals(SYSTEM_ACTION_CATALOG, sections.flatMap { it.actions })
+    }
+
+    @Test
+    fun `the vault's actions are always offered, in a section of their own, the toggle first`() {
+        val unpaired = systemActionSections(unavailable = unpairedSystemActions(bridgePaired = false))
+
+        assertEquals(
+            listOf(SystemActionType.VAULT_TOGGLE, SystemActionType.VAULT_UNLOCK, SystemActionType.VAULT_LOCK),
+            unpaired.single { it.section == SystemActionSection.VAULT }.actions,
+        )
     }
 
     @Test

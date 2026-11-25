@@ -24,6 +24,7 @@ internal fun conditionTypeLabel(type: ConditionType): String = stringResource(
         ConditionType.HA_STATE -> R.string.condition_ha_state
         ConditionType.MAC_NEARBY -> R.string.condition_mac_nearby
         ConditionType.MAC_LOCKED -> R.string.condition_mac_locked
+        ConditionType.VAULT_UNLOCKED -> R.string.condition_vault_unlocked
         ConditionType.TIME_INSTANT, ConditionType.ALARM -> R.string.condition_time_instant
         ConditionType.BT_DISCONNECTED -> R.string.condition_bt_disconnected
         ConditionType.NOTIFICATION -> R.string.condition_notification
@@ -48,6 +49,7 @@ internal fun conditionTypeExamples(type: ConditionType): String = stringResource
         ConditionType.HA_STATE -> R.string.condition_example_ha_state
         ConditionType.MAC_NEARBY -> R.string.condition_example_mac_nearby
         ConditionType.MAC_LOCKED -> R.string.condition_example_mac_locked
+        ConditionType.VAULT_UNLOCKED -> R.string.condition_example_vault_unlocked
         ConditionType.TIME_INSTANT, ConditionType.ALARM -> R.string.condition_example_time_instant
         ConditionType.BT_DISCONNECTED -> R.string.condition_example_bt_disconnected
         ConditionType.NOTIFICATION -> R.string.condition_example_notification
@@ -188,5 +190,8 @@ private fun nowResource(key: NowKey): Int = when (key) {
     NowKey.MAC_LOCK_AWAY -> R.string.now_mac_lock_away
     NowKey.MAC_LOCK_BRIDGE_OFF -> R.string.now_mac_lock_bridge_off
     NowKey.MAC_LOCK_UNKNOWN -> R.string.now_mac_lock_unknown
+    NowKey.VAULT_UNLOCKED -> R.string.now_vault_unlocked
+    NowKey.VAULT_LOCKED -> R.string.now_vault_locked
+    NowKey.VAULT_UNKNOWN -> R.string.now_vault_unknown
     NowKey.AWAITS_EVENT -> R.string.now_awaits_event
 }

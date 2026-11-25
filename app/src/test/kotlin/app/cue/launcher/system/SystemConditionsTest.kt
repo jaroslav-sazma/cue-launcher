@@ -147,6 +147,7 @@ class SystemConditionsTest {
         assertEquals(StateAspect.HA, Condition.HaState(entity = "media_player.tv", states = listOf("on")).aspect())
         assertEquals(StateAspect.MAC, Condition.MacNearby().aspect())
         assertEquals(StateAspect.MAC, Condition.MacLocked().aspect())
+        assertEquals(StateAspect.VAULT, Condition.VaultUnlocked().aspect())
     }
 
     private fun provider(aspect: StateAspect, reading: SystemState) = object : StateProvider {

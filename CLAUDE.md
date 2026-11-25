@@ -39,9 +39,16 @@ Trigger-driven Android launcher "Cue: React & Act" (its Play name; the label und
   exception is a receiver of the phone's Bluetooth state, which lives as long as the system keeps
   the service bound and does nothing until Bluetooth is switched off or on: the system does not
   report the Mac again after the phone's radio restarts, so only that receiver brings the window
-  back. The one user-started exception is the Home Assistant sign-in, whose loopback server waits
-  behind the browser until its own timeout. `scripts/background-audit.sh` checks this on an
-  emulator.
+  back. The fourth is the vault's `SafeDocumentsProvider`, which the manifest declares disabled: it
+  is enabled only from an unlock to the lock, and only the system's picker or a file manager the
+  user opens wakes it; its reading thread starts with an unlock and ends with the lock, unless
+  another app still holds a descriptor from the vault then — the thread stays, idle, failing every
+  read, until the last one is closed — and its automatic lock keeps one one-shot timer, and only
+  inside `ForegroundSession.run()` while a session is open — it fires at the session's limit and is
+  armed anew when the session changes; outside `run()` the expiry is checked lazily, when `run()`
+  starts, on every call of the provider and before every read of a descriptor it opened. The one
+  user-started exception is the Home Assistant sign-in, whose loopback server waits behind the
+  browser until its own timeout. `scripts/background-audit.sh` checks this on an emulator.
 
 ## Language
 - Everything written by hand is in English: code, identifiers, comments, commit messages, README,
@@ -65,10 +72,11 @@ release and baseline profile, the repository layout. `docs/scenario-format.md` i
 the scenario JSON — every field, the notification value rules, the envelopes and the import checks;
 the README links to it rather than repeating it.
 
-Prose names the products in full, so the two never blur: the launcher is "Cue: React & Act", the
-Mac app "Cue: Relay & Reply". A bare "Cue:" stays only where it quotes what a screen shows — the
-label under the icon, the Mac's menu, *Do Not Disturb (Cue:)*, the blueprint's title — and where it
-stands for the name shared by both, as in `NOTICE`.
+Prose names the products in full, so they never blur: the launcher is "Cue: React & Act", the Mac
+app of the bridge "Cue: Relay & Reply", the Mac app of the vault
+"Cue: Vault & View (for Google Drive)", or "Cue Vault" for short. A bare "Cue:" stays only where it
+quotes what a screen shows — the label under the icon, the Mac's menu, *Do Not Disturb (Cue:)*, the
+blueprint's title — and where it stands for the name they share, as in `NOTICE`.
 
 **Every change ends with a review of both**, in this order:
 1. Does the change touch something either file already describes? Then update that passage — a
@@ -133,26 +141,41 @@ keep matching — `HaEventContractTest` fails if they drift apart, if the two bl
 anything but their text, and it also checks that the README still documents both. A change to the
 blueprint goes into both files.
 
-## Peer project
-The macOS side of the bridge is the Bridge repo,
-[cue-bridge](https://github.com/jaroslav-sazma/cue-bridge), checked out at `../../MacOS/Bridge` from
-this one — the menu-bar app "Cue: Relay & Reply", bundle id `app.cue.bridge`. The `main` branches
-of both repos pair, both at `bridgeProtocolVersion 1`.
+## Peer projects
+Two macOS apps work with this one, each in a repo of its own. The macOS side of the bridge is the
+Bridge repo, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge), checked out at
+`../../MacOS/Bridge` from this one — the menu-bar app "Cue: Relay & Reply", bundle id
+`app.cue.bridge`. The `main` branches of both repos pair, both at `bridgeProtocolVersion 1`. The
+vault's Mac side is the Vault repo, [cue-vault](https://github.com/jaroslav-sazma/cue-vault),
+checked out at `../../MacOS/Vault` — the Dock app "Cue: Vault & View (for Google Drive)",
+"Cue Vault" for short, bundle id `app.cue.vault`, which creates and writes the `.cuevault` file this
+side only reads and exports its document type as `app.cue.vault.container`.
 - Build this side with `./gradlew assembleDebug` and install it on the emulator with
   `adb -e install -r app/build/outputs/apk/debug/app-debug.apk` — never on the owner's Pixel
   unasked.
-- Build the peer from the Bridge repo root with
-  `xcodebuild -scheme Bridge -configuration Debug -derivedDataPath build build`. Launching the built
-  app binds ports, so it is an unsandboxed step the user approves, or the tester starts it; never
-  enable local binding in the sandbox settings.
-- The canonical protocol spec `docs/bridge-protocol.md` and the shared test vectors in
-  `fixtures/bridge/` live here, in the launcher repo; both are CC0-1.0, not GPL (`NOTICE`). The
-  Bridge repo never restates the spec. It vendors an identical copy of the JSON vectors, not their
-  README, in its own `fixtures/bridge/`, which its tests read by default (`BRIDGE_VECTORS_DIR`
-  overrides), and a parity test fails on any byte that differs from this repo's copy while the two
-  checkouts sit side by side. Vectors change here only; `tools/sync-vectors.sh` in the Bridge repo
-  then copies them over, and the copy goes into the Bridge half of the change. A protocol change
-  lands as a pair of commits, one in each repo, carrying the same version.
+- Build the bridge peer from the Bridge repo root with
+  `xcodebuild -scheme Bridge -configuration Debug -derivedDataPath build build`, run with the
+  sandbox off, a step the user approves: inside the sandbox the Swift macro plugin server fails and
+  so does every build. Launching the built app binds ports, so it is an unsandboxed step the user
+  approves, or the tester starts it; never enable local binding in the sandbox settings.
+- The canonical protocol spec `docs/bridge-protocol.md` with its shared test vectors in
+  `fixtures/bridge/` lives here, in the launcher repo, and is CC0-1.0, not GPL (`NOTICE`). The
+  Bridge repo never restates the spec. It vendors an identical copy of the JSON files of
+  `fixtures/bridge/`, not their README, in its own `fixtures/bridge/`, which its tests read by
+  default (`BRIDGE_VECTORS_DIR` overrides it), and a parity test fails on any byte that differs from
+  this repo's copy while the two checkouts sit side by side. Vectors change here only;
+  `tools/sync-vectors.sh` in the Bridge repo then copies them over, and the copy goes into the
+  Bridge half of the change. A protocol change lands as a pair of commits, one in each repo,
+  carrying the same version.
+- The vault format spec `docs/vault-format.md`, its reference script `scripts/cuevault.py` and its
+  shared vectors in `fixtures/vault/` live here as well, also CC0-1.0, and the Vault repo never
+  restates the spec. It vendors an identical copy of `vectors.json` and the `*.cuevault` files, not
+  their README, in its own `fixtures/vault/`, and its parity test fails on any byte that differs
+  from this repo's copy while the two checkouts sit side by side. Vectors change here only, through
+  `scripts/cuevault.py vectors`, then `--check`; `tools/sync-vectors.sh` in the Vault repo then
+  copies them over, and the copy goes into the Vault half of the change. A format change lands as a
+  pair of commits, one here and one in the Vault repo with its Swift codec, carrying the same format
+  version. The Vault repo's own CLAUDE.md has its build and its rules.
 - Logs: macOS `/usr/bin/log stream --level debug --predicate 'subsystem == "app.cue.bridge"'` —
   zsh shadows `log` with a builtin, and debug events never reach `log show`; Android
   `adb -e logcat -s CueBridge`.

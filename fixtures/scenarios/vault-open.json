@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "vault-open",
+  "name": "Vault unlocked → lock it",
+  "enabled": true,
+  "priority": 450,
+  "size": "1x1",
+  "conditions": [
+    { "type": "vault_unlocked" }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "icon_text",
+    "text": null,
+    "text2": null,
+    "items": [
+      { "label": "Vault", "icon": null, "action": { "kind": "system", "action": "vault_toggle" } }
+    ]
+  }
+}

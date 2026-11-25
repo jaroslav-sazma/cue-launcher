@@ -1,4 +1,4 @@
-<!-- One concern per pull request. A security fix is coordinated privately first, see SECURITY.md. -->
+<!-- One concern per pull request. A security fix is coordinated privately first: SECURITY.md. -->
 
 ## What and why
 

@@ -57,11 +57,11 @@ internal fun Application.setReceiverEnabled(receiver: Class<out BroadcastReceive
 
 // For a component the manifest declares disabled: there DEFAULT means off, and going back to it
 // leaves nothing behind.
-internal fun Application.isGatedComponentEnabled(component: Class<*>): Boolean =
+internal fun Context.isGatedComponentEnabled(component: Class<*>): Boolean =
     packageManager.getComponentEnabledSetting(ComponentName(this, component)) ==
         PackageManager.COMPONENT_ENABLED_STATE_ENABLED
 
-internal fun Application.setGatedComponentEnabled(component: Class<*>, enabled: Boolean) {
+internal fun Context.setGatedComponentEnabled(component: Class<*>, enabled: Boolean) {
     val state = when {
         enabled -> PackageManager.COMPONENT_ENABLED_STATE_ENABLED
         else -> PackageManager.COMPONENT_ENABLED_STATE_DEFAULT

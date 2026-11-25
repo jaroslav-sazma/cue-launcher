@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "vault-office",
+  "name": "Papers at the office (change the SSID to your own network)",
+  "enabled": true,
+  "priority": 450,
+  "size": "2x2",
+  "conditions": [
+    { "type": "wifi", "mode": "ssid", "ssid": "AndroidWifi", "negate": false }
+  ],
+  "content": {
+    "kind": "template",
+    "layout": "text_two_icons",
+    "text": "Vault",
+    "text2": null,
+    "items": [
+      { "label": "Open", "icon": null, "action": { "kind": "system", "action": "vault_unlock" } },
+      { "label": "Lock", "icon": null, "action": { "kind": "system", "action": "vault_lock" } }
+    ]
+  }
+}

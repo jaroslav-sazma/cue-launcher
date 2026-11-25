@@ -59,6 +59,7 @@ anyone can join
 - [Scenarios](#scenarios)
 - [Home Assistant](#home-assistant)
 - [Mac bridge](#mac-bridge)
+- [Vault](#vault)
 - [Example scenarios](#example-scenarios)
 - [Creating scenarios in an AI chat](#creating-scenarios-in-an-ai-chat)
 
@@ -254,8 +255,8 @@ Long-press an empty spot on the home screen → **Launcher settings**. There are
 
 - **Scenarios** — your scenarios and the **+** button for a new one (see [Scenarios](#scenarios)).
   Its **⋮** menu holds *Import*, **Home Assistant** (see [Home Assistant](#home-assistant)), **Mac
-  bridge** (see [Mac bridge](#mac-bridge)) and *About*, with the version, the licences and *Report a
-  bug*.
+  bridge** (see [Mac bridge](#mac-bridge)), **Vault** (see [Vault](#vault)) and *About*, with the
+  version, the licences and *Report a bug*.
 - **Appearance & features** — how the launcher looks and behaves, below.
 - **Backups** — exporting and restoring (see [Backups and sharing](#backups-and-sharing)).
 
@@ -365,6 +366,7 @@ Adding a second event to a lone event switches the scenario to *any of them* by 
 | **Home Assistant — state** | an entity is in one of the states you pick | the TV is `playing` or `paused` → its remote | Home Assistant connected to Cue: React & Act |
 | **Mac nearby** | the Mac you paired is close to the phone | the Mac on your desk → "Silence" | the Mac bridge turned on and paired with your Mac |
 | **Mac locked** | the Mac you paired is close to the phone and its screen is locked. While the Mac is away it is neither locked nor unlocked | you locked the Mac at your desk → your messages app | the Mac bridge turned on and paired with your Mac; offered only once it is |
+| **Vault unlocked** | the [vault](#vault) is unlocked on the phone. With no vault set up it counts as locked | the vault is open → a button that locks it again | a vault set up on the phone |
 
 #### Happens at a single moment
 
@@ -426,6 +428,13 @@ A few of them need a word more:
   Mac left: it ends the way an event's tile always does. The builder lists the condition only while
   the Mac bridge is on and a Mac is paired; a scenario that already has it keeps it all the same,
   and with the bridge off the builder says so and offers **Set up the Mac bridge**.
+- **Vault unlocked** holds from the moment you unlock the [vault](#vault) until it locks again: with
+  a tap, on its settings screen, by its automatic lock or when the phone or the launcher restarts.
+  It stops holding the moment the automatic lock runs out, wherever you are: while the home screen
+  or the launcher's settings are on screen the vault locks right then and a tile that depends on it
+  changes with it, and away from them a scenario that checks it from then on sees it locked, even
+  before the vault itself has locked. With no vault set up the condition never holds — and turned
+  around, as *Vault locked*, it always does. Unlike *Mac locked* it is always listed in the builder.
 
 **An event's tile ends** when its time runs out, when you close it (long-press → Close), when the
 event it waits for arrives, when the notification that brought it is dismissed — unless it waits
@@ -580,6 +589,7 @@ that web address opens instead.
 | **Device** | *Flashlight*, *TV remote* | the flashlight is a toggle. *TV remote* opens the remote of the Google TV app, like that app's tile in Quick Settings: pick a TV, then control it. Without the Google TV app it is not offered, and a tile that carries it only says the app is missing |
 | **Place** | *Remember the place*, *Show the remembered place* | *Remember the place* reads where the phone is at the tap — once, on screen, never in the background — for the scenarios that wait for *A place is remembered*; if none waits, nothing is saved and it says so. It needs location, asked at the first tap; approximate is enough. *Show the remembered place* opens it in the maps app |
 | **Mac** | *Lock the Mac* | locks the screen of the Mac you paired through the [Mac bridge](#mac-bridge), and is offered only while one is paired. A button that only locks the Mac follows it: a laptop while the Mac is nearby and unlocked, a greyed-out lock once it is locked, and a greyed-out crossed laptop while the Mac is away or has not reported its screen yet — greyed out, a tap does nothing. A button that does more than that is never greyed out and runs all its actions. A tap that cannot reach the Mac says why |
+| **Vault** | *Unlock / lock the vault*, *Unlock the vault*, *Lock the vault* | unlock and lock the [vault](#vault). *Unlock / lock the vault* is a toggle: on an unlocked vault a tap locks it, otherwise it does what *Unlock the vault* does. *Unlock the vault* asks for your fingerprint, face or screen lock and then, unless you turned that off, opens the vault in the file manager; on a vault that is already unlocked, a tap just opens it there. A button that does nothing but one of the three shows the vault's state — a folder with a closed lock while it is locked, with an open one in the accent colour while it is unlocked — and is never greyed out. A tap the home screen cannot finish — no vault set up, the master password needed, the file to be chosen again, a file that cannot be opened — opens the vault's settings, which say what is missing |
 | **Panels** | *Volume panel*, *Internet panel*, *Wi-Fi panel*, *NFC panel*, *System settings* | the system's own panels and settings |
 
 **What "Do Not Disturb (Cue:)" is.** Since Android 15 no app can switch the system's Do Not Disturb
@@ -1163,6 +1173,178 @@ new notifications.
 
 ---
 
+## Vault
+
+The vault keeps the files you would least like to lose or to see leaked — certificates, scans of
+documents, recovery codes — in one encrypted file. The Mac app Cue: Vault & View (for Google Drive),
+Cue Vault for short, creates it on your Mac and is where you change what is in it; Google Drive
+keeps the file and brings it to your phone. Cue: React & Act opens that file **read-only**: once you
+unlock it, its files appear as **Vault** in the phone's file manager (*Files*) and in the file
+picker of every app, so you can open a scanned document or attach a certificate from there. Nothing
+it decrypts is ever written to the phone's storage: while the vault is unlocked, the launcher keeps
+a copy of the still encrypted file in its own private storage, decrypts only the part of a file an
+app is reading, and deletes the copy when the vault locks.
+
+The Mac's side — creating the vault, adding and removing files, the master password and going back
+to an earlier version — is described in the
+[README](https://github.com/jaroslav-sazma/cue-vault#readme) of Cue Vault's own repository, which
+also says how to [install](https://github.com/jaroslav-sazma/cue-vault#installing) it. Until you set
+a vault up on the phone, nothing of it runs there: there is only its settings screen, *Launcher
+settings → Scenarios → ⋮ → Vault*, its three actions in the action sheet and the condition *Vault
+unlocked*.
+
+### Setting up the vault
+
+You need the vault file on your Google Drive, made on the Mac as Cue Vault's README describes under
+[Setting up](https://github.com/jaroslav-sazma/cue-vault#setting-up), and its master password. The
+launcher reads the file through Android's file picker, so it also opens a vault file that another
+app offers there — one in the phone's own storage, say, or in another cloud app — but it is built
+and tested for Google Drive, which the steps below assume.
+
+1. Install the **Google Drive** app on the phone and sign in with the account that holds the file.
+   Cue: React & Act never talks to Google itself: it reads the file through Android's file picker,
+   from the Google Drive app. To unlock the vault without a connection, make the file available
+   offline in the Google Drive app.
+2. Open *Launcher settings → Scenarios → ⋮ → Vault*, tap **Choose vault file** and pick the file —
+   `vault.cuevault` unless you named it otherwise — under Google Drive in the picker.
+3. **Vault password** asks for the master password. Type it — the button beside the field shows what
+   you typed — and tap **Unlock**. A mistake only says *Wrong password. Try again.*
+4. Android then asks for your fingerprint, face or screen lock to **Remember the vault on this
+   phone**, and the vault opens.
+
+From then on your fingerprint, face or screen lock — PIN, pattern or password — unlocks the vault,
+and the master password is not asked for again. The phone keeps the vault's key in Android's
+Keystore, and only that check lets it out, once for each unlock. A phone without a screen lock
+cannot keep the key, so it asks for the master password at every unlock. The master password comes
+back by itself whenever the phone can no longer use its key: after you remove the screen lock (even
+if you set up a new one later), after the password was changed on the Mac (type the new one), or
+when you choose a file that holds another vault. The screen says which it is. Changing the screen
+lock or adding a fingerprint keeps the key. Uninstalling Cue: React & Act removes the vault from the
+phone with the rest of the launcher's data — the chosen file, the key and the settings, none of
+which is backed up — so after a reinstall you set it up again as above, with the file and the master
+password.
+
+### Unlocking and locking
+
+The **Vault** screen shows the file's name and whether the vault is locked or unlocked, and until
+when, and under **Last saved on the Mac** when the Mac last wrote the file — known once the phone
+has unlocked it. **Unlock** asks for your fingerprint, face or screen lock, then copies the file
+into the launcher's private storage and checks all of it before anything opens; a large vault, or a
+file the Google Drive app has not downloaded yet, takes longer. **Lock** locks it at once, and while
+it is unlocked **Show files** opens it in the file manager. On a phone without an app that can show
+it, the screen says *No app on this phone can show the vault's files* instead.
+
+However the vault locks — with **Lock**, a tap on the home screen or its automatic lock — Android
+switches it off, and an app that still has one of its files open, a PDF viewer showing a contract
+from it, say, may be closed by Android at that moment. Anything unsaved in that app is lost with it.
+The vault itself loses nothing, since the phone cannot change its files anyway, but finish what you
+are doing in such an app before the vault locks.
+
+From the home screen, three [system actions](#system-actions) do the same with a tap: *Unlock / lock
+the vault*, *Unlock the vault* and *Lock the vault*. *Unlock / lock the vault* is the one to put on
+a single button: a tap unlocks the vault as *Unlock the vault* does, and the next tap locks it. A
+tap on *Unlock the vault* unlocks it, and on a vault that is already unlocked opens it in the file
+manager. A button that does nothing but one of the three shows the vault's state — a folder with a
+closed lock while it is locked, with an open one in the accent colour while it is unlocked — and can
+always be tapped. Whatever a tap cannot finish on the home screen — no vault set up yet, the master
+password needed, the file to be chosen again, a file that cannot be opened — opens the Vault screen
+instead, which asks for the password or says what is wrong and offers what fixes it. Say you keep
+scans of your documents in the vault: a small tile *Documents* with *Unlock / lock the vault*, shown
+while you are away from home, brings them up in Files with one tap and a fingerprint, and locks them
+again with the next tap.
+
+The condition [*Vault unlocked*](#holds-while-the-state-lasts) lets a scenario follow the vault: a
+tile with *Lock the vault*, say, shown only while the vault is unlocked, or one turned around as
+*Vault locked*. While the home screen or the launcher's settings are on screen, it switches the
+moment the vault locks, by a tap or by its automatic lock.
+
+**Open in the file manager after unlocking**, on until you turn it off, decides whether the file
+manager opens by itself after an unlock. Turn it off if you mostly reach the files from another
+app's picker — when you attach a document to an email, say.
+
+### Automatic lock
+
+The vault locks by itself a set time after you unlocked it: 15 minutes, unless you set anything from
+1 to 60 minutes with the slider under **Automatic lock**. The time counts from the unlock, not from
+the last file you opened, and a new setting applies to a vault that is already unlocked too. While
+the home screen or the launcher's settings are on screen, the vault locks right when the time is up,
+and its buttons and the scenarios that follow it change at that moment. Nothing runs in the
+background to watch the clock, though: away from the launcher the vault locks at the first moment it
+is used once the time is up — when you come back to the home screen, or when an app opens, lists or
+reads a file in it, a file it opened before the time ran out included. Until then a vault past its
+time stays unlocked, but no app can get anything from it without locking it. Restarting the phone or
+the launcher locks it as well, since the key of an unlocked vault is kept only in memory.
+
+For example, with 15 minutes set, you unlock the vault at 9:00 and open a contract from it in a PDF
+viewer. At 9:10 you pick a second file from the vault in the viewer, which still works. At 9:20 the
+viewer reads more of the contract as you scroll on, or you try a third file: the vault locks at that
+moment, and the viewer gets nothing more from it. Since the viewer still has the contract open,
+Android may close it right then, and anything unsaved in it — a note you added, say — is lost; if
+it stays open, only what it had already loaded stays on its screen.
+
+### Another file, or forgetting the vault
+
+**Choose another file** switches to another vault file, or to the same vault after its file moved;
+the same vault opens without the master password, another one asks for its own. If Android has taken
+the phone's access to the file away — after the Google Drive app was reinstalled, say — the screen
+says *Cue: can no longer read the vault file* and offers **Choose the file again**. A file that
+cannot be read or opened at all says why, with **Try again** and **Choose another file**.
+
+**Forget vault** asks *Forget the vault?* and then forgets the chosen file, the vault's key and its
+settings on this phone. The file itself stays on your Google Drive, and choosing it again sets the
+vault up anew with the master password and the default settings.
+
+### What the vault protects against
+
+- **Someone in your Google account** sees one file they cannot read, as Cue Vault's README
+  [explains](https://github.com/jaroslav-sazma/cue-vault#what-it-protects-against).
+- **Someone holding your unlocked phone** cannot open a locked vault without your fingerprint, face
+  or screen lock.
+- **The apps on your phone** cannot change or delete anything in the vault, and reach a file in it
+  only when you pick it for them, and only until the vault locks: a file an app remembers from an
+  earlier unlock, in its recent files say, opens nothing, and you pick it again. Nothing decrypted
+  is ever written to the phone's storage.
+
+What it does not protect against:
+
+- **Anyone who knows your phone's PIN, pattern or password** can unlock the vault on it, just as
+  they can unlock the phone.
+- **An app you open a file in may keep its own copy** — a preview in its cache, a recent-files
+  entry, an attachment in a draft. That the vault is read-only does not stop it.
+- **The file manager may remember the names of folders and files it showed**, such as the last
+  folder you opened, even after the vault locks — only the names: it cannot open them again.
+- **Malware that has taken over the phone** can read the vault while it is unlocked.
+- **An old copy.** The phone shows the version of the file the Google Drive app last downloaded. If
+  the phone was offline, or Google Drive has not caught up yet, it may be older than the Mac's;
+  compare **Last saved on the Mac** with when you last changed the vault there.
+
+Neither the phone nor Cue Vault on the Mac sets the vault a size limit, and a large vault takes
+hardly more of the phone's memory than a small one: only the parts apps read are decrypted, a little
+at a time, and beyond that the phone keeps just the list of its files. That list is what limits a
+vault on the phone to 100 000 files and folders; one with more says *The vault holds more files and
+folders than this phone can open*. While it is unlocked, though, the launcher keeps the encrypted
+file in its private storage, so the phone needs as much free space as the file is large, and the
+copy is deleted when the vault locks. When the file's size is known up front, Android sets that room
+aside before the copy starts, and to make it may clear other apps' caches — files they download or
+build again when they need them. Without that much room, the vault says *There is not enough free
+storage space on the phone to open the vault*.
+
+### Recovering the vault
+
+The vault is created, filled and given a new master password on the Mac, in Cue Vault, as its README
+describes under [Setting up](https://github.com/jaroslav-sazma/cue-vault#setting-up) and
+[Changing the password](https://github.com/jaroslav-sazma/cue-vault#changing-the-password); the
+phone asks for the new password at its next unlock. Cue Vault keeps no copies of its own: an earlier
+version of the file comes back from Google Drive's version history, as its README describes under
+[Earlier versions](https://github.com/jaroslav-sazma/cue-vault#earlier-versions). A lost or reset
+phone loses nothing: set it up again with the file and the master password. Should every device with
+the apps be gone, the file and the master password are still enough to open the vault on any
+computer; Cue Vault's README walks you through that
+[recovery](https://github.com/jaroslav-sazma/cue-vault#recovering-the-vault-without-the-apps), step
+by step. The master password is the one thing nobody can replace.
+
+---
+
 ## Example scenarios
 
 From one condition to small chains. [`fixtures/scenarios/`](fixtures/scenarios/) holds about thirty
@@ -1306,13 +1488,14 @@ Anything tied to one phone — a widget, a Bluetooth device, a Wi-Fi name — is
 unfilled placeholder is imported **switched off**, with a `!` badge, rather than rejected.
 
 **The Home Assistant addresses, the sign-in or token and the pairing secret are never part of a
-file, and neither is anything of the Mac bridge:** its pairing stays on the phone it was made on
-and a restore leaves it as it is, so a new phone or a reinstall pairs with the Mac again. A *Mac
-nearby* condition travels with its scenario. Everything else is exported as it is, and is worth a
-look before you share a file: scenario names, the apps a notification condition listens to and the
-text it looks for, Home Assistant entity ids and service data, links (a `tel:` link carries the
-number), app shortcut ids (a messaging app's shortcut often names a contact), and — in a whole
-configuration — the home screen layout, folder names and the list of hidden apps.
+file, and neither is anything of the Mac bridge or of the vault:** the bridge's pairing stays on the
+phone it was made on and a restore leaves it as it is, so on a new phone or after a reinstall you
+pair with the Mac again and set the vault up again with its file and master password. A *Mac nearby*
+or *Vault unlocked* condition travels with its scenario. Everything else is exported as it is, and
+is worth a look before you share a file: scenario names, the apps a notification condition listens
+to and the text it looks for, Home Assistant entity ids and service data, links (a `tel:` link
+carries the number), app shortcut ids (a messaging app's shortcut often names a contact), and — in a
+whole configuration — the home screen layout, folder names and the list of hidden apps.
 
 A file can come from anywhere, so the launcher takes it only when an app hands it over with access
 granted, never as a `file:` path or from a web page. A file that overdoes it — a value longer than
@@ -1368,12 +1551,13 @@ launcher picks it up the next time you return to the home screen.
 
 No permission is needed for the launcher itself, the static area, the app search, app widgets, the
 next alarm on the clock, or for the time, alarm, charging, headphones and ringer conditions, nor for
-creating scenarios in an AI chat. Three more are granted at install without a dialog: **biometric
-prompt** (to ask the system for a confirmation and get back only yes or no), **network state** (to
-know which network the phone is on) and **expand status bar** (for the swipe that opens the
-notifications). The Mac bridge adds three of the same kind, which let Android watch for the paired
-Mac and let the launcher work with it in the background while it is near; none of them does
-anything until a Mac is paired.
+creating scenarios in an AI chat or for the [vault](#vault), which reads only the one file you pick
+in Android's file picker. Three more are granted at install without a dialog: **biometric prompt**
+(to ask the system for a confirmation and get back only yes or no, and to let the vault's key out of
+Android's Keystore), **network state** (to know which network the phone is on) and **expand status
+bar** (for the swipe that opens the notifications). The Mac bridge adds three of the same kind,
+which let Android watch for the paired Mac and let the launcher work with it in the background while
+it is near; none of them does anything until a Mac is paired.
 
 Creating scenarios in an AI chat needs only two entries in the manifest: one that lets the launcher
 see which apps can be the default assistant, next to the Gemini app the drawer's *Ask AI* row
@@ -1413,6 +1597,12 @@ goes. While the Mac is away nothing of the bridge runs, except that, if Android 
 time yet, the bridge still waits for the phone's Bluetooth to be switched off or on, which costs
 nothing until it happens.
 
+The [vault](#vault) adds no background work: its automatic lock keeps a timer only while the home
+screen or the launcher's settings are on screen, and otherwise is checked only when you come back to
+the home screen or an app reaches into the vault. While it is unlocked, Android wakes the launcher
+when the file manager or a file picker shows the vault or opens a file from it, and only then.
+Locked, or never set up, the vault is switched off, and Android does not even list it.
+
 Android's battery screen can still list **background** time for Cue: React & Act in two cases,
 neither of which costs anything by itself: the time the screen is off counts as background use of
 whatever was on screen when it went dark, so locking the phone on the home screen adds to it for any
@@ -1432,7 +1622,8 @@ with the phone, which keeps one connected for its notification dots.
 - [docs/security-audit.md](docs/security-audit.md) records what a security review covered and the
   state of each area.
 - The Mac app of the [Mac bridge](#mac-bridge) has its own privacy policy and security documents in
-  its repository, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge).
+  its repository, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge), and so has the Mac app
+  of the [vault](#vault), Cue Vault, in [cue-vault](https://github.com/jaroslav-sazma/cue-vault).
 
 ---
 
@@ -1460,10 +1651,13 @@ check for updates itself — it connects to nothing but your own Home Assistant 
 the next release by hand or let an app such as [Obtainium](https://obtainium.imranr.dev/) watch the
 GitHub releases for you.
 
-**The Mac app.** Cue: Relay & Reply, the Mac's half of the [Mac bridge](#mac-bridge), is published
+**The Mac apps.** Cue: Relay & Reply, the Mac's half of the [Mac bridge](#mac-bridge), is published
 in its own repository: get it from its
 [releases](https://github.com/jaroslav-sazma/cue-bridge/releases), and see its
 [README](https://github.com/jaroslav-sazma/cue-bridge#installing) for how to install it.
+Cue: Vault & View (for Google Drive), the Mac's half of the [vault](#vault), has a repository of its
+own too: get it from its [releases](https://github.com/jaroslav-sazma/cue-vault/releases), and see
+its [README](https://github.com/jaroslav-sazma/cue-vault#installing) for how to install it.
 
 ### Verifying a download
 
@@ -1503,6 +1697,9 @@ down so it does not have to be worked out again.
   scenarios, sets and whole configurations.
 - The Mac bridge: notifications, clipboard, Send to Mac and locking the Mac, with the Mac app in its
   own repository, [cue-bridge](https://github.com/jaroslav-sazma/cue-bridge).
+- The vault: an encrypted file of your own on Google Drive, opened read-only on the phone with the
+  fingerprint or the screen lock and shown in the file manager, locked again by itself, with the Mac
+  app in its own repository, [cue-vault](https://github.com/jaroslav-sazma/cue-vault).
 
 ### v2
 
@@ -1542,9 +1739,10 @@ security issue. To report a bug from the phone, *Launcher settings → Scenarios
 a bug* opens a new GitHub issue in your browser with the phone model, the Android build and the app
 version already filled in. The app sends nothing itself — those three values travel in the address
 of the page, so GitHub sees them once the page opens, and the issue is only filed when you submit it
-there. A bug in the Mac app goes to the issues of its own repository,
-[cue-bridge](https://github.com/jaroslav-sazma/cue-bridge/issues), whose README says how to find the
-app's version.
+there. A bug in a Mac app goes to the issues of its own repository —
+[cue-bridge](https://github.com/jaroslav-sazma/cue-bridge/issues) for the Mac bridge,
+[cue-vault](https://github.com/jaroslav-sazma/cue-vault/issues) for the vault — whose README says
+how to find the app's version.
 
 Cue: React & Act is designed, directed and tested by its maintainer, with AI coding assistants
 contributing to the code.
@@ -1560,17 +1758,20 @@ License, or (at your option) any later version (SPDX: `GPL-3.0-or-later`). The f
 
 [`NOTICE`](NOTICE) adds two terms that section 7 of the GPL allows: a modified version has to be
 marked as different from the original, for example with its own name and application ID, and **the
-GPL grants no trademark rights to the names "Cue:", "Cue: React & Act" and "Cue: Relay & Reply" or
-to the Cue: icon and logo**. `NOTICE` also lists the third-party material the app bundles, such as
-the Material Design Icons font by Pictogrammers; their license texts are in
-[`LICENSES/`](LICENSES/), and the app shows all of them too (*Launcher settings → Scenarios → ⋮ →
-About → Open-source licenses*).
+GPL grants no trademark rights to the names "Cue:" and "Cue: React & Act" or to the Cue: icon and
+logo**. `NOTICE` also lists the third-party material the app bundles, such as the Material Design
+Icons font by Pictogrammers; their license texts are in [`LICENSES/`](LICENSES/), and the app shows
+all of them too (*Launcher settings → Scenarios → ⋮ → About → Open-source licenses*).
 
-One part is not under the GPL: the Mac bridge's protocol,
+Some parts are not under the GPL: the Mac bridge's protocol,
 [`docs/bridge-protocol.md`](docs/bridge-protocol.md), and its test vectors in
-[`fixtures/bridge/`](fixtures/bridge/) are dedicated to the public domain under CC0 1.0
+[`fixtures/bridge/`](fixtures/bridge/), and the vault's file format,
+[`docs/vault-format.md`](docs/vault-format.md), its recovery script
+[`scripts/cuevault.py`](scripts/cuevault.py) with
+[`scripts/cuevault-requirements.txt`](scripts/cuevault-requirements.txt), and its test vectors in
+[`fixtures/vault/`](fixtures/vault/) are dedicated to the public domain under CC0 1.0
 ([`LICENSES/CC0-1.0.txt`](LICENSES/CC0-1.0.txt)), so that anyone can write a bridge for another
-computer, Linux or Windows say, under any license they like.
+computer, Linux or Windows say, or open a vault anywhere, under any license they like.
 
 Use it, fork it, build on it; the copyleft is there so it cannot be closed up and resold. If the
 project ever stops moving, the repository is enough for anyone to pick it up.

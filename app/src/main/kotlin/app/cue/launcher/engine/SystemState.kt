@@ -32,6 +32,8 @@ data class SystemState(
     val macBridge: MacBridgeState? = null,
 
     val macLock: MacLockState? = null,
+
+    val vaultUnlocked: Boolean? = null,
 ) {
 
     fun mergedWith(patch: SystemState): SystemState = SystemState(
@@ -47,6 +49,7 @@ data class SystemState(
         ha = patch.ha ?: ha,
         macBridge = patch.macBridge ?: macBridge,
         macLock = patch.macLock ?: macLock,
+        vaultUnlocked = patch.vaultUnlocked ?: vaultUnlocked,
     )
 }
 
@@ -94,7 +97,7 @@ data class WifiState(
     val bssid: String? = null,
 )
 
-enum class StateAspect { CLOCK, POWER, AUDIO, BLUETOOTH, WIFI, RINGER, CALENDAR, MEDIA, HA, MAC }
+enum class StateAspect { CLOCK, POWER, AUDIO, BLUETOOTH, WIFI, RINGER, CALENDAR, MEDIA, HA, MAC, VAULT }
 
 fun Condition.StateCondition.aspect(): StateAspect = when (this) {
     is Condition.TimeWindow -> StateAspect.CLOCK
@@ -108,6 +111,7 @@ fun Condition.StateCondition.aspect(): StateAspect = when (this) {
     is Condition.HaState -> StateAspect.HA
     is Condition.MacNearby -> StateAspect.MAC
     is Condition.MacLocked -> StateAspect.MAC
+    is Condition.VaultUnlocked -> StateAspect.VAULT
 }
 
 fun stateAspectsOf(scenarios: List<Scenario>): Set<StateAspect> =

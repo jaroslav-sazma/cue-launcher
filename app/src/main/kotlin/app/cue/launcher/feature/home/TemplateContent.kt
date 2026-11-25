@@ -36,8 +36,13 @@ fun templateStateGlyphs(
     haGlyphs: Map<String, List<String>>,
     font: MdiGlyphs,
     macLocked: Boolean?,
+    vaultUnlocked: Boolean = false,
 ): List<String> = macLockGlyphs(item, macLocked)
+    ?: vaultGlyphs(item, vaultUnlocked)
     ?: haIconEntity(item)?.let(haGlyphs::get).orEmpty().filter { font.codePointOf(it) != null }
+
+fun templateIconAccented(item: TemplateItem, accented: Set<String>, vaultUnlocked: Boolean): Boolean =
+    haIconEntity(item)?.let { it in accented } == true || (vaultUnlocked && onlyVaultAction(item))
 
 fun templateIconApp(item: TemplateItem): ActionApp? =
     if (mdiGlyphName(item.icon) != null) null else item.primaryAction?.actionApp
@@ -58,6 +63,9 @@ val SYSTEM_ACTION_GLYPHS: Map<SystemActionType, String> = mapOf(
     SystemActionType.REMEMBER_PLACE to "map-marker-plus",
     SystemActionType.SHOW_PLACE to "map-marker",
     SystemActionType.MAC_LOCK to "laptop",
+    SystemActionType.VAULT_UNLOCK to VAULT_UNLOCKED_GLYPH,
+    SystemActionType.VAULT_LOCK to VAULT_LOCKED_GLYPH,
+    SystemActionType.VAULT_TOGGLE to VAULT_LOCKED_GLYPH,
 )
 
 const val HA_GLYPH = "home-assistant"

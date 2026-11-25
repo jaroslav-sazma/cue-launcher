@@ -1,6 +1,6 @@
 # Privacy Policy — Cue: React & Act
 
-*Last updated: 2026-10-29. Applies to the Android app `app.cue.launcher`, developed by Jaroslav
+*Last updated: 2026-11-18. Applies to the Android app `app.cue.launcher`, developed by Jaroslav
 Sazma ([contact](#contact)).*
 
 **Cue: React & Act itself sends nothing to its developer or to any third party.** The app has no
@@ -26,9 +26,10 @@ form is open and is never saved; the rule keeps only the word or two it looks fo
 from the notification's title, where a sender's name usually is. Denying a permission only disables
 the feature that needs it.
 
-If you mark a Home Assistant action as needing confirmation, the app asks Android's biometric
-prompt and receives only whether the check passed. No fingerprint, face or screen-lock data ever
-reaches the app.
+If you mark a Home Assistant action as needing confirmation, the app asks Android's biometric prompt
+and receives only whether the check passed. Unlocking the vault goes through the same prompt, which
+lets the vault's key out of the Android Keystore for that one unlock. No fingerprint, face or
+screen-lock data ever reaches the app.
 
 ## Creating scenarios in an AI chat
 
@@ -88,6 +89,26 @@ removed when you unpair there. The Mac app passes nothing on to anyone else; wha
 described in its own
 [privacy policy](https://github.com/jaroslav-sazma/cue-bridge/blob/main/PRIVACY.md).
 
+## The vault
+
+The vault is optional, and nothing of it runs until you set it up. Its file is the one the Mac app
+Cue: Vault & View (for Google Drive), Cue Vault for short, creates on your Mac, encrypted there with
+your master password and synced by Google Drive. Cue: React & Act reads that one file, read-only,
+through Android's document access: you pick it in the system's file picker, and the Google Drive app
+hands it over. The app itself never contacts Google or any other server for it; downloading the file
+is the Google Drive app's work, under Google's own privacy policy. What Cue Vault keeps on the Mac
+is described in its own
+[privacy policy](https://github.com/jaroslav-sazma/cue-vault/blob/main/PRIVACY.md).
+
+The vault is decrypted on the phone, in memory and a piece at a time as you open its files: nothing
+decrypted is ever written to the phone's storage. Only the file itself, still encrypted, is copied
+into the launcher's private storage, which is never backed up, for as long as the vault is unlocked;
+locking the vault, its automatic lock or a restart of the phone or the launcher deletes that copy
+and drops what was decrypted. While it is unlocked, its files are offered read-only to the system
+file manager and to the file pickers of other apps; an app receives a file only when you pick it for
+that app, and can read it only until the vault locks; what that app then does with it is up to that
+app. Nothing of the vault leaves the phone through Cue: React & Act.
+
 ## Stored on your device
 
 The app keeps its data in its private storage on the phone:
@@ -116,6 +137,12 @@ The app keeps its data in its private storage on the phone:
   key is kept as well. Turning the bridge off or unpairing deletes all of it. The list of apps you
   keep off the Mac stays when you unpair and is deleted when you turn the bridge off. Notifications
   and copied text sent to the Mac are not stored on the phone;
+- for the vault, in a file of its own: the reference to the vault file you chose, with its name and
+  the time the Mac last wrote it, the automatic lock and file manager settings, and the vault's key,
+  encrypted with a key in the Android Keystore that only your fingerprint, face or screen lock
+  opens, together with the vault's two identifiers. *Forget vault* deletes the reference and the
+  key. While the vault is unlocked, the encrypted copy of its file described above is stored as
+  well, until it locks;
 - the last description assembled for an AI chat, as a file in the app's cache, replaced by the next
   one, and, in the settings, what you chose to include and whether a pasted answer is still awaited.
 
@@ -183,8 +210,9 @@ All app data lives on your device. Clearing the launch history or the event log 
 them; deleting a scenario deletes what it stored. Uninstalling the app removes everything. What the
 app wrote into your Home Assistant — the blueprint and the sign-in session — stays there until you
 remove it in Home Assistant. Turning the Mac bridge off or unpairing deletes the pairing on the
-phone; notifications already shown on the Mac stay there until you close them or unpair the Mac
-too.
+phone; notifications already shown on the Mac stay there until you close them or unpair the Mac too.
+Forgetting the vault deletes its key and the reference to its file on the phone; the file itself
+stays on your Google Drive.
 
 ## Contact
 

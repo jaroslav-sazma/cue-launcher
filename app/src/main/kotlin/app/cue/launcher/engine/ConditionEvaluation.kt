@@ -22,6 +22,7 @@ fun stateConditionOutcome(condition: Condition.StateCondition, state: SystemStat
         // Unlike mac_nearby, a Mac that is away or silent is unknown rather than unlocked, so the
         // negated form never holds for a Mac nobody can see.
         is Condition.MacLocked -> outcomeOf(state.macLock.reportedLocked())
+        is Condition.VaultUnlocked -> outcomeOf(state.vaultUnlocked)
     }
 
     return if (condition.negate) measured.flipped() else measured

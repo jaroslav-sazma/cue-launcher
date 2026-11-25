@@ -1,1 +1,8 @@
 blank_issues_enabled: false
+contact_links:
+  - name: "A bug in Cue: Relay & Reply, the Mac app of the bridge"
+    url: https://github.com/jaroslav-sazma/cue-bridge/issues
+    about: "The Mac side of the bridge has a repository of its own: report it there."
+  - name: "A bug in Cue: Vault & View (for Google Drive), the Mac app of the vault"
+    url: https://github.com/jaroslav-sazma/cue-vault/issues
+    about: "Cue Vault has a repository of its own: report it there."

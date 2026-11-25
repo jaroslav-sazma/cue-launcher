@@ -11,14 +11,14 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts.StartActivityForResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import app.cue.launcher.data.scenario.AccentSource
 import app.cue.launcher.data.scenario.accentRgbOf
 import app.cue.launcher.data.settings.AppearanceSettings
@@ -33,6 +33,7 @@ import app.cue.launcher.feature.home.CalendarSources
 import app.cue.launcher.feature.home.LocalCalendarFeed
 import app.cue.launcher.feature.home.LocalCalendarSources
 import app.cue.launcher.feature.home.LocalMediaFeed
+import app.cue.launcher.feature.home.LocalVaultUnlocked
 import app.cue.launcher.feature.home.MediaFeed
 import app.cue.launcher.feature.home.MediaWidgetState
 import app.cue.launcher.feature.icons.IconAppearanceHost
@@ -40,34 +41,38 @@ import app.cue.launcher.feature.icons.LocalNotificationCounts
 import app.cue.launcher.feature.icons.NotificationCounts
 import app.cue.launcher.feature.scenarios.AppLabels
 import app.cue.launcher.feature.scenarios.LocalAppLabels
-import app.cue.launcher.feature.scenarios.builder.activeNotificationsOf
+import app.cue.launcher.feature.scenarios.aichat.LocalAiChatInventory
 import app.cue.launcher.feature.scenarios.builder.LocalActiveNotifications
+import app.cue.launcher.feature.scenarios.builder.activeNotificationsOf
 import app.cue.launcher.feature.settings.bridge.BridgeServices
 import app.cue.launcher.feature.settings.bridge.LocalBridgeServices
 import app.cue.launcher.feature.settings.ha.HaServices
 import app.cue.launcher.feature.settings.ha.HaSetup
+import app.cue.launcher.feature.settings.safe.LocalSafeVault
+import app.cue.launcher.feature.settings.safe.LocalVaultRequest
+import app.cue.launcher.feature.settings.safe.VaultRequest
 import app.cue.launcher.feature.widgets.WidgetHosting
-import app.cue.launcher.feature.scenarios.aichat.LocalAiChatInventory
 import app.cue.launcher.system.ActionExecutor
 import app.cue.launcher.system.ActionOutcome
 import app.cue.launcher.system.CalendarRepository
 import app.cue.launcher.system.HomeRole
 import app.cue.launcher.system.HomeRoleStatus
 import app.cue.launcher.system.InstalledApp
-import app.cue.launcher.system.ha.HA_SIGN_IN_RETURN
 import app.cue.launcher.system.LauncherAppsRepository
 import app.cue.launcher.system.WallpaperLuminance
+import app.cue.launcher.system.ha.HA_SIGN_IN_RETURN
 import app.cue.launcher.system.launchSystemScreen
 import app.cue.launcher.system.media.MediaPlayers
 import app.cue.launcher.system.media.playerChoices
+import app.cue.launcher.system.safe.SafeVault
 import app.cue.launcher.system.widget.WidgetBinder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.emitAll
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.emitAll
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
@@ -88,6 +93,8 @@ class MainActivity : ComponentActivity() {
     private lateinit var ha: HaServices
 
     private val bridgeServices: () -> BridgeServices = { graph.bridgeServices }
+
+    private val safeVault: () -> SafeVault = { graph.safeVault }
 
     private val homeRoleRequest = registerForActivityResult(StartActivityForResult()) {
 
@@ -123,7 +130,11 @@ class MainActivity : ComponentActivity() {
                 val counts = remember(notificationCounts, badgesOn) {
                     NotificationCounts(notificationCounts).takeIf { badgesOn }
                 }
+                val vaultSession by remember { graph.safeHost.session }.collectAsStateWithLifecycle()
                 CompositionLocalProvider(
+                    LocalVaultUnlocked provides (vaultSession != null),
+                    LocalSafeVault provides safeVault,
+                    LocalVaultRequest provides remember { VaultRequest() },
                     LocalNotificationCounts provides counts,
                     LocalCalendarFeed provides rememberCalendarFeed(graph.calendarRepository, settingsRepository),
                     LocalCalendarSources provides remember { CalendarSources { graph.calendarRepository.calendars() } },

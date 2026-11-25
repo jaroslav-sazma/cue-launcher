@@ -80,6 +80,8 @@ enum class PhraseKey {
     MAC_NEARBY_NEGATED,
     MAC_LOCKED,
     MAC_LOCKED_NEGATED,
+    VAULT_UNLOCKED,
+    VAULT_UNLOCKED_NEGATED,
     TIME_INSTANT,
     ALARM,
     BT_DISCONNECTED_ANY,
@@ -159,11 +161,9 @@ private fun triggerPhrase(condition: Condition): ConditionPhrase = when (conditi
         states = condition.states,
     )
 
-    is Condition.MacNearby ->
-        ConditionPhrase(pick(condition.negate, PhraseKey.MAC_NEARBY, PhraseKey.MAC_NEARBY_NEGATED))
-
-    is Condition.MacLocked ->
-        ConditionPhrase(pick(condition.negate, PhraseKey.MAC_LOCKED, PhraseKey.MAC_LOCKED_NEGATED))
+    is Condition.MacNearby -> condition.phrase(PhraseKey.MAC_NEARBY, PhraseKey.MAC_NEARBY_NEGATED)
+    is Condition.MacLocked -> condition.phrase(PhraseKey.MAC_LOCKED, PhraseKey.MAC_LOCKED_NEGATED)
+    is Condition.VaultUnlocked -> condition.phrase(PhraseKey.VAULT_UNLOCKED, PhraseKey.VAULT_UNLOCKED_NEGATED)
 
     is Condition.RingerMode -> ConditionPhrase(
         when (condition.mode) {
@@ -199,6 +199,9 @@ private fun triggerPhrase(condition: Condition): ConditionPhrase = when (conditi
 }
 
 private fun pick(negate: Boolean, plain: PhraseKey, negated: PhraseKey): PhraseKey = if (negate) negated else plain
+
+private fun Condition.StateCondition.phrase(plain: PhraseKey, negated: PhraseKey): ConditionPhrase =
+    ConditionPhrase(pick(negate, plain, negated))
 
 private fun mediaPhrase(condition: Condition.MediaPlaying): ConditionPhrase = when {
     condition.packages.isEmpty() ->

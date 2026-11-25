@@ -1,6 +1,7 @@
 package app.cue.launcher.di
 
 import android.app.Application
+import android.os.storage.StorageManager
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.DataStoreFactory
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
@@ -18,6 +19,8 @@ import app.cue.launcher.data.ha.HaConfigRepository
 import app.cue.launcher.data.ha.HaEventLogDao
 import app.cue.launcher.data.ha.HaEventLogRepository
 import app.cue.launcher.data.ha.HaSessionTokens
+import app.cue.launcher.data.safe.SafeSettings
+import app.cue.launcher.data.safe.SafeSettingsSerializer
 import app.cue.launcher.data.icons.IconOverrideDao
 import app.cue.launcher.data.launchlog.AppLaunchDao
 import app.cue.launcher.data.launchlog.LaunchLogRepository
@@ -86,6 +89,17 @@ import app.cue.launcher.system.ha.HaGateway
 import app.cue.launcher.system.ha.HaStateReader
 import app.cue.launcher.system.ha.HaTokenClient
 import app.cue.launcher.system.iconpack.IconPackRepository
+import app.cue.launcher.system.safe.KeystoreSafeKeyGuard
+import app.cue.launcher.system.safe.ProcessSafeHost
+import app.cue.launcher.system.safe.ResolverSafeContainers
+import app.cue.launcher.system.safe.SafeClock
+import app.cue.launcher.system.safe.SafeConditions
+import app.cue.launcher.system.safe.SafeContainers
+import app.cue.launcher.system.safe.SafeCopies
+import app.cue.launcher.system.safe.SafeHost
+import app.cue.launcher.system.safe.SafeKeyGuard
+import app.cue.launcher.system.safe.SafeVault
+import app.cue.launcher.system.safe.safeCopyDirectory
 import app.cue.launcher.system.notifications.NotificationListenerLink
 import app.cue.launcher.system.UserProfiles
 import app.cue.launcher.system.logUnexpected
@@ -190,6 +204,12 @@ interface AppGraph {
     // Resolved only by the companion service, which is component-disabled while no Mac is paired.
     val bridgeWindow: BridgeWindow
 
+    // Resolved only by the vault's settings and actions; until a vault is set up nothing of it runs.
+    val safeVault: SafeVault
+
+    // Only the open session in memory, for the home screen's vault buttons.
+    val safeHost: SafeHost
+
     @Provides
     @SingleIn(AppScope::class)
     fun provideProcessScope(): CoroutineScope = CoroutineScope(
@@ -290,6 +310,10 @@ interface AppGraph {
     val BridgeConditions.bindBridgeStateProvider: StateProvider
 
     @Binds
+    @IntoSet
+    val SafeConditions.bindSafeStateProvider: StateProvider
+
+    @Binds
     val HaEventLogRepository.bindHaEventLog: HaEventLog
 
     @Binds
@@ -306,6 +330,24 @@ interface AppGraph {
 
     @Provides
     fun provideBridgeKeySealer(): BridgeKeySealer = BridgeKeyCipher
+
+    @Binds
+    val KeystoreSafeKeyGuard.bindSafeKeyGuard: SafeKeyGuard
+
+    @Binds
+    val ResolverSafeContainers.bindSafeContainers: SafeContainers
+
+    @Provides
+    fun provideSafeCopies(application: Application): SafeCopies =
+        SafeCopies(safeCopyDirectory(application)) { descriptor, bytes ->
+            application.getSystemService(StorageManager::class.java).allocateBytes(descriptor, bytes)
+        }
+
+    @Binds
+    val ProcessSafeHost.bindSafeHost: SafeHost
+
+    @Provides
+    fun provideSafeClock(): SafeClock = SafeClock.SYSTEM
 
     @Provides
     @SingleIn(AppScope::class)
@@ -340,6 +382,17 @@ interface AppGraph {
             produceFile = { application.dataStoreFile(BRIDGE_SEQUENCE_FILE) },
         )
 
+    // Created lazily like every DataStore: the file is first read when the vault is touched.
+    @Provides
+    @SingleIn(AppScope::class)
+    fun provideSafeSettingsStore(application: Application): DataStore<SafeSettings> =
+        DataStoreFactory.create(
+            serializer = SafeSettingsSerializer,
+            corruptionHandler = ReplaceFileCorruptionHandler { SafeSettingsSerializer.defaultValue },
+            scope = CoroutineScope(Dispatchers.IO + SupervisorJob()),
+            produceFile = { application.dataStoreFile(SAFE_FILE) },
+        )
+
     @DependencyGraph.Factory
     fun interface Factory {
         fun create(@Provides application: Application): AppGraph
@@ -349,5 +402,7 @@ interface AppGraph {
 private const val SETTINGS_FILE = "settings.json"
 
 private const val BRIDGE_SEQUENCE_FILE = "bridge-sequence.json"
+
+private const val SAFE_FILE = "safe.json"
 
 private const val PROCESS_SCOPE_TAG = "ProcessScope"

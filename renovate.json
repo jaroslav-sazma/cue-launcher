@@ -27,6 +27,38 @@
       "allowedVersions": "<6"
     },
     {
+      "description": "The vault-vectors CI job tests scripts/cuevault.py on Python 3.9, the oldest it supports: the image takes digest updates only, never another Python.",
+      "matchFileNames": [".github/workflows/ci.yml"],
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["python"],
+      "matchUpdateTypes": ["major", "minor", "patch"],
+      "enabled": false
+    },
+    {
+      "description": "Renovate cannot tell which release still supports Python 3.9, so cryptography stays on its current major until someone checks Requires-Python; see CONTRIBUTING.",
+      "matchFileNames": ["scripts/cuevault-requirements.txt"],
+      "matchPackageNames": ["cryptography"],
+      "allowedVersions": "<51"
+    },
+    {
+      "description": "Renovate cannot tell which release still supports Python 3.9, so typing-extensions stays on its current minor until someone checks Requires-Python; see CONTRIBUTING.",
+      "matchFileNames": ["scripts/cuevault-requirements.txt"],
+      "matchPackageNames": ["typing-extensions"],
+      "allowedVersions": "<4.17"
+    },
+    {
+      "description": "scripts/cuevault.py has to run on the system Python of macOS, 3.9, which cffi 2.1 dropped; see CONTRIBUTING.",
+      "matchFileNames": ["scripts/cuevault-requirements.txt"],
+      "matchPackageNames": ["cffi"],
+      "allowedVersions": "<2.1"
+    },
+    {
+      "description": "scripts/cuevault.py has to run on the system Python of macOS, 3.9, which pycparser 3 dropped; see CONTRIBUTING.",
+      "matchFileNames": ["scripts/cuevault-requirements.txt"],
+      "matchPackageNames": ["pycparser"],
+      "allowedVersions": "<3"
+    },
+    {
       "description": "The JDK moves only together with the daemon JVM, compileOptions and detekt (which cannot run on 25+), see CONTRIBUTING.",
       "matchDepNames": ["java-jdk"],
       "matchUpdateTypes": ["major"],

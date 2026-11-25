@@ -43,6 +43,12 @@ sealed interface ActionRoute {
 
     data object LockMac : ActionRoute
 
+    data object UnlockVault : ActionRoute
+
+    data object LockVault : ActionRoute
+
+    data object ToggleVault : ActionRoute
+
     data class SystemScreen(val screen: SystemScreenTarget) : ActionRoute
 
     data class HaService(val call: HaServiceCall) : ActionRoute
@@ -103,6 +109,9 @@ fun systemActionRoute(action: SystemActionType): ActionRoute = when (action) {
     SystemActionType.REMEMBER_PLACE -> ActionRoute.RememberPlace
     SystemActionType.SHOW_PLACE -> ActionRoute.ShowPlace
     SystemActionType.MAC_LOCK -> ActionRoute.LockMac
+    SystemActionType.VAULT_UNLOCK -> ActionRoute.UnlockVault
+    SystemActionType.VAULT_LOCK -> ActionRoute.LockVault
+    SystemActionType.VAULT_TOGGLE -> ActionRoute.ToggleVault
 }
 
 fun absoluteClassName(packageName: String, component: String): String {

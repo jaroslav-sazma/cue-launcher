@@ -27,7 +27,8 @@ they ask for it, and — during sign-in — a socket on the phone's own loopback
 the browser to come back, plus the instance's sign-in page opened in a browser tab. The optional Mac
 bridge, off by default, adds the user's own paired Mac: TLS connections to it on the local network,
 and a Bluetooth link while it is in range, which also carries those connections where the two share
-no network.
+no network. The optional vault adds no traffic of its own: it reads one encrypted file the user
+picked, through Android's document access, from the app that holds it — the Google Drive app.
 
 Sensitive data it can hold, all of it inside the app's private storage, kept out of cloud backup and
 out of device-to-device transfer when moving to a new phone:
@@ -45,6 +46,15 @@ out of device-to-device transfer when moving to a new phone:
   their way between the phone and the Mac and are not stored; a clip from the Mac that arrives while
   the phone is locked waits in memory until the unlock, until the phone has been out of the Mac's
   range for about a minute or until the companion service's window closes, whichever comes first;
+- the vault: the reference to the vault file the user picked, with its persisted read grant, and the
+  vault's content key (CEK), sealed with an AES-256-GCM key held in the Android Keystore that opens
+  only after a biometric or screen-lock authentication for that one use; the file's vault and key
+  ids beside it. While the vault is unlocked, a copy of the still encrypted file sits in the app's
+  private storage, outside every backup, and the CEK in memory; only what an app reads is decrypted,
+  into that read's buffer and a cache of at most sixteen 64 KiB segments. The lock, the automatic
+  lock or the end of the process deletes the copy and drops the key and the cache; nothing decrypted
+  is ever written to storage. *Forget vault* deletes the reference, the sealed key and the Keystore
+  key, and resets the vault's settings;
 - notification titles and texts: a notification that activates a scenario has its title and text
   stored with the tile it raised, until that tile ends (after 60 seconds unless the scenario sets
   its own duration or an event that ends it) or — when no such event is set and no state the
@@ -91,7 +101,12 @@ What Cue: React & Act defends against:
   exported: it serves that one cached file, and only to the app a send grants a one-off read. While
   a Mac is paired, an app can also hand *Send to Mac* a text, as the selection menu and the share
   sheet do; the text goes to the user's own Mac clipboard, read as plain text only and capped at
-  100 KB, and the Mac announces it.
+  100 KB, and the Mac announces it. While the vault is unlocked, its documents provider is exported,
+  but guarded by `MANAGE_DOCUMENTS`, which only the system's document UI holds: another app reaches
+  a vault file only through the read grant a picker hands it for the file the user picked, never the
+  whole vault, and only until the vault locks: document ids hold for one unlock, so a grant the app
+  kept, or a link it stored, finds nothing in a later one, and the lock revokes every such grant.
+  Nothing in it can be written, created, renamed or deleted.
 - **Scenario JSON pasted from an AI chat.** It is untrusted input, treated like an imported file:
   the same import gate, then a check against the phone — installed apps, their shortcuts and
   screens, paired devices, Home Assistant entities and services, widget providers, the system
@@ -144,15 +159,37 @@ What Cue: React & Act defends against:
   notice under the field names the old address until it is saved or edited — and the test sends a
   stored credential only to addresses the user has saved: any other address is reported as untried
   and nothing is sent.
+- **Someone in the user's Google account.** The vault file in Google Drive is encrypted on the Mac
+  with a key that only the master password unwraps, so the account yields one unreadable file;
+  changing the password changes the key, so an old password that leaked opens only the copies from
+  before the change. An offline attack on the file is limited by PBKDF2 with 600 000 iterations and
+  the password's own strength. A file tampered with in the account is detected before anything of it
+  is shown: the phone opens only a file whose every segment authenticates.
 - **A lost or stolen device, offline.** The credential and the bridge's frame key are sealed with
   Keystore keys that never leave the device, the bridge's TLS key lives in the Keystore itself, and
-  nothing is written to a backup or carried over to a new phone.
+  nothing is written to a backup or carried over to a new phone. The vault's content key is sealed
+  with a Keystore key that every use has to unlock with the user's fingerprint, face or screen lock,
+  so a locked vault stays closed to whoever holds the phone without them; while it is locked,
+  nothing of its content is on the phone at all.
 
 What it does not defend against, by design:
 
 - **A rooted or physically unlocked device.** Anything with root, `adb` or the unlocked screen can
   read the app's private storage and therefore the pairing secret. Android's app sandbox is the
   boundary; Cue: React & Act does not try to be a second one.
+- **Whoever knows the phone's screen lock.** The vault's key opens with the fingerprint, the face or
+  the screen lock alike, so anyone who knows the PIN, pattern or password can unlock the vault on
+  that phone, as they can unlock the phone itself.
+- **What other apps do with a vault file.** A file the user opens from the vault in another app — a
+  viewer, a mail draft — is that app's to keep: a cache, a recent-files entry, a copy. The vault
+  being read-only does not stop copying, and while it is unlocked, code that has taken over the
+  phone can read it. The system's file picker and file manager may also keep the names of vault
+  files they showed among their recent files after the lock: the ids beside them name no path and
+  resolve to nothing once the vault locks, but a file's name is what a picker shows, so it stays
+  readable there.
+- **An outdated copy.** The phone reads the version of the file the Google Drive app last
+  downloaded, which can be older than the Mac's; the vault screen shows when the Mac last wrote the
+  file it opened, so the user can tell.
 - **Someone who deliberately impersonates the home network.** "At home" is decided by a network name
   or BSSID and by the paired instance's identity, none of which is a secret. An attacker who copies
   them on another network can receive a cleartext home address's credential. An `https://` home
@@ -171,4 +208,7 @@ What it does not defend against, by design:
 [`docs/security-audit.md`](docs/security-audit.md) records what a security review of the launcher
 covered and what the state of each area is. The Mac app's own side of the bridge — what it stores,
 its signing and its residual risks — is described in its repository's
-[`docs/security.md`](https://github.com/jaroslav-sazma/cue-bridge/blob/main/docs/security.md).
+[`docs/security.md`](https://github.com/jaroslav-sazma/cue-bridge/blob/main/docs/security.md). The
+vault's Mac side — the Mac app Cue: Vault & View (for Google Drive), which creates and writes the
+vault file — is described in the same way in its repository's
+[`docs/security.md`](https://github.com/jaroslav-sazma/cue-vault/blob/main/docs/security.md).

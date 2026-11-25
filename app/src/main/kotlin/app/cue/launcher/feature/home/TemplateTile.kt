@@ -49,10 +49,8 @@ import app.cue.launcher.designsystem.LocalCueColors
 import app.cue.launcher.designsystem.LocalTintedIcons
 import app.cue.launcher.designsystem.TileSurface
 import app.cue.launcher.designsystem.Tokens
-import app.cue.launcher.designsystem.glyph.LocalMdiGlyphs
 import app.cue.launcher.designsystem.toTextStyle
 import app.cue.launcher.designsystem.labelsVisibleAt
-import app.cue.launcher.engine.haIconEntity
 import app.cue.launcher.engine.progressTrack
 import app.cue.launcher.engine.templateItemEnabled
 import app.cue.launcher.feature.icons.rememberTintedPackageIcon
@@ -187,7 +185,7 @@ private fun TemplateActionRow(
                     caption = item.label?.takeIf { state.labelled },
                     glyphTint = templateIconTint(item, state.semantic, state.accented),
                     captionTint = templateInk(state.semantic),
-                    stateGlyphs = templateStateGlyphs(item, state.haGlyphs, LocalMdiGlyphs.current, state.macLocked),
+                    stateGlyphs = tileStateGlyphs(item, state.haGlyphs, state.macLocked),
                     macLocked = state.macLocked,
                 )
             }
@@ -217,13 +215,14 @@ private fun iconLabelsFit(): Boolean = labelsVisibleAt(LocalDensity.current.font
     LocalHomeBands.current.mediumHeight >= Tokens.Grid.RowHeight.tile2x2
 
 // Each icon answers for itself: the accent marks the one Home Assistant entity behind it that is
-// on, and everything else keeps the colour the tile's notification asked for.
+// on, or a vault button's unlocked vault, and everything else keeps the colour the tile's
+// notification asked for.
 @Composable
 internal fun templateIconTint(
     item: TemplateItem,
     semantic: SemanticStyle,
     accented: Set<String>,
-): Color = if (haIconEntity(item)?.let { it in accented } == true) {
+): Color = if (templateIconAccented(item, accented, vaultShownUnlocked(item))) {
     LocalCueColors.current.accent
 } else {
     templateInk(semantic)

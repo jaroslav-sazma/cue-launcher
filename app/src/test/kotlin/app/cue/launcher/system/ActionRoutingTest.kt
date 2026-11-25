@@ -6,6 +6,11 @@ import app.cue.launcher.data.scenario.RingerModeState
 import app.cue.launcher.data.scenario.SystemActionType
 import app.cue.launcher.data.scenario.TapAction
 import app.cue.launcher.system.bridge.LockMacOutcome
+import app.cue.launcher.system.safe.PasswordReason
+import app.cue.launcher.system.safe.SafeError
+import app.cue.launcher.system.safe.SafeFilesOpened
+import app.cue.launcher.system.safe.SafeState
+import app.cue.launcher.system.safe.UnlockStep
 import kotlinx.serialization.json.JsonObject
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
@@ -210,6 +215,55 @@ class ActionRoutingTest {
         assertEquals(ActionOutcome.MAC_NOT_PAIRED, lockMacOutcome(LockMacOutcome.NOT_PAIRED))
         assertEquals(ActionOutcome.MAC_LOCAL_NETWORK, lockMacOutcome(LockMacOutcome.NO_LOCAL_NETWORK))
         assertEquals(ActionOutcome.MAC_UNREACHABLE, lockMacOutcome(LockMacOutcome.UNREACHABLE))
+    }
+
+    @Test
+    fun `a vault tap that needs the user lands on the vault settings, anything else is done`() {
+        assertEquals(ActionRoute.UnlockVault, systemActionRoute(SystemActionType.VAULT_UNLOCK))
+        assertEquals(ActionRoute.LockVault, systemActionRoute(SystemActionType.VAULT_LOCK))
+
+        val settings = listOf(
+            SafeState.NotConfigured,
+            SafeState.NeedsPassword(PasswordReason.SET_UP),
+            SafeState.NeedsPassword(PasswordReason.KEY_LOST, rejected = true),
+            SafeState.ChooseFileAgain,
+            SafeState.Failed(SafeError.UNREADABLE),
+        )
+        val done = listOf(
+            SafeState.Locked,
+            SafeState.Unlocking(UnlockStep.DECRYPTING),
+            SafeState.Unlocked(unlockedAt = 0L, locksAt = 1L, writtenAt = 2L),
+        )
+        settings.forEach { assertEquals(ActionOutcome.VAULT_SETTINGS, vaultOutcome(it), it.toString()) }
+        done.forEach { assertEquals(ActionOutcome.DONE, vaultOutcome(it), it.toString()) }
+    }
+
+    @Test
+    fun `only a missing file manager reports the vault's files as missing`() {
+        assertEquals(ActionOutcome.TARGET_MISSING, vaultFilesOutcome(SafeFilesOpened.NO_FILE_MANAGER))
+        assertEquals(ActionOutcome.DONE, vaultFilesOutcome(SafeFilesOpened.OPENED))
+        assertEquals(ActionOutcome.DONE, vaultFilesOutcome(SafeFilesOpened.LOCKED))
+    }
+
+    @Test
+    fun `the vault toggle locks an unlocked vault and takes the unlock's path otherwise`() {
+        assertEquals(ActionRoute.ToggleVault, systemActionRoute(SystemActionType.VAULT_TOGGLE))
+        val unlocked = SafeState.Unlocked(unlockedAt = 0L, locksAt = 1L, writtenAt = 2L)
+        val unlocking = SafeState.Unlocking(UnlockStep.READING)
+        val toUnlock = listOf(
+            SafeState.NotConfigured,
+            SafeState.Locked,
+            SafeState.NeedsPassword(PasswordReason.SET_UP),
+            SafeState.ChooseFileAgain,
+            SafeState.Failed(SafeError.DAMAGED),
+        )
+
+        assertEquals(VaultTap.LOCK, vaultTapOf(unlocked, toggle = true))
+        assertEquals(VaultTap.OPEN_FILES, vaultTapOf(unlocked, toggle = false))
+        listOf(true, false).forEach { toggle ->
+            assertEquals(VaultTap.NOTHING, vaultTapOf(unlocking, toggle), "toggle=$toggle")
+            toUnlock.forEach { assertEquals(VaultTap.UNLOCK, vaultTapOf(it, toggle), "$it toggle=$toggle") }
+        }
     }
 
     @Test

@@ -30,6 +30,14 @@ class ConditionCatalogTest {
     }
 
     @Test
+    fun `Vault unlocked is offered whether or not a vault is set up, and starts plain`() {
+        assertTrue(ConditionType.VAULT_UNLOCKED in conditionCatalog(bridgePaired = false))
+        assertTrue(ConditionType.VAULT_UNLOCKED in conditionCatalog(bridgePaired = true))
+        assertEquals(Condition.VaultUnlocked(), newCondition(ConditionType.VAULT_UNLOCKED))
+        assertEquals(ConditionType.VAULT_UNLOCKED, conditionTypeOf(Condition.VaultUnlocked(negate = true)))
+    }
+
+    @Test
     fun `a bridge counts as paired only once it reads as more than off`() {
         assertFalse(SystemState().bridgePaired)
         assertFalse(SystemState(macBridge = MacBridgeState.OFF).bridgePaired)
@@ -46,7 +54,7 @@ class ConditionCatalogTest {
     }
 
     @Test
-    fun `sections have eleven state and six instant`() {
+    fun `sections have twelve state and six instant`() {
         val sections = catalogSections(CONDITION_CATALOG)
 
         assertEquals(listOf(ConditionSection.STATE, ConditionSection.INSTANT), sections.map { it.section })
@@ -128,7 +136,7 @@ class ConditionCatalogTest {
     }
 
     private companion object {
-        const val STATE_COUNT = 11
+        const val STATE_COUNT = 12
         const val INSTANT_COUNT = 6
 
         val LONGER_DEFAULTS = setOf(ConditionType.NOTIFICATION_ENDED, ConditionType.PLACE_SAVED)

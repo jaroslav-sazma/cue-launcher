@@ -32,11 +32,14 @@ import app.cue.launcher.system.bridge.BridgeLockMac
 import app.cue.launcher.system.ha.HaGateway
 import app.cue.launcher.system.media.MediaPlayers
 import app.cue.launcher.system.notifications.NotificationReplySender
+import app.cue.launcher.system.safe.SafeState
+import app.cue.launcher.system.safe.SafeVault
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.Inject
 import dev.zacsweers.metro.SingleIn
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 
 @Suppress("TooManyFunctions", "LongParameterList")
@@ -65,6 +68,9 @@ class ActionExecutor(
 
     // Lazy, like the bridge's other parts: a phone that never taps Lock Mac never builds the link.
     private val lockMac: Lazy<BridgeLockMac>,
+
+    // Lazy for the same reason: until a vault action is tapped nothing of the vault is built.
+    private val safe: Lazy<SafeVault>,
 ) {
 
     private val service: LauncherApps = application.getSystemService(LauncherApps::class.java)
@@ -108,11 +114,41 @@ class ActionExecutor(
             ActionRoute.RememberPlace -> rememberPlace()
             ActionRoute.ShowPlace -> showPlace(sourceBounds)
             ActionRoute.LockMac -> lockMacOutcome(lockMac.value.lock())
+            ActionRoute.UnlockVault -> tapVault(toggle = false)
+            ActionRoute.LockVault -> lockVault()
+            ActionRoute.ToggleVault -> tapVault(toggle = true)
             ActionRoute.Malformed -> {
                 Log.w(TAG, "No handler for a malformed ${action::class.simpleName} action")
                 ActionOutcome.FAILED
             }
         }
+
+    private suspend fun tapVault(toggle: Boolean): ActionOutcome {
+        val vault = safe.value
+        vault.lockIfExpired()
+        return when (vaultTapOf(vault.state.first(), toggle)) {
+            VaultTap.OPEN_FILES -> vaultFilesOutcome(vault.openInFiles(application))
+            VaultTap.LOCK -> {
+                vault.lock()
+                ActionOutcome.DONE
+            }
+            VaultTap.NOTHING -> ActionOutcome.DONE
+            VaultTap.UNLOCK -> {
+                val after = vault.unlock()
+                if (after is SafeState.Unlocked) {
+                    vaultFilesOutcome(vault.openInFilesIfEnabled(application))
+                } else {
+                    vaultOutcome(after)
+                }
+            }
+        }
+    }
+
+    private suspend fun lockVault(): ActionOutcome {
+        val vault = safe.value
+        vault.lock()
+        return if (vault.state.first() == SafeState.NotConfigured) ActionOutcome.VAULT_SETTINGS else ActionOutcome.DONE
+    }
 
     // Asked before the fix: with nothing waiting for a place, the wait for the satellites would buy
     // nothing.

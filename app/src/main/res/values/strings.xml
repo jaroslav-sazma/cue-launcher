@@ -427,6 +427,8 @@
     <string name="phrase_mac_nearby_negated">Mac not nearby</string>
     <string name="phrase_mac_locked">Mac locked</string>
     <string name="phrase_mac_locked_negated">Mac not locked</string>
+    <string name="phrase_vault_unlocked">Vault unlocked</string>
+    <string name="phrase_vault_unlocked_negated">Vault locked</string>
     <string name="phrase_time_instant">at %1$s</string>
     <string name="phrase_alarm">at the alarm</string>
     <string name="phrase_bt_disconnected_any">Bluetooth disconnected</string>
@@ -641,6 +643,7 @@
     <string name="condition_ha_state">Home Assistant — state</string>
     <string name="condition_mac_nearby">Mac nearby</string>
     <string name="condition_mac_locked">Mac locked</string>
+    <string name="condition_vault_unlocked">Vault unlocked</string>
     <string name="condition_time_instant">A moment in time</string>
     <string name="condition_bt_disconnected">Bluetooth disconnected</string>
     <string name="condition_notification">Notification from an app</string>
@@ -659,6 +662,7 @@
     <string name="condition_example_ha_state">TV playing, door open, someone home, smart home</string>
     <string name="condition_example_mac_nearby">Mac, laptop, desk, work</string>
     <string name="condition_example_mac_locked">Mac, laptop, locked, away from the desk, break</string>
+    <string name="condition_example_vault_unlocked">vault, documents, files, unlocked, open</string>
     <string name="condition_example_time_instant">alarm, reminder, at 17:00</string>
     <string name="condition_example_bt_disconnected">where I parked, leaving the car, headphones taken off</string>
     <string name="condition_example_notification">message, parcel, delivery, app</string>
@@ -709,6 +713,7 @@
     <string name="builder_mac_nearby_configure">Set up the Mac bridge</string>
     <string name="builder_mac_locked_note">The Mac counts as locked while it is nearby and reports its screen locked, and as not locked while it is nearby and reports it unlocked. A Mac that has left, or has not reported its screen yet, counts as neither, so neither “Mac locked” nor “Mac not locked” holds.</string>
     <string name="builder_mac_locked_bridge_off">This needs the Mac bridge turned on and paired with your Mac. Set it up in Settings → Mac bridge; until then neither “Mac locked” nor “Mac not locked” holds.</string>
+    <string name="builder_vault_unlocked_note">The vault counts as unlocked from an unlock until it locks again: by hand, by its automatic lock, or when the phone or the launcher restarts. With no vault set up it counts as locked, so “Vault locked” holds.</string>
     <string name="builder_bt_unnamed">Device %1$s</string>
     <string name="builder_bt_connected_now">Connected now</string>
     <string name="builder_bt_paired">Paired with this phone</string>
@@ -874,6 +879,9 @@
     <string name="now_mac_lock_away">Your Mac is not nearby, so Cue: cannot tell whether its screen is locked.</string>
     <string name="now_mac_lock_bridge_off">The Mac bridge is off or no Mac is paired, so Cue: cannot tell whether the Mac is locked.</string>
     <string name="now_mac_lock_unknown">Whether the Mac is locked is not being read yet.</string>
+    <string name="now_vault_unlocked">The vault is unlocked right now.</string>
+    <string name="now_vault_locked">The vault is locked right now.</string>
+    <string name="now_vault_unknown">Whether the vault is unlocked is not being read yet.</string>
     <string name="now_awaits_event">Waiting for an event — the tile shows up once it arrives.</string>
 
     <string name="action_choice_open_app">Open an app</string>
@@ -992,7 +1000,7 @@
     <string name="licenses_mpl_title">Mozilla Public License 2.0</string>
     <string name="licenses_mpl_covers">Public Suffix List, bundled with OkHttp</string>
     <string name="licenses_cc0_title">CC0 1.0 Universal</string>
-    <string name="licenses_cc0_covers">The Mac bridge protocol and its test vectors, in the public domain</string>
+    <string name="licenses_cc0_covers">The Mac bridge protocol, the vault format with its reference script, and their test vectors, in the public domain</string>
 
     <string name="scenarios_title">Scenarios</string>
     <string name="scenarios_empty">No scenarios yet. Create the first one with the “+” button, or import them from a file.</string>
@@ -1408,4 +1416,67 @@
         <item quantity="one">…and %1$d more — keep typing to narrow it down</item>
         <item quantity="other">…and %1$d more — keep typing to narrow it down</item>
     </plurals>
+    <string name="safe_root_title">Vault</string>
+    <string name="safe_prompt_unlock">Unlock the vault</string>
+    <string name="safe_prompt_remember">Remember the vault on this phone</string>
+    <string name="safe_not_configured">The vault is not set up.</string>
+    <string name="safe_choose_again">Cue: can no longer read the vault file. Choose it again.</string>
+    <string name="safe_step_reading">Reading the vault file…</string>
+    <string name="safe_step_checking_password">Checking the password…</string>
+    <string name="safe_step_authenticating">Waiting for confirmation…</string>
+    <string name="safe_step_decrypting">Decrypting…</string>
+    <string name="safe_password_set_up">Enter the vault\'s password to set it up on this phone. From then on, your fingerprint or screen lock opens it.</string>
+    <string name="safe_password_key_lost">This phone no longer has the vault\'s key, for example because the screen lock was removed in the meantime. Enter the password once, and the screen lock opens the vault again.</string>
+    <string name="safe_password_changed">The vault\'s password was changed on the Mac. Enter the new one.</string>
+    <string name="safe_password_other_vault">The chosen file is another vault than the one this phone knows. Enter its password.</string>
+    <string name="safe_password_no_screen_lock">This phone has no screen lock, so it cannot keep the vault\'s key: the vault opens with its password every time.</string>
+    <string name="safe_password_rejected">Wrong password. Try again.</string>
+    <string name="safe_error_not_a_vault">The chosen file is not a vault.</string>
+    <string name="safe_error_unsupported_version">The vault is saved in a newer format than this version of Cue: can read. Update the app.</string>
+    <string name="safe_error_damaged">The vault file is damaged, so nothing of it was opened. An earlier version in the file\'s version history on Google Drive may still be intact.</string>
+    <string name="safe_error_unreadable">The vault file could not be read. If it is on Google Drive, check the connection or make the file available offline, then try again.</string>
+    <string name="safe_error_no_space">There is not enough free storage space on the phone to open the vault. While it is unlocked, the vault takes up as much space as its file is large.</string>
+    <string name="safe_error_too_many_entries">The vault holds more files and folders than this phone can open. Move some of them out of it on the Mac.</string>
+    <string name="safe_title">Vault</string>
+    <string name="safe_intro">The vault is one encrypted file that the Mac app Cue: Vault &amp; View (for Google Drive) creates and edits on your Mac. This phone opens it read-only: while it is unlocked, its files appear as Vault in the file manager and in every file picker.</string>
+    <string name="safe_drive_note">Keep the file on Google Drive and the Google Drive app on this phone. To open the vault without a connection, make the file available offline in the Drive app.</string>
+    <string name="safe_choose">Choose vault file</string>
+    <string name="safe_section_file">Vault file</string>
+    <string name="safe_state_locked">Locked</string>
+    <string name="safe_state_unlocked">Unlocked until %1$s</string>
+    <string name="safe_state_password">Waiting for the password</string>
+    <string name="safe_state_unavailable">Cannot be opened</string>
+    <string name="safe_written_at">Last saved on the Mac</string>
+    <string name="safe_unlock">Unlock</string>
+    <string name="safe_lock">Lock</string>
+    <string name="safe_show_files">Show files</string>
+    <string name="safe_no_file_manager">No app on this phone can show the vault\'s files.</string>
+    <string name="safe_try_again">Try again</string>
+    <string name="safe_choose_again_action">Choose the file again</string>
+    <string name="safe_section_lock">Automatic lock</string>
+    <plurals name="safe_lock_after">
+        <item quantity="one">Locks %d minute after unlocking</item>
+        <item quantity="other">Locks %d minutes after unlocking</item>
+    </plurals>
+    <string name="safe_lock_note">The time counts from unlocking. While the home screen or these settings are on screen, the vault locks right on time. Nothing runs in the background to watch it, though: otherwise the vault locks the first time it is used after the time has run out — when you come back to the home screen, or an app opens or reads one of its files. Restarting the phone or the launcher locks it too.</string>
+    <string name="safe_open_in_files">Open in the file manager after unlocking</string>
+    <string name="safe_open_in_files_detail">Shows the vault\'s files as soon as it unlocks</string>
+    <string name="safe_choose_other">Choose another file</string>
+    <string name="safe_forget">Forget vault</string>
+    <string name="safe_forget_note">Forgetting removes the file choice, the vault\'s key and its settings from this phone. The vault file itself stays where it is.</string>
+    <string name="safe_forget_title">Forget the vault?</string>
+    <string name="safe_forget_detail">The vault locks, and this phone forgets its file, its key and its settings. The file stays on Google Drive; to use it here again, choose it and enter its password.</string>
+    <string name="safe_cancel">Cancel</string>
+    <string name="safe_password_title">Vault password</string>
+    <string name="safe_password_field">Password</string>
+    <string name="safe_password_show">Show password</string>
+    <string name="safe_password_hide">Hide password</string>
+    <string name="scenarios_menu_vault">Vault</string>
+    <string name="action_system_vault">Vault</string>
+    <string name="action_system_vault_unlock">Unlock the vault</string>
+    <string name="action_system_vault_lock">Lock the vault</string>
+    <string name="action_system_vault_unlock_detail">opens the vault with your fingerprint or screen lock; once it is open, a tap shows its files</string>
+    <string name="action_system_vault_lock_detail">locks the vault at once and closes its files</string>
+    <string name="action_system_vault_toggle">Unlock / lock the vault</string>
+    <string name="action_system_vault_toggle_detail">a toggle — unlocks the vault like “Unlock the vault”, a second tap locks it</string>
 </resources>

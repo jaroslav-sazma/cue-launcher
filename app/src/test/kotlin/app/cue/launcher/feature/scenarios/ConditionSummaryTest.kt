@@ -202,6 +202,7 @@ class ConditionSummaryTest {
             Condition.HaState(entity = "binary_sensor.door", states = listOf("on")),
             Condition.MacNearby(),
             Condition.MacLocked(),
+            Condition.VaultUnlocked(),
             Condition.TimeInstant(at = "17:00"),
             Condition.Alarm(),
             Condition.BtDisconnected(),

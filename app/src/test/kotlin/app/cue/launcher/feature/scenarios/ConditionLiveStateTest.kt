@@ -145,6 +145,18 @@ class ConditionLiveStateTest {
     }
 
     @Test
+    fun `the vault reading says whether the vault is unlocked now`() {
+        val reading = { negate: Boolean, unlocked: Boolean? ->
+            liveReading(Condition.VaultUnlocked(negate = negate), SystemState(vaultUnlocked = unlocked))
+        }
+
+        assertEquals(LiveReading(LiveVerdict.HOLDS, NowKey.VAULT_UNLOCKED), reading(false, true))
+        assertEquals(LiveReading(LiveVerdict.FAILS, NowKey.VAULT_LOCKED), reading(false, false))
+        assertEquals(LiveReading(LiveVerdict.HOLDS, NowKey.VAULT_LOCKED), reading(true, false))
+        assertEquals(LiveReading(LiveVerdict.UNKNOWN, NowKey.VAULT_UNKNOWN), reading(true, null))
+    }
+
+    @Test
     fun `the Mac lock reading tells a locked screen from an absent or silent Mac`() {
         val reading = { mac: MacBridgeState?, lock: MacLockState? ->
             liveReading(Condition.MacLocked(), SystemState(macBridge = mac, macLock = lock))

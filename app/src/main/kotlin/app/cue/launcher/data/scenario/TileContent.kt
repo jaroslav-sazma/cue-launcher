@@ -252,6 +252,15 @@ enum class SystemActionType(val jsonName: String) {
 
     @SerialName("mac_lock")
     MAC_LOCK("mac_lock"),
+
+    @SerialName("vault_unlock")
+    VAULT_UNLOCK("vault_unlock"),
+
+    @SerialName("vault_lock")
+    VAULT_LOCK("vault_lock"),
+
+    @SerialName("vault_toggle")
+    VAULT_TOGGLE("vault_toggle"),
     ;
 
     companion object {

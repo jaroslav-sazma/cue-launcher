@@ -54,6 +54,7 @@ import app.cue.launcher.designsystem.spatialDefaultSpec
 import app.cue.launcher.engine.ScenarioEngine
 import app.cue.launcher.feature.dragdrop.ShortcutDragState
 import app.cue.launcher.feature.panel.WidgetPanel
+import app.cue.launcher.feature.settings.safe.rememberVaultOpener
 import app.cue.launcher.feature.widgets.WidgetHosting
 import app.cue.launcher.system.ActionExecutor
 import app.cue.launcher.system.HomeRoleStatus
@@ -95,6 +96,7 @@ fun LauncherPager(
         executor = actionExecutor,
         engine = engine,
         gestures = settings.gestures,
+        onOpenVault = rememberVaultOpener(onOpenSettings),
     )
 
     PagerEffects(

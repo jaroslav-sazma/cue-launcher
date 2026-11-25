@@ -432,6 +432,8 @@
     <string name="phrase_mac_nearby_negated">Mac není poblíž</string>
     <string name="phrase_mac_locked">Mac je zamčený</string>
     <string name="phrase_mac_locked_negated">Mac není zamčený</string>
+    <string name="phrase_vault_unlocked">Trezor je odemčený</string>
+    <string name="phrase_vault_unlocked_negated">Trezor je zamčený</string>
     <string name="phrase_time_instant">v %1$s</string>
     <string name="phrase_alarm">při budíku</string>
     <string name="phrase_bt_disconnected_any">Bluetooth odpojeno</string>
@@ -646,6 +648,7 @@
     <string name="condition_ha_state">Home Assistant — stav</string>
     <string name="condition_mac_nearby">Mac poblíž</string>
     <string name="condition_mac_locked">Zamčený Mac</string>
+    <string name="condition_vault_unlocked">Odemčený trezor</string>
     <string name="condition_time_instant">Okamžik v čase</string>
     <string name="condition_bt_disconnected">Bluetooth odpojeno</string>
     <string name="condition_notification">Notifikace z aplikace</string>
@@ -664,6 +667,7 @@
     <string name="condition_example_ha_state">televize hraje, otevřené dveře, někdo doma, chytrá domácnost</string>
     <string name="condition_example_mac_nearby">Mac, notebook, stůl, práce</string>
     <string name="condition_example_mac_locked">Mac, notebook, zamčený, mimo stůl, pauza</string>
+    <string name="condition_example_vault_unlocked">trezor, dokumenty, soubory, odemčený, otevřený</string>
     <string name="condition_example_time_instant">budík, připomínka, v 17:00</string>
     <string name="condition_example_bt_disconnected">kde parkuju, odchod z auta, sundaná sluchátka</string>
     <string name="condition_example_notification">zpráva, balík, doručení, aplikace</string>
@@ -714,6 +718,7 @@
     <string name="builder_mac_nearby_configure">Nastavit most k Macu</string>
     <string name="builder_mac_locked_note">Mac se počítá jako zamčený, dokud je poblíž a hlásí zamčenou obrazovku, a jako nezamčený, dokud je poblíž a hlásí ji odemčenou. Mac, který se vzdálil nebo stav obrazovky ještě nenahlásil, se nepočítá ani jako zamčený, ani jako nezamčený, takže neplatí „Mac je zamčený“ ani „Mac není zamčený“.</string>
     <string name="builder_mac_locked_bridge_off">Tahle podmínka potřebuje zapnutý most k Macu a spárovaný Mac. Nastav ho v Nastavení → Most k Macu; do té doby neplatí „Mac je zamčený“ ani „Mac není zamčený“.</string>
+    <string name="builder_vault_unlocked_note">Trezor se počítá jako odemčený od odemčení, dokud se znovu nezamkne: ručně, automatickým zamčením nebo restartem telefonu či launcheru. Dokud žádný trezor nastavený nemáš, počítá se jako zamčený, takže platí „Trezor je zamčený“.</string>
     <string name="builder_bt_unnamed">Zařízení %1$s</string>
     <string name="builder_bt_connected_now">Připojená teď</string>
     <string name="builder_bt_paired">Spárovaná s telefonem</string>
@@ -881,6 +886,9 @@
     <string name="now_mac_lock_away">Mac teď poblíž není, takže Cue: nepozná, jestli má zamčenou obrazovku.</string>
     <string name="now_mac_lock_bridge_off">Most k Macu je vypnutý nebo není spárovaný žádný Mac, takže Cue: nepozná, jestli je Mac zamčený.</string>
     <string name="now_mac_lock_unknown">Zamčení Macu se zatím nečte.</string>
+    <string name="now_vault_unlocked">Trezor je teď odemčený.</string>
+    <string name="now_vault_locked">Trezor je teď zamčený.</string>
+    <string name="now_vault_unknown">Odemčení trezoru se zatím nečte.</string>
     <string name="now_awaits_event">Čeká se na událost — dlaždice se ukáže, až přijde.</string>
 
     <string name="action_choice_open_app">Otevřít aplikaci</string>
@@ -999,7 +1007,7 @@
     <string name="licenses_mpl_title">Mozilla Public License 2.0</string>
     <string name="licenses_mpl_covers">Public Suffix List, součást OkHttp</string>
     <string name="licenses_cc0_title">CC0 1.0 Universal</string>
-    <string name="licenses_cc0_covers">Protokol mostu na Mac a jeho testovací vektory, volné dílo</string>
+    <string name="licenses_cc0_covers">Protokol mostu na Mac, formát trezoru s referenčním skriptem a jejich testovací vektory, volné dílo</string>
 
     <string name="scenarios_title">Scénáře</string>
     <string name="scenarios_empty">Zatím žádné scénáře. Založ první tlačítkem „+“, nebo je naimportuj ze souboru.</string>
@@ -1439,4 +1447,69 @@
         <item quantity="many">…a ještě %1$d dalšího — piš dál a seznam se zúží</item>
         <item quantity="other">…a ještě %1$d dalších — piš dál a seznam se zúží</item>
     </plurals>
+    <string name="safe_root_title">Trezor</string>
+    <string name="safe_prompt_unlock">Odemknout trezor</string>
+    <string name="safe_prompt_remember">Zapamatovat trezor v tomto telefonu</string>
+    <string name="safe_not_configured">Trezor není nastavený.</string>
+    <string name="safe_choose_again">Cue: už soubor trezoru nemůže číst. Vyber ho znovu.</string>
+    <string name="safe_step_reading">Načítám soubor trezoru…</string>
+    <string name="safe_step_checking_password">Ověřuji heslo…</string>
+    <string name="safe_step_authenticating">Čekám na ověření…</string>
+    <string name="safe_step_decrypting">Dešifruji…</string>
+    <string name="safe_password_set_up">Zadej heslo trezoru a nastav ho tak v tomto telefonu. Potom ho bude odemykat otisk prstu nebo zámek obrazovky.</string>
+    <string name="safe_password_key_lost">Telefon už klíč trezoru nemá, třeba proto, že byl mezitím zrušen zámek obrazovky. Zadej jednou heslo a trezor bude zase odemykat zámek obrazovky.</string>
+    <string name="safe_password_changed">Heslo trezoru se na Macu změnilo. Zadej nové.</string>
+    <string name="safe_password_other_vault">Vybraný soubor je jiný trezor než ten, který telefon zná. Zadej jeho heslo.</string>
+    <string name="safe_password_no_screen_lock">Telefon nemá zámek obrazovky, a proto si klíč trezoru nemůže uložit: trezor se pokaždé odemyká heslem.</string>
+    <string name="safe_password_rejected">Špatné heslo. Zkus to znovu.</string>
+    <string name="safe_error_not_a_vault">Vybraný soubor není trezor.</string>
+    <string name="safe_error_unsupported_version">Trezor je uložený v novějším formátu, než jaký tahle verze Cue: umí přečíst. Aktualizuj aplikaci.</string>
+    <string name="safe_error_damaged">Soubor trezoru je poškozený, a proto se z něj nic neotevřelo. Neporušená může být starší verze v historii verzí souboru na Disku Google.</string>
+    <string name="safe_error_unreadable">Soubor trezoru nejde přečíst. Pokud je na Disku Google, zkontroluj připojení nebo soubor zpřístupni offline a zkus to znovu.</string>
+    <string name="safe_error_no_space">V telefonu není dost volného místa na otevření trezoru. Odemčený trezor v něm zabírá tolik místa, jak velký je jeho soubor.</string>
+    <string name="safe_error_too_many_entries">V trezoru je víc souborů a složek, než kolik jich tenhle telefon dokáže otevřít. Na Macu některé z něj přesuň jinam.</string>
+    <string name="safe_title">Trezor</string>
+    <string name="safe_intro">Trezor je jeden šifrovaný soubor, který zakládá a upravuje aplikace Cue: Vault &amp; View (for Google Drive) na Macu. Telefon ho otevírá jen pro čtení: dokud je odemčený, jeho soubory jsou jako Trezor ve správci souborů a v každém výběru souborů.</string>
+    <string name="safe_drive_note">Soubor nech na Disku Google a v telefonu měj aplikaci Disk Google. Aby se trezor otevřel i bez připojení, zpřístupni soubor v aplikaci Disk offline.</string>
+    <string name="safe_choose">Vybrat soubor trezoru</string>
+    <string name="safe_section_file">Soubor trezoru</string>
+    <string name="safe_state_locked">Zamčený</string>
+    <string name="safe_state_unlocked">Odemčený do %1$s</string>
+    <string name="safe_state_password">Čeká na heslo</string>
+    <string name="safe_state_unavailable">Nejde otevřít</string>
+    <string name="safe_written_at">Naposledy uloženo na Macu</string>
+    <string name="safe_unlock">Odemknout</string>
+    <string name="safe_lock">Zamknout</string>
+    <string name="safe_show_files">Zobrazit soubory</string>
+    <string name="safe_no_file_manager">Soubory trezoru neumí zobrazit žádná aplikace v telefonu.</string>
+    <string name="safe_try_again">Zkusit znovu</string>
+    <string name="safe_choose_again_action">Vybrat soubor znovu</string>
+    <string name="safe_section_lock">Automatické zamčení</string>
+    <plurals name="safe_lock_after">
+        <item quantity="one">Zamkne se %d minutu po odemknutí</item>
+        <item quantity="few">Zamkne se %d minuty po odemknutí</item>
+        <item quantity="many">Zamkne se %d minuty po odemknutí</item>
+        <item quantity="other">Zamkne se %d minut po odemknutí</item>
+    </plurals>
+    <string name="safe_lock_note">Čas běží od odemknutí. Dokud je na obrazovce plocha nebo toto nastavení, trezor se zamkne přesně včas. Na pozadí ale čas nic nehlídá: jinak se trezor zamkne, až se po uplynutí doby poprvé použije — když se vrátíš na plochu nebo když aplikace otevře či čte některý jeho soubor. Zamkne ho i restart telefonu nebo launcheru.</string>
+    <string name="safe_open_in_files">Po odemknutí otevřít ve správci souborů</string>
+    <string name="safe_open_in_files_detail">Ukáže soubory trezoru hned po odemknutí</string>
+    <string name="safe_choose_other">Vybrat jiný soubor</string>
+    <string name="safe_forget">Zapomenout trezor</string>
+    <string name="safe_forget_note">Zapomenutí smaže z telefonu výběr souboru, klíč trezoru i jeho nastavení. Samotný soubor trezoru zůstane, kde je.</string>
+    <string name="safe_forget_title">Zapomenout trezor?</string>
+    <string name="safe_forget_detail">Trezor se zamkne a telefon zapomene jeho soubor, klíč i nastavení. Soubor zůstane na Disku Google; aby tu znovu fungoval, vyber ho a zadej jeho heslo.</string>
+    <string name="safe_cancel">Zrušit</string>
+    <string name="safe_password_title">Heslo trezoru</string>
+    <string name="safe_password_field">Heslo</string>
+    <string name="safe_password_show">Zobrazit heslo</string>
+    <string name="safe_password_hide">Skrýt heslo</string>
+    <string name="scenarios_menu_vault">Trezor</string>
+    <string name="action_system_vault">Trezor</string>
+    <string name="action_system_vault_unlock">Odemknout trezor</string>
+    <string name="action_system_vault_lock">Zamknout trezor</string>
+    <string name="action_system_vault_unlock_detail">otevře trezor otiskem prstu nebo zámkem obrazovky; otevřený trezor ťuknutím ukáže jeho soubory</string>
+    <string name="action_system_vault_lock_detail">trezor hned zamkne a zavře jeho soubory</string>
+    <string name="action_system_vault_toggle">Odemknout / zamknout trezor</string>
+    <string name="action_system_vault_toggle_detail">přepínač — odemkne trezor jako „Odemknout trezor“, druhé ťuknutí ho zamkne</string>
 </resources>

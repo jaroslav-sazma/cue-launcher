@@ -120,6 +120,7 @@ class ConditionFormTest {
             Condition.BtConnected(),
             Condition.MacNearby(),
             Condition.MacLocked(),
+            Condition.VaultUnlocked(),
         ).forEach { assertNull(conditionFormError(it), it.toString()) }
     }
 

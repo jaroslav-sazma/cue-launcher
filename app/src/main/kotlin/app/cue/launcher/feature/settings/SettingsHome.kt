@@ -51,6 +51,11 @@ import app.cue.launcher.feature.settings.bridge.BridgeScreen
 import app.cue.launcher.feature.settings.ha.HaServices
 import app.cue.launcher.feature.settings.ha.haActionTester
 import app.cue.launcher.feature.settings.ha.HomeAssistantScreen
+import app.cue.launcher.feature.settings.safe.LocalVaultRequest
+import app.cue.launcher.feature.settings.safe.SafeScreen
+import app.cue.launcher.feature.settings.safe.VaultSettings
+import app.cue.launcher.feature.settings.safe.leavesForHome
+import app.cue.launcher.feature.settings.safe.settingsStartKeys
 import app.cue.launcher.feature.widgets.WidgetHosting
 import app.cue.launcher.system.AppActionsRepository
 import app.cue.launcher.system.ConfigBackup
@@ -115,7 +120,9 @@ fun SettingsNavigation(
     importUri: Uri? = null,
     onImportConsumed: () -> Unit = {},
 ) {
-    val backStack = rememberNavBackStack(ScenariosTab)
+    val vaultRequest = LocalVaultRequest.current
+    @Suppress("SpreadOperator") // two keys at most, once per opening
+    val backStack = rememberNavBackStack(*settingsStartKeys(ScenariosTab, vaultRequest.pending))
     val deps = remember(scenarios, activations, systemState, launcherApps) {
         SettingsDeps(scenarios, activations, systemState, launcherApps, appActions, widgets, settings)
     }
@@ -129,6 +136,16 @@ fun SettingsNavigation(
 
     LaunchedEffect(importUri) {
         if (importUri != null) selectTab(BackupsTab)
+    }
+
+    LaunchedEffect(vaultRequest.pending) {
+        if (vaultRequest.pending) {
+            if (backStack.lastOrNull() !is VaultSettings) {
+                selectTab(ScenariosTab)
+                backStack.add(VaultSettings(fromHome = true))
+            }
+            vaultRequest.pending = false
+        }
     }
 
     BackHandler(enabled = backStack.size == 1) {
@@ -190,7 +207,7 @@ private fun SettingsDestinations(
     NavDisplay(
         backStack = backStack,
         modifier = modifier,
-        onBack = { if (backStack.size > 1) pop() else onClose() },
+        onBack = { if (backStack.size > 1 && !backStack.leavesForHome()) pop() else onClose() },
         entryProvider = entryProvider {
             entry<ScenariosTab> {
                 ScenariosDestination(deps, backStack, selectTab, listNotice) { onListNotice(null) }
@@ -199,6 +216,7 @@ private fun SettingsDestinations(
             entry<ScenarioEditor> { key -> EditorDestination(key, deps, haAccess, openBridge, pop, onListNotice) }
             entry<HomeAssistant> { HaDestination(deps.scenarios, ha, pop) }
             entry<Bridge> { BridgeScreen(onClose = pop, onOpenApps = { backStack.add(BridgeApps) }) }
+            entry<VaultSettings> { key -> SafeScreen(onClose = if (key.fromHome) onClose else pop) }
             entry<BridgeApps> { BridgeAppsScreen(launcherApps = deps.launcherApps, onBack = pop) }
             entry<OpenSourceLicenses> {
                 LicensesScreen(onOpen = { backStack.add(LicenseTextKey(it.name)) }, onBack = pop)
@@ -221,13 +239,7 @@ private fun SettingsDestinations(
                     ha = haAccess,
                 )
             }
-            entry<HiddenApps> {
-                HiddenAppsScreen(
-                    launcherApps = deps.launcherApps,
-                    hiddenApps = hiddenApps,
-                    onBack = pop,
-                )
-            }
+            entry<HiddenApps> { HiddenAppsScreen(deps.launcherApps, hiddenApps, onBack = pop) }
             entry<BackupsTab> {
                 BackupsScreen(
                     scenarios = deps.scenarios,
@@ -339,6 +351,7 @@ private fun ScenariosDestination(
         onOpenBackups = { selectTab(BackupsTab) },
         onHomeAssistant = { backStack.add(HomeAssistant) },
         onBridge = { backStack.add(Bridge) },
+        onVault = { backStack.pushOnce(VaultSettings()) },
         onOpenLicenses = { backStack.add(OpenSourceLicenses) },
         onNewScenario = { backStack.add(ScenarioBuilder()) },
         onEditScenario = { backStack.add(ScenarioEditor(it.id)) },

@@ -6,7 +6,9 @@ import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import app.cue.launcher.R
@@ -49,13 +51,13 @@ fun rememberTileActions(
     engine: ScenarioEngine,
 
     gestures: GesturesConfig = GesturesConfig(),
+    onOpenVault: () -> Unit = {},
 ): TileActions {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val calendar = rememberCalendarGate()
-    val dnd = rememberDndRequest()
+    val report = rememberOutcomeReport(onOpenVault)
     val notificationAccess = rememberNotificationAccessRequest()
-    val location = rememberLocationRequest()
     val media = LocalMediaFeed.current
     val placeTap = remember { PlaceTap() }
     LifecycleStartEffect(placeTap) { onStopOrDispose { placeTap.cancel() } }
@@ -67,13 +69,11 @@ fun rememberTileActions(
         gestures.searchbarTap,
         gestures.calendarTap,
         calendar,
-        dnd,
+        report,
         notificationAccess,
-        location,
         media,
         placeTap,
     ) {
-        val report = outcomeReport(context, dnd, location)
         TileActions(
             perform = { actions, sourceBounds ->
                 val job = scope.launch { report(executor.perform(actions, sourceBounds)) }
@@ -137,18 +137,30 @@ private class PlaceTap {
 private fun remembersPlace(action: TapAction): Boolean =
     action is TapAction.SystemAction && action.action == SystemActionType.REMEMBER_PLACE
 
+@Composable
+private fun rememberOutcomeReport(onOpenVault: () -> Unit): (ActionOutcome) -> Unit {
+    val context = LocalContext.current
+    val dnd = rememberDndRequest()
+    val location = rememberLocationRequest()
+    val openVault by rememberUpdatedState(onOpenVault)
+    return remember(context, dnd, location) { outcomeReport(context, dnd, location) { openVault() } }
+}
+
 // Special access has no request dialog, so a refused Do Not Disturb action would otherwise end in a
 // message naming a settings screen the user has to find on their own.
 private fun outcomeReport(
     context: Context,
     dnd: () -> Unit,
     location: (JitRequirement) -> Unit,
+    vault: () -> Unit,
 ): (ActionOutcome) -> Unit = { outcome ->
     outcome.messageRes()?.let { Toast.makeText(context, it, Toast.LENGTH_SHORT).show() }
     when (outcome) {
         ActionOutcome.PERMISSION_REQUIRED -> dnd()
         ActionOutcome.LOCATION_PERMISSION_REQUIRED -> location(JitRequirement.Grant(JitPermission.PLACE))
         ActionOutcome.LOCATION_OFF -> location(JitRequirement.LocationServices)
+        // The home screen shows no dialogs of its own: the password and the file choice live there.
+        ActionOutcome.VAULT_SETTINGS -> vault()
         else -> Unit
     }
 }
@@ -215,4 +227,5 @@ private fun ActionOutcome.messageRes(): Int? = when (this) {
     ActionOutcome.MAC_NOT_PAIRED -> R.string.action_mac_not_paired
     ActionOutcome.MAC_LOCAL_NETWORK -> R.string.action_mac_local_network
     ActionOutcome.MAC_UNREACHABLE -> R.string.action_mac_unreachable
+    ActionOutcome.VAULT_SETTINGS -> null
 }

@@ -157,6 +157,7 @@ private fun conditionTypeGlyph(type: ConditionType): String = when (type) {
     ConditionType.HA_STATE -> "home-automation"
     ConditionType.MAC_NEARBY -> "laptop"
     ConditionType.MAC_LOCKED -> "lock"
+    ConditionType.VAULT_UNLOCKED -> "folder-lock-open"
     ConditionType.TIME_INSTANT, ConditionType.ALARM -> "timer-outline"
     ConditionType.BT_DISCONNECTED -> "bluetooth-off"
     ConditionType.NOTIFICATION -> "bell-outline"

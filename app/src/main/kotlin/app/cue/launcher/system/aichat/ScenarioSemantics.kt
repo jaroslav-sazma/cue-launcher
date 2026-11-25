@@ -48,10 +48,8 @@ internal fun ConditionType.meaning(): String = when (this) {
         "Holds while the user's Mac is near the phone, found over Bluetooth through Cue:'s Mac bridge; it stops " +
             "holding about a minute after the Mac leaves. Needs the Mac bridge turned on and paired with the " +
             "Cue: app on the Mac; until then it never holds, and negated it always does."
-    ConditionType.MAC_LOCKED ->
-        "Holds while the user's Mac is nearby and reports its screen locked; negated, nearby and reporting it " +
-            "unlocked. Needs the Mac bridge like mac_nearby; bridge off, no Mac paired, the Mac away or no screen " +
-            "report yet means unknown: neither mac_locked nor its negation holds, so negated it implies nearby."
+    ConditionType.MAC_LOCKED -> MAC_LOCKED_MEANING
+    ConditionType.VAULT_UNLOCKED -> VAULT_UNLOCKED_MEANING
     ConditionType.TIME_INSTANT -> "Fires at `at` on the listed `days`."
     ConditionType.ALARM ->
         "Fires when the phone's alarm clock rings; a snooze that rings again restarts the countdown. A " +
@@ -79,6 +77,16 @@ internal fun ConditionType.meaning(): String = when (this) {
             "show_place opens it, `{place:lat}` and `{place:lng}` read it, and it is forgotten when the tile " +
             "goes. remember_place saves nothing unless a scenario with this condition waits for it."
 }
+
+private const val MAC_LOCKED_MEANING =
+    "Holds while the user's Mac is nearby and reports its screen locked; negated, nearby and reporting it " +
+        "unlocked. Needs the Mac bridge like mac_nearby; bridge off, no Mac paired, the Mac away or no screen " +
+        "report yet means unknown: neither mac_locked nor its negation holds, so negated it implies nearby."
+
+private const val VAULT_UNLOCKED_MEANING =
+    "Holds while the user's vault is unlocked on the phone, from an unlock until it locks again: by the " +
+        "vault_lock or vault_toggle action, from Cue:'s Vault settings, by its automatic lock a set time " +
+        "after the unlock, or by a restart. With no vault set up it never holds, and negated it always does."
 
 internal fun EndEventType.meaning(): String = when (this) {
     EndEventType.TIME_INSTANT -> "Ends the tile the first time `at` comes on one of the listed `days`."
@@ -146,6 +154,23 @@ internal fun SystemActionType.meaning(): String = when (this) {
         "locks the screen of the user's Mac through Cue:'s Mac bridge. An item whose only action it is " +
             "follows the Mac: greyed out, doing nothing, while the Mac is already locked or not nearby; an " +
             "item with more actions always runs them all. Needs the Mac bridge turned on and paired"
+    SystemActionType.VAULT_UNLOCK ->
+        "unlocks the user's vault, an encrypted file kept on Google Drive and edited on the Mac in the Mac " +
+            "app Cue: Vault & View (for Google Drive), with the fingerprint or the screen lock, then shows " +
+            "its files read-only in the file manager if the vault's switch for that is on, as it is by " +
+            "default; a tap on an unlocked vault always shows the files. " +
+            "The vault is set up in Cue:'s Vault settings; until then a tap opens them. An item whose only " +
+            "action it is shows whether the vault is locked or unlocked"
+    SystemActionType.VAULT_LOCK ->
+        "locks the vault at once and closes its files; it also locks by itself a set time after unlocking. " +
+            "While no vault is set up a tap opens Cue:'s Vault settings instead. An item whose only action it " +
+            "is shows whether the vault is locked or unlocked"
+    SystemActionType.VAULT_TOGGLE ->
+        "a toggle: locks the vault while it is unlocked, and otherwise does what vault_unlock does — unlocks " +
+            "it and shows its files if the vault's \"Open in the file manager after unlocking\" switch is on, " +
+            "or opens the Vault settings while no vault is set up. The one action for a single vault " +
+            "button; an item whose only action it is shows whether the vault is locked or unlocked, its " +
+            "icon in the accent colour while unlocked"
 }
 
 internal fun ExtractKind.meaning(): String = when (this) {

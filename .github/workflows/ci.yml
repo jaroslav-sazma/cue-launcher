@@ -82,6 +82,28 @@ jobs:
             app/build/test-results/**
           if-no-files-found: ignore
 
+  # The vault format's reference script against its shared vectors. It needs no Gradle, so it runs
+  # beside the build instead of waiting for it. It runs on Python 3.9, the oldest the script
+  # supports and the system Python of macOS; renovate.json keeps the image on 3.9. The image has no
+  # git, so checkout downloads the commit through the REST API.
+  vault-vectors:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: python:3.9-slim@sha256:2d97f6910b16bd338d3060f261f53f144965f755599aab1acda1e13cf1731b1b
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Vault format vectors
+        run: |
+          python3 --version
+          python3 -m venv "$RUNNER_TEMP/cuevault-venv"
+          "$RUNNER_TEMP/cuevault-venv/bin/pip" install --require-hashes -r scripts/cuevault-requirements.txt
+          "$RUNNER_TEMP/cuevault-venv/bin/python" scripts/cuevault.py vectors --check fixtures/vault
+
   # Sends the resolved Gradle dependency graph to GitHub, which is what lets Dependabot alerts see
   # vulnerable libraries in a Gradle project at all. Only for the default branch and only the
   # release runtime of the app: alerts are about what ships, not about test or build tooling.

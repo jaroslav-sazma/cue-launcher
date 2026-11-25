@@ -1,0 +1,851 @@
+{
+  "description": "Test vectors of the Cue: vault container format, version 1 (docs/vault-format.md). fixtures/vault/README.md describes the schema.",
+  "passwords": [
+    {
+      "input": "correct horse battery staple",
+      "description": "a passphrase, used as typed: the spaces count",
+      "expected": "636f727265637420686f727365206261747465727920737461706c65"
+    },
+    {
+      "input": "Correct Horse Battery Staple",
+      "description": "case counts: other bytes than the same passphrase in lower case",
+      "expected": "436f727265637420486f727365204261747465727920537461706c65"
+    },
+    {
+      "input": "correct-horse-battery-staple",
+      "description": "dashes count: kept as typed",
+      "expected": "636f72726563742d686f7273652d626174746572792d737461706c65"
+    },
+    {
+      "input": "  correct horse\tbattery staple  ",
+      "description": "whitespace is never trimmed or collapsed: the spaces at both ends and the tab are kept",
+      "expected": "2020636f727265637420686f727365096261747465727920737461706c652020"
+    },
+    {
+      "input": "Z\u030clut\u030couc\u030cky\u0301 ku\u030an\u030c u\u0301pe\u030cl d\u030ca\u0301belske\u0301 o\u0301dy",
+      "description": "typed in NFD: normalized to NFC",
+      "expected": "c5bd6c75c5a56f75c48d6bc3bd206bc5afc58820c3ba70c49b6c20c48fc3a162656c736bc3a920c3b36479"
+    },
+    {
+      "input": "Žluťoučký kůň úpěl ďábelské ódy",
+      "description": "typed in NFC: the same bytes as typed in NFD",
+      "expected": "c5bd6c75c5a56f75c48d6bc3bd206bc5afc58820c3ba70c49b6c20c48fc3a162656c736bc3a920c3b36479"
+    },
+    {
+      "input": "ﬁle cabinet",
+      "description": "NFC, not NFKC: the ligature ﬁ is kept",
+      "expected": "efac816c6520636162696e6574"
+    },
+    {
+      "input": "z\u030clut\u030ca\u0301k12",
+      "description": "typed in NFD: 11 code points, 8 after NFC (the shortest new password a writer takes), 11 bytes in UTF-8",
+      "expected": "c5be6c75c5a5c3a16b3132"
+    },
+    {
+      "input": "",
+      "description": "empty: no bytes; a reader takes it, a writer refuses it as a new password",
+      "expected": ""
+    }
+  ],
+  "positive": [
+    {
+      "name": "empty",
+      "description": "A new vault: an archive of only the two zero blocks, one segment of 1024 bytes; a passphrase with spaces.",
+      "inputs": {
+        "password": "correct horse battery staple",
+        "iterations": 100000,
+        "salt": "a8490a58aca98d385d0fe27ef9ba7965",
+        "vault_id": "75d605650c6874364fad667bd6176dd7",
+        "key_id": "55d8d6b663c31e041ea339440a136e08",
+        "written_at": 1793491200,
+        "cek": "8208bbe62c2a7c88d4bac349dd37c38ebe6cc85a48499559d4b365a7e29fc6e8",
+        "wrap_nonce": "b5820f38e18e7456e20a7096",
+        "nonce_prefix": "4253726a9895df",
+        "entries": []
+      },
+      "expected": {
+        "file": "empty.cuevault",
+        "size": 1176,
+        "sha256": "f7847eaf381e12a645b33c7f13db0655d871da88a4ca0dd06e13f3f546af1236",
+        "kek": "3b4bd134f0afe205700556b391cbfe8846f66616bca471dabd4856f1dd3830fc",
+        "header": "4355455641554c5401a0860100a8490a58aca98d385d0fe27ef9ba796575d605650c6874364fad667bd6176dd755d8d6b663c31e041ea339440a136e080081e66a00000000b5820f38e18e7456e20a709613d4047d0c52e72a7666b30ecd2e60a56032bd598a9180be0025e4f2b406faa596ed7ac1146eb87eb6263ce6e257ef834253726a9895df",
+        "segments": 1,
+        "archive_size": 1024,
+        "archive_sha256": "5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
+      }
+    },
+    {
+      "name": "few-files",
+      "description": "Files and directories with Czech diacritics in their names (NFC), an empty file, an empty directory and a subdirectory; a password with diacritics.",
+      "inputs": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy",
+        "iterations": 100000,
+        "salt": "117dff0d88a3a8f6f70012d4ffb3beea",
+        "vault_id": "d930a4fa0a07c3c0fe83ce6e28b0828e",
+        "key_id": "8dcf27eaa8410ff0452798faae25d84b",
+        "written_at": 1793577600,
+        "cek": "3addfa8e6effaf5caa827491c125da71dee6a0f90c7ec22abcce5f605d55d2d2",
+        "wrap_nonce": "f46d8a76fc05fe502b140075",
+        "nonce_prefix": "643aef2a0d8308",
+        "entries": [
+          {
+            "path": "Archiv/",
+            "type": "dir",
+            "mtime": 1767225600
+          },
+          {
+            "path": "Certifikáty/",
+            "type": "dir",
+            "mtime": 1767312000
+          },
+          {
+            "path": "Certifikáty/osobní.p12",
+            "type": "file",
+            "mtime": 1767312000,
+            "content": {
+              "hex": "308231e7b8d094842c56f89c4bb4375a6958b17667ca3ed539295e17e66df63b48a1"
+            }
+          },
+          {
+            "path": "Smlouvy/",
+            "type": "dir",
+            "mtime": 1769904000
+          },
+          {
+            "path": "Smlouvy/nájemní smlouva.pdf",
+            "type": "file",
+            "mtime": 1769904000,
+            "content": {
+              "utf8": "%PDF-1.7\n% test vector, not a real document\n"
+            }
+          },
+          {
+            "path": "Smlouvy/prázdný.txt",
+            "type": "file",
+            "mtime": 1769990400,
+            "content": {
+              "utf8": ""
+            }
+          },
+          {
+            "path": "čtěte mě.txt",
+            "type": "file",
+            "mtime": 1772323200,
+            "content": {
+              "utf8": "Obsah trezoru pro testovací vektory.\n"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "file": "few-files.cuevault",
+        "size": 6296,
+        "sha256": "5c7a95edbc5e2becf1d165faa217f889725a246fd04c300b85e96e2a54b810b7",
+        "kek": "db00f52385afa0e8c1165f2ded4b957eadf884e566dd69855df62f4b8757edf2",
+        "header": "4355455641554c5401a0860100117dff0d88a3a8f6f70012d4ffb3beead930a4fa0a07c3c0fe83ce6e28b0828e8dcf27eaa8410ff0452798faae25d84b80d2e76a00000000f46d8a76fc05fe502b1400757eb75bf07ec7e035b2b28d41c6ff7645a766d2f3a32803b1bc0b152961fd244957c15386d8da1dfb99e3c277168dfdab643aef2a0d8308",
+        "segments": 1,
+        "archive_size": 6144,
+        "archive_sha256": "3fb9bc9a746fef47230880dbebfeaff7991e936454fcf3a6f90f97d1be04a271"
+      }
+    },
+    {
+      "name": "long-path",
+      "description": "A root file name of exactly 100 bytes (name field without NUL) and paths of up to 195 bytes split into prefix and name, where more than one split would fit and the longest prefix wins; a password with dashes, which count like any other character.",
+      "inputs": {
+        "password": "orbit-lantern-quiet-river",
+        "iterations": 100000,
+        "salt": "ab5172125439b2be05d7487b69e90fd1",
+        "vault_id": "ba8585fff21e70fa8f358edfcf64c911",
+        "key_id": "8d88e19e5331db4b6c0b7acf80a9c301",
+        "written_at": 1793664000,
+        "cek": "0204034976ce8a9876a0761616e18d561b319c1dd44f5ba7d464b48c4b88c4dd",
+        "wrap_nonce": "e117e3daf8a39c1d679b8a21",
+        "nonce_prefix": "c2050b881611b2",
+        "entries": [
+          {
+            "path": "projekty/",
+            "type": "dir",
+            "mtime": 1775001600
+          },
+          {
+            "path": "projekty/klient-s-opravdu-velmi-dlouhým-názvem-společnosti/",
+            "type": "dir",
+            "mtime": 1775001600
+          },
+          {
+            "path": "projekty/klient-s-opravdu-velmi-dlouhým-názvem-společnosti/certifikáty-pro-elektronické-podepisování-dokumentů/",
+            "type": "dir",
+            "mtime": 1775088000
+          },
+          {
+            "path": "projekty/klient-s-opravdu-velmi-dlouhým-názvem-společnosti/certifikáty-pro-elektronické-podepisování-dokumentů/platné-od-roku-2026/",
+            "type": "dir",
+            "mtime": 1775174400
+          },
+          {
+            "path": "projekty/klient-s-opravdu-velmi-dlouhým-názvem-společnosti/certifikáty-pro-elektronické-podepisování-dokumentů/platné-od-roku-2026/kvalifikovaný-certifikát-pro-elektronický-podpis.p12",
+            "type": "file",
+            "mtime": 1775260800,
+            "content": {
+              "repeat": {
+                "byte": "a5",
+                "count": 700
+              }
+            }
+          },
+          {
+            "path": "sto-bajtů-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx.txt",
+            "type": "file",
+            "mtime": 1775347200,
+            "content": {
+              "utf8": "This name fills the whole name field.\n"
+            }
+          }
+        ]
+      },
+      "expected": {
+        "file": "long-path.cuevault",
+        "size": 5784,
+        "sha256": "b98fc81bdbf034295eb337b42ef841821ae4c5088a7fb0922d2ef562630234a3",
+        "kek": "790b84b8122409a4b48cf894553a2baaa3844ce895309da4269cc39315d95b09",
+        "header": "4355455641554c5401a0860100ab5172125439b2be05d7487b69e90fd1ba8585fff21e70fa8f358edfcf64c9118d88e19e5331db4b6c0b7acf80a9c3010024e96a00000000e117e3daf8a39c1d679b8a2136abfc5d6c3883396d474dc15ca34d21996bdaa875ce3517558510bce87f328edd1b50d007b675969f1edcfaea6f2385c2050b881611b2",
+        "segments": 1,
+        "archive_size": 5632,
+        "archive_sha256": "85ebc61cf206be9e24edd4a0e60c8f682aebcd3fb6ab81b5b2c6b637a52b3967"
+      }
+    },
+    {
+      "name": "full-prefix",
+      "description": "A prefix of exactly 155 bytes, so the prefix field has no NUL after it: once with a short name and once with a name of exactly 100 bytes, a path of 256 bytes that fills both fields; a mixed-case password with spaces, used as typed.",
+      "inputs": {
+        "password": "Orbit Lantern Quiet River",
+        "iterations": 100000,
+        "salt": "e53bbfa6946e2a2398654a5152fb7a7c",
+        "vault_id": "d9aa812e274a398f66b82eef75b75fbd",
+        "key_id": "7e3a2880fb78e0c1ee7b4e64b326dec3",
+        "written_at": 1793923200,
+        "cek": "94a140f2578d681af3f4642129f6aef1358c056b2b60aa61d71299766488b6ba",
+        "wrap_nonce": "1c09404fd6c24f84db0451b3",
+        "nonce_prefix": "277fc160f20a48",
+        "entries": [
+          {
+            "path": "prefix-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/",
+            "type": "dir",
+            "mtime": 1782864000
+          },
+          {
+            "path": "prefix-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/fills-the-prefix-field-to-155-bytes-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/",
+            "type": "dir",
+            "mtime": 1782950400
+          },
+          {
+            "path": "prefix-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/fills-the-prefix-field-to-155-bytes-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/short.txt",
+            "type": "file",
+            "mtime": 1783036800,
+            "content": {
+              "utf8": "The prefix field is full, with no NUL after it.\n"
+            }
+          },
+          {
+            "path": "prefix-aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa/fills-the-prefix-field-to-155-bytes-bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb/name-of-exactly-100-bytes-nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn.bin",
+            "type": "file",
+            "mtime": 1783123200,
+            "content": {
+              "repeat": {
+                "byte": "5a",
+                "count": 10
+              }
+            }
+          }
+        ]
+      },
+      "expected": {
+        "file": "full-prefix.cuevault",
+        "size": 4248,
+        "sha256": "ebc8921674b5b6e11d2c86ce7e4ff174cffa54a1d49d26b498bae0c561adb74f",
+        "kek": "e0e86540dcbf001688ffd2aaf8514b61f2ee4684e47619d8a32b756ec374e0b9",
+        "header": "4355455641554c5401a0860100e53bbfa6946e2a2398654a5152fb7a7cd9aa812e274a398f66b82eef75b75fbd7e3a2880fb78e0c1ee7b4e64b326dec38018ed6a000000001c09404fd6c24f84db0451b3bee0a782039117728892b6a71180215f76b9926fb0a391b9d34c2aa507afd132ab88132f88bd97c58eecc3f0d250a034277fc160f20a48",
+        "segments": 1,
+        "archive_size": 4096,
+        "archive_sha256": "03d3061105966d8fe99ce5d41470cab03cfc381ae4b491419b084570e6b81b8c"
+      }
+    },
+    {
+      "name": "exact-segment",
+      "description": "An archive of exactly 65536 bytes, so its single segment is full: a directory, a file of 63388 bytes (124 blocks, the last one padded) and the end marker make 128 blocks; a password of exactly 8 code points, the shortest a writer takes, three of them two bytes in UTF-8.",
+      "inputs": {
+        "password": "žluťák12",
+        "iterations": 100000,
+        "salt": "216c3211732aead480b8e2fb48c21691",
+        "vault_id": "3ee64e46c80e4e3e41ad1d4b409ad993",
+        "key_id": "202fe974f5ae9af8f4fc6cc41753bd56",
+        "written_at": 1793750400,
+        "cek": "048f5a435e61d50c91f5d7f995e9e8f93f2bfb1036c23c204b0860b345880eca",
+        "wrap_nonce": "d2dedddbc44bc2a046032858",
+        "nonce_prefix": "070e345cde73b2",
+        "entries": [
+          {
+            "path": "data/",
+            "type": "dir",
+            "mtime": 1777593600
+          },
+          {
+            "path": "data/block.bin",
+            "type": "file",
+            "mtime": 1777680000,
+            "content": {
+              "sequence": {
+                "count": 63388
+              }
+            }
+          }
+        ]
+      },
+      "expected": {
+        "file": "exact-segment.cuevault",
+        "size": 65688,
+        "sha256": "3f6b597e2834ae5564e1c6f55b61f01ece28260c6674e4b992084a726bfa2407",
+        "kek": "8a97f6309a1522d7aa4c053df6575bf0ba53f42fb05945e3fa01c71398649105",
+        "header": "4355455641554c5401a0860100216c3211732aead480b8e2fb48c216913ee64e46c80e4e3e41ad1d4b409ad993202fe974f5ae9af8f4fc6cc41753bd568075ea6a00000000d2dedddbc44bc2a046032858b56dc68c3962b08421f0e95484be469107d732776bc43e85d3b76492d63b12aae2ff232899a90861bddbca98ed9c59f0070e345cde73b2",
+        "segments": 1,
+        "archive_size": 65536,
+        "archive_sha256": "01e650800ace4268a5ca99a5f894882f1d97fb75d146c5960dd0d65752024477"
+      }
+    },
+    {
+      "name": "multi-segment",
+      "description": "An archive of 143360 bytes in three segments of 65536, 65536 and 12288 bytes; the password typed in NFD, normalized to NFC for the key derivation.",
+      "inputs": {
+        "password": "Cre\u0300me bru\u0302le\u0301e at noon",
+        "iterations": 100000,
+        "salt": "29a561c28d542e633d11fbbbe3fd64b5",
+        "vault_id": "8cf99019c59441bc9d9385abf2d0ef3c",
+        "key_id": "3ce465f58faed267f218a5b834e9ff24",
+        "written_at": 1793836800,
+        "cek": "66bf5cf95b4dc1d8e6cfc09bb7dc192996d722b0715e94412e5f59307ef08888",
+        "wrap_nonce": "a31ce83eeb715f65a9edeb02",
+        "nonce_prefix": "f86eefe31ad69b",
+        "entries": [
+          {
+            "path": "notes.txt",
+            "type": "file",
+            "mtime": 1780272000,
+            "content": {
+              "utf8": "Three segments.\n"
+            }
+          },
+          {
+            "path": "photos/",
+            "type": "dir",
+            "mtime": 1780358400
+          },
+          {
+            "path": "photos/scan.bin",
+            "type": "file",
+            "mtime": 1780444800,
+            "content": {
+              "sequence": {
+                "count": 140000
+              }
+            }
+          }
+        ]
+      },
+      "expected": {
+        "file": "multi-segment.cuevault",
+        "size": 143544,
+        "sha256": "d229979a069f366d7abe121737c2a601ff8a3f3a231c4771c762d92d6288bb5b",
+        "kek": "44172eaf21646c8a091deb4ee547d5c57eb86aa350c2920700cda5e6b9d37da4",
+        "header": "4355455641554c5401a086010029a561c28d542e633d11fbbbe3fd64b58cf99019c59441bc9d9385abf2d0ef3c3ce465f58faed267f218a5b834e9ff2400c7eb6a00000000a31ce83eeb715f65a9edeb02e93a559f3ef974c35d5c693c5b71f33415369fe4ec27ce68c57b89fb7af32ce6620c060b49dec727f506b487257fd33af86eefe31ad69b",
+        "segments": 3,
+        "archive_size": 143360,
+        "archive_sha256": "cb4ed4f17732e9ed246d43bfcc37e6a96d56d0634f264cc4bc04bfe85720e273"
+      }
+    }
+  ],
+  "negative": [
+    {
+      "name": "wrong-password",
+      "description": "The right file with its password's first letter in lower case: case counts, so the CEK does not unwrap.",
+      "base": "few-files",
+      "mutation": null,
+      "credential": {
+        "password": "žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "few-files.cuevault",
+        "sha256": "5c7a95edbc5e2becf1d165faa217f889725a246fd04c300b85e96e2a54b810b7",
+        "error": "wrong_password"
+      }
+    },
+    {
+      "name": "stored-key-stale",
+      "description": "A device's stored key whose key_id is not the header's, as after a password change on another device; detected before any decryption.",
+      "base": "few-files",
+      "mutation": null,
+      "credential": {
+        "stored_key": {
+          "key_id": "d22627a8cc21f2d9ef0bde9c210fc1ef",
+          "cek": "e54fb130b20cf0d80b7a2eff40b23a4dbbb3497e0ff122fbc9fe07b7df3a19c0"
+        }
+      },
+      "expected": {
+        "file": "few-files.cuevault",
+        "sha256": "5c7a95edbc5e2becf1d165faa217f889725a246fd04c300b85e96e2a54b810b7",
+        "error": "stale_key"
+      }
+    },
+    {
+      "name": "wrap-tag-flipped",
+      "description": "One bit of wrap_tag flipped: a damaged header reads like a wrong password.",
+      "base": "empty",
+      "mutation": {
+        "kind": "xor",
+        "offset": 113,
+        "mask": "80"
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "wrap-tag-flipped.cuevault",
+        "sha256": "150b1f8f94885843f3b5a97e1615b6e3272857636efc31378a68847f7e7f3da8",
+        "error": "wrong_password"
+      }
+    },
+    {
+      "name": "key-id-changed",
+      "description": "key_id replaced: it is part of the wrap's AAD, so the CEK does not unwrap.",
+      "base": "empty",
+      "mutation": {
+        "kind": "set_bytes",
+        "offset": 45,
+        "hex": "522141f2e2cf86f8dfb27c0946b2a906"
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "key-id-changed.cuevault",
+        "sha256": "1fbc61976cc665bb8055297f26717109c2a7c4e8fabe686e52b60f5e98a7acca",
+        "error": "wrong_password"
+      }
+    },
+    {
+      "name": "written-at-changed",
+      "description": "written_at replaced: outside the wrap's AAD, so the CEK unwraps, but every segment authenticates the whole header.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "set_bytes",
+        "offset": 61,
+        "hex": "80d8db7000000000"
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "written-at-changed.cuevault",
+        "sha256": "68f2cea34f52d60263958f7d7ee282058a220c5869a898ef5e83e71fc004eeac",
+        "error": "corrupt"
+      }
+    },
+    {
+      "name": "segment-byte-flipped",
+      "description": "One bit flipped inside the first (and only) segment.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "xor",
+        "offset": 336,
+        "mask": "01"
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "segment-byte-flipped.cuevault",
+        "sha256": "a030b94e297557cc72720782d7b8a3096468328c2c0b1621bc3e414949cddf46",
+        "error": "corrupt"
+      }
+    },
+    {
+      "name": "last-segment-dropped",
+      "description": "The last segment removed: the new last segment was sealed without the last flag.",
+      "base": "multi-segment",
+      "mutation": {
+        "kind": "truncate",
+        "length": 131240
+      },
+      "credential": {
+        "password": "Cre\u0300me bru\u0302le\u0301e at noon"
+      },
+      "expected": {
+        "file": "last-segment-dropped.cuevault",
+        "sha256": "0f63159cbd4e0de8fdb7babc7f5ca755d6414c9bc446473df29f4a92ba093e05",
+        "error": "corrupt"
+      }
+    },
+    {
+      "name": "segments-swapped",
+      "description": "The first two segments swapped: their nonces carry their index.",
+      "base": "multi-segment",
+      "mutation": {
+        "kind": "swap_segments",
+        "first": 0,
+        "second": 1
+      },
+      "credential": {
+        "password": "Cre\u0300me bru\u0302le\u0301e at noon"
+      },
+      "expected": {
+        "file": "segments-swapped.cuevault",
+        "sha256": "12ab6426238e88af912e5b62d6debb4eb2270702a4152bf1e2dbe0e59b579300",
+        "error": "corrupt"
+      }
+    },
+    {
+      "name": "payload-cut-short",
+      "description": "The file cut to 10 bytes of payload, less than a segment's 17-byte minimum.",
+      "base": "empty",
+      "mutation": {
+        "kind": "truncate",
+        "length": 146
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "payload-cut-short.cuevault",
+        "sha256": "1f304123070a0d40a2d079304991864c009348cce428a8799c922c581812bb3a",
+        "error": "bad_header"
+      }
+    },
+    {
+      "name": "header-cut",
+      "description": "The file cut inside the header.",
+      "base": "empty",
+      "mutation": {
+        "kind": "truncate",
+        "length": 100
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "header-cut.cuevault",
+        "sha256": "f1f2b1a94ccf77619e31cd566434e1c7c5fbefc83ecaf5a1c482206e4e6bc615",
+        "error": "bad_header"
+      }
+    },
+    {
+      "name": "cut-short-wrong-password",
+      "description": "few-files cut to 8 bytes of payload and opened with another password: with the length known the layout fails first; a reader that streams a file of unknown length checks the password before it sees the layout.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "truncate",
+        "length": 144
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "cut-short-wrong-password.cuevault",
+        "sha256": "a8910552cda38165eef08e93025f34bf091223765980acc9af855d5db55bce59",
+        "error": "bad_header",
+        "error_streaming": "wrong_password"
+      }
+    },
+    {
+      "name": "cut-short-stale-key",
+      "description": "multi-segment cut 5 bytes into its second segment and opened with a stale stored key: with the length known the layout fails first; a reader that streams a file of unknown length compares the key_id before it sees the layout.",
+      "base": "multi-segment",
+      "mutation": {
+        "kind": "truncate",
+        "length": 65693
+      },
+      "credential": {
+        "stored_key": {
+          "key_id": "d22627a8cc21f2d9ef0bde9c210fc1ef",
+          "cek": "e54fb130b20cf0d80b7a2eff40b23a4dbbb3497e0ff122fbc9fe07b7df3a19c0"
+        }
+      },
+      "expected": {
+        "file": "cut-short-stale-key.cuevault",
+        "sha256": "99c47d2727d5e89018e742460db333a5acfa0eb6a65da8b46021969d923253be",
+        "error": "bad_header",
+        "error_streaming": "stale_key"
+      }
+    },
+    {
+      "name": "iterations-too-low",
+      "description": "kdf_iterations set to 99999, below the reader's range.",
+      "base": "empty",
+      "mutation": {
+        "kind": "set_bytes",
+        "offset": 9,
+        "hex": "9f860100"
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "iterations-too-low.cuevault",
+        "sha256": "61914d079658cb32ee57a10c7d199d870a4e421d117f21739a78dfbc47e6cdb2",
+        "error": "bad_header"
+      }
+    },
+    {
+      "name": "iterations-too-high",
+      "description": "kdf_iterations set to 10000001, above the reader's range.",
+      "base": "empty",
+      "mutation": {
+        "kind": "set_bytes",
+        "offset": 9,
+        "hex": "81969800"
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "iterations-too-high.cuevault",
+        "sha256": "a1e30e369c9dcb881338d5ca38ded3afd278f14730f09bf9b01a856971967c2d",
+        "error": "bad_header"
+      }
+    },
+    {
+      "name": "version-unknown",
+      "description": "version set to 2.",
+      "base": "empty",
+      "mutation": {
+        "kind": "set_bytes",
+        "offset": 8,
+        "hex": "02"
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "version-unknown.cuevault",
+        "sha256": "65efc04dc1ae5768cab69e926c8cc76b44fc5282201a59c3d4f4eab833af0a0f",
+        "error": "unsupported_version"
+      }
+    },
+    {
+      "name": "magic-wrong",
+      "description": "The last byte of the magic changed.",
+      "base": "empty",
+      "mutation": {
+        "kind": "set_bytes",
+        "offset": 0,
+        "hex": "4355455641554c58"
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "magic-wrong.cuevault",
+        "sha256": "1285a2375c5f2808fcb7169dd3019a30927d6a6d6339cf30cb6c2a7164048c8f",
+        "error": "not_a_vault"
+      }
+    },
+    {
+      "name": "too-short-for-magic",
+      "description": "Five bytes, too few to hold the magic.",
+      "base": "empty",
+      "mutation": {
+        "kind": "truncate",
+        "length": 5
+      },
+      "credential": {
+        "password": "correct horse battery staple"
+      },
+      "expected": {
+        "file": "too-short-for-magic.cuevault",
+        "sha256": "d7f695dd7b8a90fb8431333cb5c2654ac569fd20e46f8643a96581edca694e62",
+        "error": "not_a_vault"
+      }
+    },
+    {
+      "name": "archive-symlink",
+      "description": "A correctly sealed archive holding a symbolic link (typeflag 2).",
+      "base": "few-files",
+      "mutation": {
+        "kind": "replace_entries",
+        "entries": [
+          {
+            "path": "a.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "target\n"
+            }
+          },
+          {
+            "path": "odkaz",
+            "type": "symlink",
+            "mtime": 1767225600,
+            "linkname": "a.txt"
+          }
+        ]
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "archive-symlink.cuevault",
+        "sha256": "27af590929ee2d057984eef3838b903a5080345b70f70b7efa2122cc37d236d2",
+        "error": "bad_archive"
+      }
+    },
+    {
+      "name": "archive-dot-dot",
+      "description": "A correctly sealed archive with the path ../mimo.txt.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "replace_entries",
+        "entries": [
+          {
+            "path": "../mimo.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "escape\n"
+            }
+          }
+        ]
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "archive-dot-dot.cuevault",
+        "sha256": "e65d35ef955ea51d3eb2d4c7b5d696ef0f2620350425a03a71a9811e7d0c2218",
+        "error": "bad_archive"
+      }
+    },
+    {
+      "name": "archive-duplicate",
+      "description": "A correctly sealed archive with the same path twice.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "replace_entries",
+        "entries": [
+          {
+            "path": "a/",
+            "type": "dir",
+            "mtime": 1767225600
+          },
+          {
+            "path": "a/b.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "one\n"
+            }
+          },
+          {
+            "path": "a/b.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "two\n"
+            }
+          }
+        ]
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "archive-duplicate.cuevault",
+        "sha256": "b82695b787bf9df42287106647f5542545bb0257b740173e7a41b96696cb454d",
+        "error": "bad_archive"
+      }
+    }
+  ],
+  "accepted": [
+    {
+      "name": "archive-nfd-path",
+      "description": "A correctly sealed archive whose directory and file paths are in NFD, as no writer stores them: a reader does not check normalization and returns the paths byte for byte.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "replace_entries",
+        "entries": [
+          {
+            "path": "Pr\u030ci\u0301lohy/",
+            "type": "dir",
+            "mtime": 1767225600
+          },
+          {
+            "path": "Pr\u030ci\u0301lohy/c\u030cte\u030cte me\u030c.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "NFD\n"
+            }
+          }
+        ]
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "archive-nfd-path.cuevault",
+        "sha256": "37f6c6ddc6ae0a341c44517edbaace4e428614410c254ae6825cc94f360d65dc"
+      }
+    },
+    {
+      "name": "archive-normalization-twins",
+      "description": "A correctly sealed archive with paths that differ only in normalization: an NFC file and its NFD twin, and an NFC file beside an NFD directory of the same name with a file inside it. Paths compare as bytes, so these are five distinct entries and nothing lies inside a file.",
+      "base": "few-files",
+      "mutation": {
+        "kind": "replace_entries",
+        "entries": [
+          {
+            "path": "čtěte mě.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "NFC\n"
+            }
+          },
+          {
+            "path": "c\u030cte\u030cte me\u030c.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "NFD\n"
+            }
+          },
+          {
+            "path": "ž",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "a file\n"
+            }
+          },
+          {
+            "path": "z\u030c/",
+            "type": "dir",
+            "mtime": 1767225600
+          },
+          {
+            "path": "z\u030c/a.txt",
+            "type": "file",
+            "mtime": 1767225600,
+            "content": {
+              "utf8": "inside the NFD directory\n"
+            }
+          }
+        ]
+      },
+      "credential": {
+        "password": "Žluťoučký kůň úpěl ďábelské ódy"
+      },
+      "expected": {
+        "file": "archive-normalization-twins.cuevault",
+        "sha256": "8efbce3929e5be8ed55e326fa24a1af547f06f96fdefc566007d6c5598193942"
+      }
+    }
+  ]
+}

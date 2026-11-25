@@ -7,25 +7,33 @@
 # launcher stored says so — and the process is then in the bound-service state, otherwise in the
 # home state. Reading the stored need takes a debug build.
 #
-#   scripts/background-audit.sh [seconds] [--with-listener]
+#   scripts/background-audit.sh [seconds] [--with-listener] [--vault-unlocked]
 #
 # --with-listener grants notification access for the run and takes it away again afterwards. The
 # listener binds only while badges are on or a scenario watches notifications, so that is what makes
 # the run exercise it. The reposted notification stays in the shade under the tag "cue-audit"; the
 # shell has no way to cancel it.
+#
+# --vault-unlocked says the vault was unlocked on the emulator before the run, with an automatic lock
+# longer than the run. Its documents provider and the provider's reading thread exist only from an
+# unlock to the lock: without the flag both must be absent, with it both present.
 set -euo pipefail
 
 # The debug build, which run-as needs, carries the .debug suffix; its class names do not.
 PACKAGE=app.cue.launcher.debug
 LISTENER=$PACKAGE/app.cue.launcher.system.notifications.CueNotificationListener
+VAULT_PROVIDER=app.cue.launcher.system.safe.SafeDocumentsProvider
+VAULT_READS_THREAD=CueSafeReads
 SECONDS_AWAY=60
 WITH_LISTENER=false
+VAULT_UNLOCKED=false
 # 100 Hz clock ticks; a launcher at rest costs well under a tick per second.
 TICKS_PER_MINUTE=30
 
 for arg in "$@"; do
     case $arg in
         --with-listener) WITH_LISTENER=true ;;
+        --vault-unlocked) VAULT_UNLOCKED=true ;;
         *) SECONDS_AWAY=$arg ;;
     esac
 done
@@ -104,8 +112,13 @@ else
 fi
 
 # Reduced-motion follows animator_duration_scale through a settings observer Compose keeps for the
-# whole window; it costs nothing until the setting changes.
+# whole window; it costs nothing until the setting changes. While the vault is unlocked, a folder
+# a file manager keeps open holds a cursor of the vault's provider, and the cursor's notification
+# observer lives in this process until the file manager lets the cursor go or the vault locks.
 observers=$(adb shell dumpsys content | grep "pid=$pid " | grep -v 'settings/global/animator_duration_scale' || true)
+if [ "$VAULT_UNLOCKED" = true ]; then
+    observers=$(echo "$observers" | grep -v "^ *$PACKAGE\.vault/document/" || true)
+fi
 if [ -z "$observers" ]; then report "content observers" "ok    none"; else problem "content observers" "$(echo "$observers" | awk '{ print $1 }' | tr '\n' ' ')"; fi
 
 # The bridge's USER_PRESENT receiver exists only while a clip from the Mac waits for a locked phone,
@@ -146,5 +159,25 @@ if [ "$bindings" = 0 ]; then report "other service bindings" "ok    none"; else 
 # Bindings the launcher holds to other apps' services are listed with its process, not its services.
 outgoing=$(echo "$process" | awk '/^    Connections:/ { on = 1; next } on && /^    [A-Za-z]/ { on = 0 } on && /ConnectionRecord/' | wc -l | tr -d ' ')
 if [ "$outgoing" = 0 ]; then report "bindings to other apps" "ok    none"; else problem "bindings to other apps" "$outgoing"; fi
+
+# The provider is declared disabled, so it shows among the user's enabledComponents only while the
+# launcher switched it on; the class name also appears in the provider tables, hence the section.
+vault_enabled=$(adb shell dumpsys package "$PACKAGE" | awk -v provider="$VAULT_PROVIDER" '
+    /enabledComponents:/ { on = 1; indent = match($0, /[^ ]/); next }
+    on && match($0, /[^ ]/) <= indent { on = 0 }
+    on && $1 == provider { n++ }
+    END { print n + 0 }')
+vault_reads=$(adb shell "cat /proc/$pid/task/*/comm" | tr -d '\r' | grep -cx "$VAULT_READS_THREAD" || true)
+if $VAULT_UNLOCKED; then
+    if [ "$vault_enabled" -gt 0 ] && [ "$vault_reads" = 1 ]; then
+        report "vault provider" "ok    enabled while unlocked"
+    else
+        problem "vault provider" "not open although unlocked (enabled $vault_enabled, reading threads $vault_reads)"
+    fi
+elif [ "$vault_enabled" = 0 ] && [ "$vault_reads" = 0 ]; then
+    report "vault provider" "ok    disabled"
+else
+    problem "vault provider" "open although locked (enabled $vault_enabled, reading threads $vault_reads)"
+fi
 
 exit $fail

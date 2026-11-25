@@ -107,6 +107,18 @@ class ConditionEvaluationTest {
     }
 
     @Test
+    fun `the vault condition follows the vault, and turned around holds while it is locked`() {
+        val reading = { negate: Boolean, unlocked: Boolean ->
+            stateConditionOutcome(Condition.VaultUnlocked(negate = negate), SystemState(vaultUnlocked = unlocked))
+        }
+
+        assertEquals(ConditionOutcome.HOLDS, reading(false, true))
+        assertEquals(ConditionOutcome.FAILS, reading(false, false))
+        assertEquals(ConditionOutcome.FAILS, reading(true, true))
+        assertEquals(ConditionOutcome.HOLDS, reading(true, false))
+    }
+
+    @Test
     fun `bt without an address holds for any connected device`() {
         val state = SystemState(bluetooth = BluetoothState(setOf("AA:BB:CC:DD:EE:FF")))
 
@@ -173,6 +185,7 @@ class ConditionEvaluationTest {
             clock = ClockState(minuteOfDay = 19 * MINUTES_PER_HOUR, isoDayOfWeek = 1),
             macBridge = MacBridgeState.NEARBY,
             macLock = MacLockState.LOCKED,
+            vaultUnlocked = true,
         )
 
         STATE_CONDITIONS.forEach { condition ->
@@ -400,6 +413,7 @@ class ConditionEvaluationTest {
             Condition.CalendarEvent(),
             Condition.MacNearby(),
             Condition.MacLocked(),
+            Condition.VaultUnlocked(),
         )
     }
 }

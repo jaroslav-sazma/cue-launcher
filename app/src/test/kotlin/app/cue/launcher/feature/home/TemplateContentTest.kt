@@ -90,6 +90,58 @@ class TemplateContentTest {
     }
 
     @Test
+    fun `a vault button shows whether the vault is locked, and a chosen icon still wins`() {
+        val font = MdiGlyphs(emptyMap())
+        VAULT_ACTIONS.forEach { action ->
+            val item = TemplateItem(actions = listOf(TapAction.SystemAction(action)))
+            val glyph = { unlocked: Boolean ->
+                templateGlyphName(item, templateStateGlyphs(item, emptyMap(), font, macLocked = null, unlocked))
+            }
+
+            assertEquals("folder-lock", glyph(false), action.jsonName)
+            assertEquals("folder-lock-open", glyph(true), action.jsonName)
+            val chosen = TemplateItem(icon = "mdi:safe", actions = item.actions)
+            assertEquals("safe", templateGlyphName(chosen, templateStateGlyphs(chosen, emptyMap(), font, null, true)))
+        }
+    }
+
+    @Test
+    fun `a vault button takes the accent while the vault is unlocked, and only a vault button does`() {
+        VAULT_ACTIONS.forEach { action ->
+            val item = TemplateItem(actions = listOf(TapAction.SystemAction(action)))
+
+            assertTrue(templateIconAccented(item, emptySet(), vaultUnlocked = true), action.jsonName)
+            assertFalse(templateIconAccented(item, emptySet(), vaultUnlocked = false), action.jsonName)
+        }
+        val mixed = TemplateItem(
+            actions = listOf(
+                TapAction.SystemAction(SystemActionType.VAULT_TOGGLE),
+                TapAction.SystemAction(SystemActionType.DND_ON),
+            ),
+        )
+        val torch = TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.FLASHLIGHT)))
+        assertFalse(templateIconAccented(mixed, emptySet(), vaultUnlocked = true))
+        assertFalse(templateIconAccented(torch, emptySet(), vaultUnlocked = true))
+    }
+
+    @Test
+    fun `a vault action among others follows nothing and is never greyed out`() {
+        val actions = listOf(
+            TapAction.SystemAction(SystemActionType.VAULT_UNLOCK),
+            TapAction.SystemAction(SystemActionType.DND_ON),
+        )
+        val item = TemplateItem(actions = actions)
+        val template = TileContent.Template(layout = TemplateLayout.TEXT_ONLY, text = "Papers", items = listOf(item))
+
+        assertFalse(onlyVaultAction(item))
+        assertEquals(emptyList<String>(), templateStateGlyphs(item, emptyMap(), MdiGlyphs(emptyMap()), null, true))
+        assertEquals(actions, template.enabledWholeTileActions(macLocked = null))
+        val alone = TemplateItem(actions = listOf(TapAction.SystemAction(SystemActionType.VAULT_LOCK)))
+        val lockOnly = TileContent.Template(layout = TemplateLayout.TEXT_ONLY, text = "Lock", items = listOf(alone))
+        assertTrue(lockOnly.wholeTileEnabled(macLocked = null))
+    }
+
+    @Test
     fun `a text tile that locks the Mac taps only while the Mac is unlocked`() {
         val lock = TapAction.SystemAction(SystemActionType.MAC_LOCK)
         val template = TileContent.Template(
@@ -227,5 +279,11 @@ class TemplateContentTest {
 
     private companion object {
         const val FOUR = 4
+
+        val VAULT_ACTIONS = listOf(
+            SystemActionType.VAULT_UNLOCK,
+            SystemActionType.VAULT_LOCK,
+            SystemActionType.VAULT_TOGGLE,
+        )
     }
 }

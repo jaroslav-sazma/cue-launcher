@@ -2,6 +2,8 @@ package app.cue.launcher.system
 
 import app.cue.launcher.data.ha.HaProbe
 import app.cue.launcher.system.bridge.LockMacOutcome
+import app.cue.launcher.system.safe.SafeFilesOpened
+import app.cue.launcher.system.safe.SafeState
 
 enum class ActionOutcome {
 
@@ -53,6 +55,10 @@ enum class ActionOutcome {
     MAC_LOCAL_NETWORK,
 
     MAC_UNREACHABLE,
+
+    // The vault needs the user on its settings screen: to set it up, for the password, for the file
+    // chosen again or for an error. The screen itself says which, so the outcome carries no message.
+    VAULT_SETTINGS,
 }
 
 // SENT is all the phone can know: the Mac's answering lock-state is what greys the tile out.
@@ -61,6 +67,31 @@ fun lockMacOutcome(outcome: LockMacOutcome): ActionOutcome = when (outcome) {
     LockMacOutcome.NOT_PAIRED -> ActionOutcome.MAC_NOT_PAIRED
     LockMacOutcome.NO_LOCAL_NETWORK -> ActionOutcome.MAC_LOCAL_NETWORK
     LockMacOutcome.UNREACHABLE -> ActionOutcome.MAC_UNREACHABLE
+}
+
+// Locked after an unlock is a dismissed prompt, which was its own feedback.
+fun vaultOutcome(state: SafeState): ActionOutcome = when (state) {
+    SafeState.Locked, is SafeState.Unlocking, is SafeState.Unlocked -> ActionOutcome.DONE
+    SafeState.NotConfigured, is SafeState.NeedsPassword, SafeState.ChooseFileAgain, is SafeState.Failed ->
+        ActionOutcome.VAULT_SETTINGS
+}
+
+// A vault locked in the meantime shows as locked on its tile, which is feedback enough.
+fun vaultFilesOutcome(opened: SafeFilesOpened): ActionOutcome = when (opened) {
+    SafeFilesOpened.OPENED, SafeFilesOpened.LOCKED -> ActionOutcome.DONE
+    SafeFilesOpened.NO_FILE_MANAGER -> ActionOutcome.TARGET_MISSING
+}
+
+enum class VaultTap { UNLOCK, OPEN_FILES, LOCK, NOTHING }
+
+// On an unlocked vault, Unlock opens the files whatever the switch says, as that is all a second tap
+// can mean, and the toggle locks. A tap during an unlock does nothing, or the files would open twice.
+fun vaultTapOf(state: SafeState, toggle: Boolean): VaultTap = when (state) {
+    is SafeState.Unlocked -> if (toggle) VaultTap.LOCK else VaultTap.OPEN_FILES
+    is SafeState.Unlocking -> VaultTap.NOTHING
+    SafeState.NotConfigured, SafeState.Locked, is SafeState.NeedsPassword, SafeState.ChooseFileAgain,
+    is SafeState.Failed,
+    -> VaultTap.UNLOCK
 }
 
 // Only the Google TV app opens its remote, so a missing target can name the app that is missing.
