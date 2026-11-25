@@ -2,7 +2,7 @@
 kotlin = "2.4.21"            # Metro is a compiler plugin built against one Kotlin release (1.6.0
                              # against 2.4.20): a Kotlin bump is merged only after CI has run it
                              # together with the current Metro.
-agp = "9.5.2"
+agp = "9.5.3"
 # The BOM is used instead of pinning by hand: it holds material3 1.5.0 together with the whole
 # Compose UI 1.13.0 stack, so the stack is consistent by definition. The expressive components
 # are stable from material3 1.5.0 on; the alpha BOM is not needed for them and would move to the
