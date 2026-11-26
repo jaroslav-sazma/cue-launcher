@@ -24,8 +24,8 @@ android {
         applicationId = "app.cue.launcher"
         minSdk = 37
         targetSdk = 37
-        versionCode = 8
-        versionName = "1.1.1"
+        versionCode = 9
+        versionName = "1.2.0"
     }
 
     buildFeatures {
