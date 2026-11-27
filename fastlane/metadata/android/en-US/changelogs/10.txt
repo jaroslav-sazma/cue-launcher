@@ -1,0 +1,1 @@
+The vault opens from Files by Google: tap Cue: under Other storage and its files show in the system file manager, where tapping it used to land on the home screen. Show files and opening after unlocking go straight to the file manager, without asking which app to use.
