@@ -128,6 +128,12 @@
         <intent>
             <action android:name="android.service.voice.VoiceInteractionService" />
         </intent>
+        <!-- Opening the vault picks the system's document UI among the apps that view a root, so it
+             has to see them. Must stay in sync with openSafeRoot(). -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="vnd.android.document/root" />
+        </intent>
     </queries>
 
     <!-- Cleartext, certificate transparency and what holds the boundary instead of a domain list are

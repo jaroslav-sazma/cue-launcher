@@ -1,5 +1,6 @@
 package app.cue.launcher
 
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.Intent
 import android.graphics.Rect
@@ -64,6 +65,7 @@ import app.cue.launcher.system.ha.HA_SIGN_IN_RETURN
 import app.cue.launcher.system.launchSystemScreen
 import app.cue.launcher.system.media.MediaPlayers
 import app.cue.launcher.system.media.playerChoices
+import app.cue.launcher.system.safe.SafeFilesOpened
 import app.cue.launcher.system.safe.SafeVault
 import app.cue.launcher.system.widget.WidgetBinder
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -113,6 +115,7 @@ class MainActivity : ComponentActivity() {
         homeRoleStatus.value = HomeRole.status(this)
         importUri.value = scenarioDocumentOf(intent)
         setContent { LauncherContent() }
+        if (savedInstanceState == null) openedVaultForFileManager(intent, safeVault())
     }
 
     @Composable
@@ -203,15 +206,14 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         val document = scenarioDocumentOf(intent)
-        if (document != null) {
-
-            importUri.value = document
-            return
+        when {
+            document != null -> importUri.value = document
+            // Coming back from the sign-in tab is not the home button: resetting would close the
+            // settings the sign-in was started from, and the result would land on a screen nobody can see.
+            intent.action == HA_SIGN_IN_RETURN -> Unit
+            openedVaultForFileManager(intent, safeVault()) -> Unit
+            else -> homeResetSignal.intValue++
         }
-        // Coming back from the sign-in tab is not the home button: resetting would close the settings
-        // the sign-in was started from, and the result would land on a screen nobody can see.
-        if (intent.action == HA_SIGN_IN_RETURN) return
-        homeResetSignal.intValue++
     }
 
     private fun consumeImportDocument() {
@@ -320,6 +322,17 @@ private fun scenarioDocumentOf(intent: Intent): Uri? = runCatching {
         else -> null
     }
 }.getOrNull()?.takeIf { isImportableScheme(it.scheme) }
+
+// Files by Google lists the vault's root under Other storage but never browses a provider itself:
+// tapping it starts the providing app's launch intent, which for a launcher only shows the home
+// screen. While the vault is open, that hand-off goes on to the system's Files app instead.
+private fun Activity.openedVaultForFileManager(intent: Intent, vault: SafeVault): Boolean =
+    intent.action == Intent.ACTION_MAIN &&
+        intent.hasCategory(Intent.CATEGORY_LAUNCHER) &&
+        referrer?.host in FILE_MANAGERS_HANDING_OFF &&
+        vault.openInFiles(this) == SafeFilesOpened.OPENED
+
+private val FILE_MANAGERS_HANDING_OFF = setOf("com.google.android.apps.nbu.files")
 
 internal fun isImportableScheme(scheme: String?): Boolean = scheme == ContentResolver.SCHEME_CONTENT
 

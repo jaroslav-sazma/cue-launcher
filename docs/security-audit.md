@@ -819,9 +819,15 @@ cue-vault, keeps a byte-identical copy of.
   `vault_unlocked` condition only reads whether a session is open and within its limit, and an
   imported scenario brings nothing of the vault with it. An unlock always passes the Keystore prompt
   or the password, and the one thing a tap opens outside the launcher is the vault's own root in the
-  file manager (`ACTION_VIEW` on the root URI). A tap that cannot finish — no vault set up, the
-  password needed, the file to be chosen again, a file that failed to open — opens the vault's
-  settings screen in the launcher, which is where the password is typed.
+  file manager (`ACTION_VIEW` on the root URI), addressed to the one handler that holds
+  `MANAGE_DOCUMENTS` — the system's document UI, seen through `<queries>` for that intent — and left
+  to the system's choice only where none does. The launcher's own launch intent opens the same root
+  while the vault is unlocked, when its referrer is Files by Google, which lists the root under
+  Other storage but hands a tap on it to the providing app; any app can claim that referrer, and all
+  it gets is the vault shown in the system's Files on the phone's screen, with no grant. A tap that
+  cannot finish — no vault set up, the password needed, the file to be chosen again, a file that
+  failed to open — opens the vault's settings screen in the launcher, which is where the password is
+  typed.
 
 ## Residual risks
 

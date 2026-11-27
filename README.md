@@ -1180,10 +1180,11 @@ documents, recovery codes — in one encrypted file. The Mac app Cue: Vault & Vi
 Cue Vault for short, creates it on your Mac and is where you change what is in it; Google Drive
 keeps the file and brings it to your phone. Cue: React & Act opens that file **read-only**: once you
 unlock it, its files appear as **Vault** in the phone's file manager (*Files*) and in the file
-picker of every app, so you can open a scanned document or attach a certificate from there. Nothing
-it decrypts is ever written to the phone's storage: while the vault is unlocked, the launcher keeps
-a copy of the still encrypted file in its own private storage, decrypts only the part of a file an
-app is reading, and deletes the copy when the vault locks.
+picker of every app, so you can open a scanned document or attach a certificate from there. Files by
+Google lists it under **Other storage** as **Cue:**, and a tap there opens it in *Files* as well.
+Nothing it decrypts is ever written to the phone's storage: while the vault is unlocked, the
+launcher keeps a copy of the still encrypted file in its own private storage, decrypts only the part
+of a file an app is reading, and deletes the copy when the vault locks.
 
 The Mac's side — creating the vault, adding and removing files, the master password and going back
 to an earlier version — is described in the
